@@ -2,11 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using AirlineReservationSystem.Models;
 using Microsoft.AspNetCore.Authorization;
-using System.ComponentModel.DataAnnotations;
 
 namespace AirlineReservationSystem.Controllers
 {
-    [Authorize]
     public class AccountController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -22,6 +20,12 @@ namespace AirlineReservationSystem.Controllers
         [AllowAnonymous]
         public IActionResult Login(string returnUrl = null)
         {
+            // If user is already authenticated, redirect to appropriate page
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
@@ -34,14 +38,15 @@ namespace AirlineReservationSystem.Controllers
             ViewData["ReturnUrl"] = returnUrl;
             if (ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+                // Sign in without persistent cookie (no "remember me")
+                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, isPersistent: false, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
                     return RedirectToLocal(returnUrl);
                 }
                 else
                 {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                    ModelState.AddModelError(string.Empty, "Invalid login attempt. Please check your email and password.");
                     return View(model);
                 }
             }
@@ -52,6 +57,12 @@ namespace AirlineReservationSystem.Controllers
         [AllowAnonymous]
         public IActionResult Register(string returnUrl = null)
         {
+            // If user is already authenticated, redirect to home
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
@@ -70,7 +81,8 @@ namespace AirlineReservationSystem.Controllers
                     Email = model.Email,
                     FirstName = model.FirstName,
                     LastName = model.LastName,
-                    DateOfBirth = model.DateOfBirth
+                    DateOfBirth = model.DateOfBirth,
+                    EmailConfirmed = true // Auto-confirm email since we removed email confirmation
                 };
                 
                 var result = await _userManager.CreateAsync(user, model.Password);
@@ -79,6 +91,7 @@ namespace AirlineReservationSystem.Controllers
                     // Assign User role by default
                     await _userManager.AddToRoleAsync(user, "User");
                     
+                    // Sign in the user immediately after registration
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     return RedirectToLocal(returnUrl);
                 }
@@ -92,7 +105,7 @@ namespace AirlineReservationSystem.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            return RedirectToAction(nameof(HomeController.Index), "Home");
+            return RedirectToAction("Login", "Account");
         }
 
         private void AddErrors(IdentityResult result)
@@ -111,7 +124,7 @@ namespace AirlineReservationSystem.Controllers
             }
             else
             {
-                return RedirectToAction(nameof(HomeController.Index), "Home");
+                return RedirectToAction("Index", "Home");
             }
         }
     }

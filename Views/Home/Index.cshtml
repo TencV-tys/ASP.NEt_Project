@@ -8,41 +8,28 @@
             <div class="col-lg-6">
                 <h1 class="display-4 fw-bold">Welcome to Airline Reservation System</h1>
                 <p class="lead">Book your flights easily and manage your travel plans with our comprehensive airline reservation system.</p>
-                @if (!User.Identity.IsAuthenticated)
-                {
-                    <div class="mt-4">
-                        <a class="btn btn-light btn-lg me-3" asp-action="Register" asp-controller="Account">
-                            <i class="fas fa-user-plus"></i> Register
+                
+                <div class="mt-4">
+                    <a class="btn btn-light btn-lg me-3" asp-controller="User" asp-action="Flights">
+                        <i class="fas fa-search"></i> Find Flights
+                    </a>
+                    
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a class="btn btn-outline-light btn-lg" asp-controller="Admin" asp-action="Dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Admin Dashboard
                         </a>
-                        <a class="btn btn-outline-light btn-lg" asp-action="Login" asp-controller="Account">
-                            <i class="fas fa-sign-in-alt"></i> Login
+                    }
+                    else
+                    {
+                        <a class="btn btn-outline-light btn-lg me-2" asp-controller="Home" asp-action="Dashboard">
+                            <i class="fas fa-tachometer-alt"></i> My Dashboard
                         </a>
-                    </div>
-                }
-                else
-                {
-                    <div class="mt-4">
-                        <a class="btn btn-light btn-lg me-3" asp-controller="User" asp-action="Flights">
-                            <i class="fas fa-search"></i> Find Flights
+                        <a class="btn btn-outline-light btn-lg" asp-controller="User" asp-action="MyBookings">
+                            <i class="fas fa-ticket-alt"></i> My Bookings
                         </a>
-                        
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <!-- Admin users see Admin Dashboard -->
-                            <a class="btn btn-outline-light btn-lg" asp-controller="Admin" asp-action="Dashboard">
-                                <i class="fas fa-tachometer-alt"></i> Admin Dashboard
-                            </a>
-                        }
-                        else
-                        {
-                            <!-- Regular users see User Dashboard and My Bookings -->
-                            <a class="btn btn-outline-light btn-lg me-2" asp-controller="Home" asp-action="Dashboard">
-                                <i class="fas fa-tachometer-alt"></i> My Dashboard
-                            </a>
-                        
-                        }
-                    </div>
-                }
+                    }
+                </div>
             </div>
             <div class="col-lg-6 text-center">
                 <i class="fas fa-plane-departure" style="font-size: 15rem; opacity: 0.8;"></i>

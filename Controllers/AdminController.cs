@@ -1,3 +1,4 @@
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AirlineReservationSystem.Data;
@@ -22,10 +23,8 @@ namespace AirlineReservationSystem.Controllers
             _roleManager = roleManager;
         }
 
-        // All actions in this controller are automatically protected by [Authorize(Roles = "Admin")]
-        // No changes needed to individual actions
-
-        public async Task<IActionResult> Dashboard()
+    
+          public async Task<IActionResult> Dashboard()
         {
             var dashboardStats = new AdminDashboardViewModel
             {
@@ -44,6 +43,293 @@ namespace AirlineReservationSystem.Controllers
             return View(dashboardStats);
         }
 
-        // ... rest of the AdminController methods remain the same ...
+        // GET: Admin/Users
+        public async Task<IActionResult> Users()
+        {
+            var users = await _userManager.Users.ToListAsync();
+            var userRoles = new List<UserWithRolesViewModel>();
+
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                userRoles.Add(new UserWithRolesViewModel
+                {
+                    User = user,
+                    Roles = roles
+                });
+            }
+
+            return View(userRoles);
+        }
+
+        // POST: Admin/AssignRole
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AssignRole(string userId, string role)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // Remove all existing roles
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
+
+            // Add new role
+            var result = await _userManager.AddToRoleAsync(user, role);
+            if (result.Succeeded)
+            {
+                TempData["Success"] = $"Role {role} assigned successfully to {user.Email}";
+            }
+            else
+            {
+                TempData["Error"] = "Failed to assign role";
+            }
+
+            return RedirectToAction(nameof(Users));
+        }
+
+        // POST: Admin/DeleteUser
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteUser(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // Prevent admin from deleting themselves
+            var currentUserId = _userManager.GetUserId(User);
+            if (user.Id == currentUserId)
+            {
+                TempData["Error"] = "You cannot delete your own account!";
+                return RedirectToAction(nameof(Users));
+            }
+
+            var result = await _userManager.DeleteAsync(user);
+            if (result.Succeeded)
+            {
+                TempData["Success"] = "User deleted successfully!";
+            }
+            else
+            {
+                TempData["Error"] = "Failed to delete user";
+            }
+
+            return RedirectToAction(nameof(Users));
+        }
+
+        // GET: Admin/Flights
+        public async Task<IActionResult> Flights()
+        {
+            return View(await _context.Flights.OrderBy(f => f.DepartureTime).ToListAsync());
+        }
+
+        // GET: Admin/CreateFlight
+        public IActionResult CreateFlight()
+        {
+            return View();
+        }
+
+        // POST: Admin/CreateFlight
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateFlight(Flight flight)
+        {
+            if (ModelState.IsValid)
+            {
+                flight.AvailableSeats = flight.TotalSeats;
+                _context.Add(flight);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Flight created successfully!";
+                return RedirectToAction(nameof(Flights));
+            }
+            return View(flight);
+        }
+
+        // GET: Admin/EditFlight/5
+        public async Task<IActionResult> EditFlight(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var flight = await _context.Flights.FindAsync(id);
+            if (flight == null)
+            {
+                return NotFound();
+            }
+            return View(flight);
+        }
+
+        // POST: Admin/EditFlight/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditFlight(int id, Flight flight)
+        {
+            if (id != flight.FlightId)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(flight);
+                    await _context.SaveChangesAsync();
+                    TempData["Success"] = "Flight updated successfully!";
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!FlightExists(flight.FlightId))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Flights));
+            }
+            return View(flight);
+        }
+
+        // POST: Admin/DeleteFlight/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteFlight(int id)
+        {
+            var flight = await _context.Flights.FindAsync(id);
+            if (flight != null)
+            {
+                _context.Flights.Remove(flight);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Flight deleted successfully!";
+            }
+            return RedirectToAction(nameof(Flights));
+        }
+
+        // GET: Admin/Bookings
+        public async Task<IActionResult> Bookings()
+        {
+            var bookings = await _context.Bookings
+                .Include(b => b.User)
+                .Include(b => b.Flight)
+                .OrderByDescending(b => b.BookingDate)
+                .ToListAsync();
+
+            return View(bookings);
+        }
+
+       //POST: Admin/UpdateBookingStatus
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateBookingStatus(int bookingId, string status)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.Flight)
+                .FirstOrDefaultAsync(b => b.BookingId == bookingId);
+
+            if (booking == null)
+            {
+                TempData["Error"] = "Booking not found!";
+                return RedirectToAction(nameof(Bookings));
+            }
+
+            // If changing from Cancelled to Confirmed, check seat availability
+            if (booking.Status == "Cancelled" && status == "Confirmed")
+            {
+                if (booking.Flight.AvailableSeats < booking.NumberOfPassengers)
+                {
+                    TempData["Error"] = "Not enough seats available to confirm this booking!";
+                    return RedirectToAction(nameof(Bookings));
+                }
+                booking.Flight.AvailableSeats -= booking.NumberOfPassengers;
+            }
+            // If changing from Confirmed to Cancelled, return seats
+            else if (booking.Status == "Confirmed" && status == "Cancelled")
+            {
+                booking.Flight.AvailableSeats += booking.NumberOfPassengers;
+            }
+
+            booking.Status = status;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Booking status updated to {status} successfully!";
+            return RedirectToAction(nameof(Bookings));
+        }
+
+        // GET: Admin/EditBookingStatus/5 - For modal or separate page
+        public async Task<IActionResult> EditBookingStatus(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var booking = await _context.Bookings
+                .Include(b => b.User)
+                .Include(b => b.Flight)
+                .FirstOrDefaultAsync(b => b.BookingId == id);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            return View(booking);
+        }
+
+        // POST: Admin/EditBookingStatus/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditBookingStatus(int id, string status)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.Flight)
+                .FirstOrDefaultAsync(b => b.BookingId == id);
+
+            if (booking == null)
+            {
+                TempData["Error"] = "Booking not found!";
+                return RedirectToAction(nameof(Bookings));
+            }
+
+            // Handle seat availability based on status changes
+            if (booking.Status == "Cancelled" && status == "Confirmed")
+            {
+                if (booking.Flight.AvailableSeats < booking.NumberOfPassengers)
+                {
+                    TempData["Error"] = "Not enough seats available to confirm this booking!";
+                    return RedirectToAction(nameof(Bookings));
+                }
+                booking.Flight.AvailableSeats -= booking.NumberOfPassengers;
+            }
+            else if (booking.Status == "Confirmed" && status == "Cancelled")
+            {
+                booking.Flight.AvailableSeats += booking.NumberOfPassengers;
+            }
+
+            booking.Status = status;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Booking status updated to {status} successfully!";
+            return RedirectToAction(nameof(Bookings));
+        }
+
+
+        private bool FlightExists(int id)
+        {
+            return _context.Flights.Any(e => e.FlightId == id);
+        }
+       
+
     }
 }

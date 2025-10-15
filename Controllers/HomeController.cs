@@ -21,11 +21,22 @@ namespace AirlineReservationSystem.Controllers
             _userManager = userManager;
         }
 
+        // Redirect to login if accessing home page without authentication
         public IActionResult Index()
         {
-            return View();
+            if (User.Identity.IsAuthenticated)
+            {
+                // If user is authenticated, show the home page
+                return View();
+            }
+            else
+            {
+                // If not authenticated, redirect to login
+                return RedirectToAction("Login", "Account");
+            }
         }
 
+        [Authorize]
         public IActionResult Privacy()
         {
             return View();

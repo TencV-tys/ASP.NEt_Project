@@ -12,27 +12,28 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// Add Identity with roles
+// Add Identity with roles - REMOVE email confirmation requirements
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => 
 {
-    options.SignIn.RequireConfirmedAccount = false;
+    options.SignIn.RequireConfirmedAccount = false; // Disable email confirmation
+    options.SignIn.RequireConfirmedEmail = false;   // Disable email confirmation
+    options.SignIn.RequireConfirmedPhoneNumber = false; // Disable phone confirmation
+    
+    // Password settings
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = true;
     options.Password.RequiredLength = 6;
+    
+    // User settings
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+    options.User.RequireUniqueEmail = true;
 })
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// Configure application cookie to redirect to access denied
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.AccessDeniedPath = "/Shared/AccessDenied";
-});
-
 builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
@@ -55,10 +56,10 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Redirect root to login page instead of home
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages();
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 
 // Seed initial data
 using (var scope = app.Services.CreateScope())
