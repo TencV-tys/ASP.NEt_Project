@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace AirlineReservationSystem.Controllers
 {
-    [Authorize(Roles = "User,Admin")]
+    [Authorize(Roles = "User")] // Only users with "User" role can access
     public class UserController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -19,7 +19,8 @@ namespace AirlineReservationSystem.Controllers
             _userManager = userManager;
         }
 
-        // GET: User/Flights
+        // GET: User/Flights - Available to all authenticated users
+        [AllowAnonymous]
         public async Task<IActionResult> Flights()
         {
             var flights = await _context.Flights
@@ -30,7 +31,8 @@ namespace AirlineReservationSystem.Controllers
             return View(flights);
         }
 
-        // GET: User/BookFlight/5
+        // GET: User/BookFlight/5 - Available to all authenticated users
+        [AllowAnonymous]
         public async Task<IActionResult> BookFlight(int? id)
         {
             if (id == null)
@@ -47,11 +49,23 @@ namespace AirlineReservationSystem.Controllers
             return View(flight);
         }
 
-        // POST: User/BookFlight
+        // POST: User/BookFlight - Only regular users can book flights
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BookFlight(int flightId, int numberOfPassengers)
         {
+            // Prevent admin users from booking flights
+            var user = await _userManager.GetUserAsync(User);
+            if (user != null)
+            {
+                var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+                if (isAdmin)
+                {
+                    TempData["Error"] = "Admin users cannot book flights. Please use a regular user account.";
+                    return RedirectToAction(nameof(Flights));
+                }
+            }
+
             var flight = await _context.Flights.FindAsync(flightId);
             if (flight == null || flight.AvailableSeats < numberOfPassengers)
             {
@@ -79,7 +93,7 @@ namespace AirlineReservationSystem.Controllers
             return RedirectToAction(nameof(MyBookings));
         }
 
-        // GET: User/MyBookings
+        // GET: User/MyBookings - Only regular users can view their bookings
         public async Task<IActionResult> MyBookings()
         {
             var userId = _userManager.GetUserId(User);
@@ -92,7 +106,7 @@ namespace AirlineReservationSystem.Controllers
             return View(bookings);
         }
 
-        // POST: User/CancelBooking/5
+        // POST: User/CancelBooking/5 - Only regular users can cancel their bookings
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CancelBooking(int id)
@@ -122,5 +136,12 @@ namespace AirlineReservationSystem.Controllers
             TempData["Success"] = "Booking cancelled successfully!";
             return RedirectToAction(nameof(MyBookings));
         }
+
+        [AllowAnonymous]
+       public IActionResult AccessDenied()
+       {
+        return View();
+       }
     }
+   
 }

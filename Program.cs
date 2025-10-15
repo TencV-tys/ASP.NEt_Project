@@ -25,8 +25,14 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
+// Configure application cookie to redirect to access denied
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.AccessDeniedPath = "/Shared/AccessDenied";
+});
+
 builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages(); // Add this back for Identity UI
+builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
@@ -52,7 +58,7 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages(); // Add this back for Identity UI
+app.MapRazorPages();
 
 // Seed initial data
 using (var scope = app.Services.CreateScope())

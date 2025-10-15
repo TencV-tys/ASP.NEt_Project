@@ -4,6 +4,7 @@ using AirlineReservationSystem.Data;
 using AirlineReservationSystem.Models;
 using AirlineReservationSystem.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 
 namespace AirlineReservationSystem.Controllers
 {
@@ -11,11 +12,13 @@ namespace AirlineReservationSystem.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context)
+        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _logger = logger;
             _context = context;
+            _userManager = userManager;
         }
 
         public IActionResult Index()
@@ -31,6 +34,18 @@ namespace AirlineReservationSystem.Controllers
         [Authorize]
         public async Task<IActionResult> Dashboard()
         {
+            // Check if user is admin - if yes, redirect to admin dashboard
+            var user = await _userManager.GetUserAsync(User);
+            if (user != null)
+            {
+                var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+                if (isAdmin)
+                {
+                    return RedirectToAction("Dashboard", "Admin");
+                }
+            }
+
+            // Regular user dashboard logic
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var userBookings = await _context.Bookings
                 .Include(b => b.Flight)

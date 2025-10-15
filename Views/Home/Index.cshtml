@@ -25,9 +25,22 @@
                         <a class="btn btn-light btn-lg me-3" asp-controller="User" asp-action="Flights">
                             <i class="fas fa-search"></i> Find Flights
                         </a>
-                        <a class="btn btn-outline-light btn-lg" asp-controller="Home" asp-action="Dashboard">
-                            <i class="fas fa-tachometer-alt"></i> Dashboard
-                        </a>
+                        
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <!-- Admin users see Admin Dashboard -->
+                            <a class="btn btn-outline-light btn-lg" asp-controller="Admin" asp-action="Dashboard">
+                                <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+                            </a>
+                        }
+                        else
+                        {
+                            <!-- Regular users see User Dashboard and My Bookings -->
+                            <a class="btn btn-outline-light btn-lg me-2" asp-controller="Home" asp-action="Dashboard">
+                                <i class="fas fa-tachometer-alt"></i> My Dashboard
+                            </a>
+                        
+                        }
                     </div>
                 }
             </div>

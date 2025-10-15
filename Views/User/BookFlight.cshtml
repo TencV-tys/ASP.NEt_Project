@@ -6,80 +6,91 @@
 <div class="container">
     <h2>Book Flight</h2>
     
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Flight Details</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>Flight Number:</strong> @Model.FlightNumber</p>
-                            <p><strong>Airline:</strong> @Model.Airline</p>
-                            <p><strong>Route:</strong> @Model.DepartureCity → @Model.ArrivalCity</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>Departure:</strong> @Model.DepartureTime.ToString("MMM dd, yyyy hh:mm tt")</p>
-                            <p><strong>Arrival:</strong> @Model.ArrivalTime.ToString("MMM dd, yyyy hh:mm tt")</p>
-                            <p><strong>Available Seats:</strong> @Model.AvailableSeats</p>
-                        </div>
+    @if (User.IsInRole("Admin"))
+    {
+        <div class="alert alert-warning">
+            <h5><i class="fas fa-exclamation-triangle"></i> Admin Notice</h5>
+            <p>Admin users cannot book flights. Please use a regular user account to make bookings.</p>
+            <a asp-controller="User" asp-action="Flights" class="btn btn-outline-secondary">Back to Flights</a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Flight Details</h5>
                     </div>
-                    <hr>
-                    <h5 class="text-success text-end">Price: $@Model.Price.ToString("N2") per passenger</h5>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Flight Number:</strong> @Model.FlightNumber</p>
+                                <p><strong>Airline:</strong> @Model.Airline</p>
+                                <p><strong>Route:</strong> @Model.DepartureCity → @Model.ArrivalCity</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Departure:</strong> @Model.DepartureTime.ToString("MMM dd, yyyy hh:mm tt")</p>
+                                <p><strong>Arrival:</strong> @Model.ArrivalTime.ToString("MMM dd, yyyy hh:mm tt")</p>
+                                <p><strong>Available Seats:</strong> @Model.AvailableSeats</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <h5 class="text-success text-end">Price: $@Model.Price.ToString("N2") per passenger</h5>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5>Booking Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" asp-action="BookFlight">
+                            <input type="hidden" name="flightId" value="@Model.FlightId" />
+                            
+                            <div class="form-group mb-3">
+                                <label for="numberOfPassengers">Number of Passengers</label>
+                                <select name="numberOfPassengers" class="form-control" id="numberOfPassengers" required>
+                                    <option value="">Select number of passengers</option>
+                                    @for (int i = 1; i <= Math.Min(10, Model.AvailableSeats); i++)
+                                    {
+                                        <option value="@i">@i passenger@(i > 1 ? "s" : "")</option>
+                                    }
+                                </select>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <h6>Booking Summary</h6>
+                                <p>Price per passenger: <strong>$@Model.Price.ToString("N2")</strong></p>
+                                <p>Total amount: <strong id="totalAmount">$0.00</strong></p>
+                            </div>
+                            
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-success btn-lg w-100">Confirm Booking</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
             
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h5>Booking Information</h5>
-                </div>
-                <div class="card-body">
-                    <form method="post" asp-action="BookFlight">
-                        <input type="hidden" name="flightId" value="@Model.FlightId" />
-                        
-                        <div class="form-group mb-3">
-                            <label for="numberOfPassengers">Number of Passengers</label>
-                            <select name="numberOfPassengers" class="form-control" id="numberOfPassengers" required>
-                                <option value="">Select number of passengers</option>
-                                @for (int i = 1; i <= Math.Min(10, Model.AvailableSeats); i++)
-                                {
-                                    <option value="@i">@i passenger@(i > 1 ? "s" : "")</option>
-                                }
-                            </select>
-                        </div>
-                        
-                        <div class="alert alert-info">
-                            <h6>Booking Summary</h6>
-                            <p>Price per passenger: <strong>$@Model.Price.ToString("N2")</strong></p>
-                            <p>Total amount: <strong id="totalAmount">$0.00</strong></p>
-                        </div>
-                        
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-success btn-lg w-100">Confirm Booking</button>
-                        </div>
-                    </form>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header bg-warning">
+                        <h5 class="mb-0">Important Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">✓ Free cancellation within 24 hours</li>
+                            <li class="mb-2">✓ E-ticket will be emailed to you</li>
+                            <li class="mb-2">✓ Check-in opens 24 hours before departure</li>
+                            <li class="mb-2">✓ Bring valid government-issued ID</li>
+                            <li class="mb-2">✓ Arrive at airport 2 hours before departure</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header bg-warning">
-                    <h5 class="mb-0">Important Information</h5>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled">
-                        <li class="mb-2">✓ Free cancellation within 24 hours</li>
-                        <li class="mb-2">✓ E-ticket will be emailed to you</li>
-                        <li class="mb-2">✓ Check-in opens 24 hours before departure</li>
-                        <li class="mb-2">✓ Bring valid government-issued ID</li>
-                        <li class="mb-2">✓ Arrive at airport 2 hours before departure</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
+    }
 </div>
 
 @section Scripts {
