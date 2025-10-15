@@ -13,15 +13,15 @@
                     <form asp-action="EditFlight" method="post">
                         <input type="hidden" asp-for="FlightId" />
                         
+                        <!-- Show Flight Number as read-only -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Flight Number</label>
+                            <input type="text" class="form-control" value="@Model.FlightNumber" readonly />
+                            <small class="form-text text-muted">Flight number is automatically generated and cannot be changed.</small>
+                        </div>
+                        
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label asp-for="FlightNumber" class="form-label"></label>
-                                    <input asp-for="FlightNumber" class="form-control" readonly/>
-                                    <span asp-validation-for="FlightNumber" class="text-danger" ></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <div class="form-group mb-3">
                                     <label asp-for="Airline" class="form-label"></label>
                                     <input asp-for="Airline" class="form-control" />
