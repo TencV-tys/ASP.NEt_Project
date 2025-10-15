@@ -11,10 +11,10 @@
                 @if (!User.Identity.IsAuthenticated)
                 {
                     <div class="mt-4">
-                        <a class="btn btn-light btn-lg me-3" asp-area="Identity" asp-page="/Account/Register">
+                        <a class="btn btn-light btn-lg me-3" asp-action="Register" asp-controller="Account">
                             <i class="fas fa-user-plus"></i> Register
                         </a>
-                        <a class="btn btn-outline-light btn-lg" asp-area="Identity" asp-page="/Account/Login">
+                        <a class="btn btn-outline-light btn-lg" asp-action="Login" asp-controller="Account">
                             <i class="fas fa-sign-in-alt"></i> Login
                         </a>
                     </div>

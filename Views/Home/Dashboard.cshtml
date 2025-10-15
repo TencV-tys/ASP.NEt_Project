@@ -1,0 +1,116 @@
+@model AirlineReservationSystem.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container">
+    <h2>My Dashboard</h2>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>My Recent Bookings</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.UserBookings.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Booking ID</th>
+                                        <th>Flight</th>
+                                        <th>Departure</th>
+                                        <th>Arrival</th>
+                                        <th>Passengers</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var booking in Model.UserBookings)
+                                    {
+                                        <tr>
+                                            <td>@booking.BookingId</td>
+                                            <td>@booking.Flight.FlightNumber</td>
+                                            <td>@booking.Flight.DepartureCity</td>
+                                            <td>@booking.Flight.ArrivalCity</td>
+                                            <td>@booking.NumberOfPassengers</td>
+                                            <td>$@booking.TotalAmount.ToString("N2")</td>
+                                            <td>
+                                                <span class="badge @(booking.Status == "Confirmed" ? "bg-success" : 
+                                                              booking.Status == "Cancelled" ? "bg-danger" : "bg-warning")">
+                                                    @booking.Status
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (booking.Status == "Confirmed")
+                                                {
+                                                    <form method="post" asp-controller="User" asp-action="CancelBooking" class="d-inline">
+                                                        <input type="hidden" name="id" value="@booking.BookingId" />
+                                                        <button type="submit" class="btn btn-sm btn-danger" 
+                                                                onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                                            Cancel
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">You have no bookings yet. <a asp-controller="User" asp-action="Flights">Book your first flight!</a></p>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Available Flights</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.AvailableFlights.Any())
+                    {
+                        foreach (var flight in Model.AvailableFlights)
+                        {
+                            <div class="card mb-3 flight-card">
+                                <div class="card-body">
+                                    <h6>@flight.FlightNumber - @flight.Airline</h6>
+                                    <p class="mb-1">
+                                        <strong>@flight.DepartureCity</strong> → <strong>@flight.ArrivalCity</strong>
+                                    </p>
+                                    <p class="mb-1 small">
+                                        @flight.DepartureTime.ToString("MMM dd, yyyy hh:mm tt")
+                                    </p>
+                                    <p class="mb-2">
+                                        <strong>$@flight.Price.ToString("N2")</strong>
+                                        <span class="text-muted">• @flight.AvailableSeats seats left</span>
+                                    </p>
+                                    <a asp-controller="User" asp-action="BookFlight" asp-route-id="@flight.FlightId" 
+                                       class="btn btn-primary btn-sm w-100">Book Now</a>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">No available flights at the moment.</p>
+                    }
+                    <div class="text-center">
+                        <a asp-controller="User" asp-action="Flights" class="btn btn-outline-primary btn-sm">
+                            View All Flights
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

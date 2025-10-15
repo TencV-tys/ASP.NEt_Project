@@ -1,0 +1,54 @@
+@model List<AirlineReservationSystem.Models.Flight>
+@{
+    ViewData["Title"] = "Available Flights";
+}
+
+<div class="container">
+    <h2>Available Flights</h2>
+    
+    <div class="row">
+        @foreach (var flight in Model)
+        {
+            <div class="col-md-6 mb-4">
+                <div class="card flight-card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">@flight.Airline - @flight.FlightNumber</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <h6>@flight.DepartureCity → @flight.ArrivalCity</h6>
+                                <p class="mb-1">
+                                    <strong>Departure:</strong> @flight.DepartureTime.ToString("MMM dd, yyyy hh:mm tt")
+                                </p>
+                                <p class="mb-1">
+                                    <strong>Arrival:</strong> @flight.ArrivalTime.ToString("MMM dd, yyyy hh:mm tt")
+                                </p>
+                                <p class="mb-2">
+                                    <strong>Duration:</strong> @((flight.ArrivalTime - flight.DepartureTime).Hours)h @((flight.ArrivalTime - flight.DepartureTime).Minutes)m
+                                </p>
+                            </div>
+                            <div class="col-4 text-end">
+                                <h4 class="text-success">$@flight.Price.ToString("N2")</h4>
+                                <p class="text-muted small">@flight.AvailableSeats seats left</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-grid gap-2">
+                            <a asp-action="BookFlight" asp-route-id="@flight.FlightId" class="btn btn-success">Book This Flight</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center">
+            <h4>No flights available at the moment.</h4>
+            <p>Please check back later for new flight schedules.</p>
+        </div>
+    }
+</div>

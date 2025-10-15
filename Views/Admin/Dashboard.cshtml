@@ -10,69 +10,126 @@
         <div class="col-md-3">
             <div class="card text-white bg-primary">
                 <div class="card-body">
-                    <h5 class="card-title">Total Users</h5>
-                    <h2>@Model.TotalUsers</h2>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Users</h5>
+                            <h2>@Model.TotalUsers</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card text-white bg-success">
                 <div class="card-body">
-                    <h5 class="card-title">Total Flights</h5>
-                    <h2>@Model.TotalFlights</h2>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Flights</h5>
+                            <h2>@Model.TotalFlights</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-plane fa-2x"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card text-white bg-warning">
                 <div class="card-body">
-                    <h5 class="card-title">Total Bookings</h5>
-                    <h2>@Model.TotalBookings</h2>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Bookings</h5>
+                            <h2>@Model.TotalBookings</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-ticket-alt fa-2x"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card text-white bg-info">
                 <div class="card-body">
-                    <h5 class="card-title">Total Revenue</h5>
-                    <h2>$@Model.TotalRevenue.ToString("N2")</h2>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Revenue</h5>
+                            <h2>$@Model.TotalRevenue.ToString("N2")</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-dollar-sign fa-2x"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-header">
-            <h5>Recent Bookings</h5>
-        </div>
-        <div class="card-body">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Booking ID</th>
-                        <th>User</th>
-                        <th>Flight</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var booking in Model.RecentBookings)
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Recent Bookings</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentBookings.Any())
                     {
-                        <tr>
-                            <td>@booking.BookingId</td>
-                            <td>@booking.User?.Email</td>
-                            <td>@booking.Flight?.FlightNumber</td>
-                            <td>$@booking.TotalAmount.ToString("N2")</td>
-                            <td>
-                                <span class="badge @(booking.Status == "Confirmed" ? "bg-success" : "bg-warning")">
-                                    @booking.Status
-                                </span>
-                            </td>
-                        </tr>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Booking ID</th>
+                                        <th>User</th>
+                                        <th>Flight</th>
+                                        <th>Route</th>
+                                        <th>Amount</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var booking in Model.RecentBookings)
+                                    {
+                                        <tr>
+                                            <td>@booking.BookingId</td>
+                                            <td>@booking.User?.Email</td>
+                                            <td>@booking.Flight?.FlightNumber</td>
+                                            <td>@booking.Flight?.DepartureCity → @booking.Flight?.ArrivalCity</td>
+                                            <td>$@booking.TotalAmount.ToString("N2")</td>
+                                            <td>@booking.BookingDate.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                <span class="badge @(booking.Status == "Confirmed" ? "bg-success" : 
+                                                              booking.Status == "Cancelled" ? "bg-danger" : "bg-warning")">
+                                                    @booking.Status
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <form method="post" asp-action="UpdateBookingStatus" class="d-inline">
+                                                    <input type="hidden" name="bookingId" value="@booking.BookingId" />
+                                                    <select name="status" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+                                                        <option value="Confirmed" selected="@(booking.Status == "Confirmed")">Confirmed</option>
+                                                        <option value="Cancelled" selected="@(booking.Status == "Cancelled")">Cancelled</option>
+                                                        <option value="Completed" selected="@(booking.Status == "Completed")">Completed</option>
+                                                    </select>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
-                </tbody>
-            </table>
+                    else
+                    {
+                        <p class="text-muted">No recent bookings.</p>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 </div>

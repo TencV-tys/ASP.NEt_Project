@@ -26,12 +26,36 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWNjb3VudC9SZWdpc3Rlci5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/home/vincent-tayros/AirlineReservationSystem/Views/Admin/Bookings.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWRtaW4vQm9va2luZ3MuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/vincent-tayros/AirlineReservationSystem/Views/Admin/CreateFlight.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWRtaW4vQ3JlYXRlRmxpZ2h0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [/home/vincent-tayros/AirlineReservationSystem/Views/Admin/Dashboard.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWRtaW4vRGFzaGJvYXJkLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[/home/vincent-tayros/AirlineReservationSystem/Views/Admin/EditFlight.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWRtaW4vRWRpdEZsaWdodC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/vincent-tayros/AirlineReservationSystem/Views/Admin/Flights.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWRtaW4vRmxpZ2h0cy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [/home/vincent-tayros/AirlineReservationSystem/Views/Admin/Users.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWRtaW4vVXNlcnMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/vincent-tayros/AirlineReservationSystem/Views/Home/Dashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9EYXNoYm9hcmQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/vincent-tayros/AirlineReservationSystem/Views/Home/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9FcnJvci5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [/home/vincent-tayros/AirlineReservationSystem/Views/Home/Index.cshtml]
@@ -52,6 +76,18 @@ build_metadata.AdditionalFiles.CssScope =
 
 [/home/vincent-tayros/AirlineReservationSystem/Views/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/vincent-tayros/AirlineReservationSystem/Views/User/BookFlight.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVXNlci9Cb29rRmxpZ2h0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/vincent-tayros/AirlineReservationSystem/Views/User/Flights.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVXNlci9GbGlnaHRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/vincent-tayros/AirlineReservationSystem/Views/User/MyBookings.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVXNlci9NeUJvb2tpbmdzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [/home/vincent-tayros/AirlineReservationSystem/Views/_ViewImports.cshtml]
