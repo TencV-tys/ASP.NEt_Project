@@ -1,0 +1,78 @@
+@model AirlineReservationSystem.ViewModels.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container">
+    <h2>Admin Dashboard</h2>
+    
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Users</h5>
+                    <h2>@Model.TotalUsers</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Total Flights</h5>
+                    <h2>@Model.TotalFlights</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Total Bookings</h5>
+                    <h2>@Model.TotalBookings</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Total Revenue</h5>
+                    <h2>$@Model.TotalRevenue.ToString("N2")</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Recent Bookings</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>User</th>
+                        <th>Flight</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var booking in Model.RecentBookings)
+                    {
+                        <tr>
+                            <td>@booking.BookingId</td>
+                            <td>@booking.User?.Email</td>
+                            <td>@booking.Flight?.FlightNumber</td>
+                            <td>$@booking.TotalAmount.ToString("N2")</td>
+                            <td>
+                                <span class="badge @(booking.Status == "Confirmed" ? "bg-success" : "bg-warning")">
+                                    @booking.Status
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
