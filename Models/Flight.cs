@@ -8,9 +8,8 @@ namespace AirlineReservationSystem.Models
         [Key]
         public int FlightId { get; set; }
 
-        [Required]
-        [StringLength(10)]
-        public string FlightNumber { get; set; } = string.Empty;
+        [StringLength(50)]
+        public string FlightNumber { get; set; } = string.Empty; // Will be auto-generated
 
         [Required]
         [StringLength(100)]

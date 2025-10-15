@@ -129,7 +129,7 @@ namespace AirlineReservationSystem.Controllers
             return View(await _context.Flights.OrderBy(f => f.DepartureTime).ToListAsync());
         }
 
-        // GET: Admin/CreateFlight
+       // GET: Admin/CreateFlight
         public IActionResult CreateFlight()
         {
             return View();
@@ -142,10 +142,13 @@ namespace AirlineReservationSystem.Controllers
         {
             if (ModelState.IsValid)
             {
+                // Auto-generate flight number using GUID (short version)
+                flight.FlightNumber = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
                 flight.AvailableSeats = flight.TotalSeats;
+                
                 _context.Add(flight);
                 await _context.SaveChangesAsync();
-                TempData["Success"] = "Flight created successfully!";
+                TempData["Success"] = $"Flight created successfully! Flight Number: {flight.FlightNumber}";
                 return RedirectToAction(nameof(Flights));
             }
             return View(flight);
@@ -181,6 +184,13 @@ namespace AirlineReservationSystem.Controllers
             {
                 try
                 {
+                    // Get existing flight to preserve the auto-generated flight number
+                    var existingFlight = await _context.Flights.AsNoTracking().FirstOrDefaultAsync(f => f.FlightId == id);
+                    if (existingFlight != null)
+                    {
+                        flight.FlightNumber = existingFlight.FlightNumber; // Keep original flight number
+                    }
+                    
                     _context.Update(flight);
                     await _context.SaveChangesAsync();
                     TempData["Success"] = "Flight updated successfully!";
@@ -200,6 +210,9 @@ namespace AirlineReservationSystem.Controllers
             }
             return View(flight);
         }
+
+
+
 
         // POST: Admin/DeleteFlight/5
         [HttpPost]

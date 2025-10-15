@@ -50,15 +50,6 @@ namespace AirlineReservationSystem.Data
                     await userManager.AddToRoleAsync(adminUser, "Admin");
                 }
             }
-            else
-            {
-                // Ensure admin user has Admin role
-                var roles = await userManager.GetRolesAsync(adminUser);
-                if (!roles.Contains("Admin"))
-                {
-                    await userManager.AddToRoleAsync(adminUser, "Admin");
-                }
-            }
 
             // Create sample regular user
             var userEmail = "user@ars.com";
@@ -84,13 +75,13 @@ namespace AirlineReservationSystem.Data
                 }
             }
 
-            // Seed sample flights
+            // Seed sample flights with auto-generated flight numbers
             if (!context.Flights.Any())
             {
                 context.Flights.AddRange(
                     new Flight
                     {
-                        FlightNumber = "AA101",
+                        FlightNumber = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper(),
                         Airline = "American Airlines",
                         DepartureCity = "New York",
                         ArrivalCity = "Los Angeles",
@@ -102,7 +93,7 @@ namespace AirlineReservationSystem.Data
                     },
                     new Flight
                     {
-                        FlightNumber = "UA202",
+                        FlightNumber = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper(),
                         Airline = "United Airlines",
                         DepartureCity = "Chicago",
                         ArrivalCity = "Miami",
@@ -114,7 +105,7 @@ namespace AirlineReservationSystem.Data
                     },
                     new Flight
                     {
-                        FlightNumber = "DL303",
+                        FlightNumber = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper(),
                         Airline = "Delta Airlines",
                         DepartureCity = "Atlanta",
                         ArrivalCity = "Seattle",
