@@ -77,92 +77,137 @@ namespace AirlineReservationSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BookFlight(Guid flightId, int numberOfPassengers)
         {
-            // Prevent admin users from booking flights
-            var user = await _userManager.GetUserAsync(User);
-            if (user != null)
+            try
             {
-                var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
-                if (isAdmin)
+                // Prevent admin users from booking flights
+                var user = await _userManager.GetUserAsync(User);
+                if (user != null)
                 {
-                    TempData["Error"] = "Admin users cannot book flights. Please use a regular user account.";
+                    var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+                    if (isAdmin)
+                    {
+                        TempData["Error"] = "Admin users cannot book flights. Please use a regular user account.";
+                        return RedirectToAction(nameof(Flights));
+                    }
+                }
+
+                var flight = await _context.Flights.FindAsync(flightId);
+                if (flight == null || !flight.IsActive)
+                {
+                    TempData["Error"] = "Flight not found or not active.";
                     return RedirectToAction(nameof(Flights));
                 }
-            }
 
-            var flight = await _context.Flights.FindAsync(flightId);
-            if (flight == null || flight.AvailableSeats < numberOfPassengers)
+                if (flight.AvailableSeats < numberOfPassengers)
+                {
+                    TempData["Error"] = $"Not enough seats available. Only {flight.AvailableSeats} seats left.";
+                    return RedirectToAction(nameof(Flights));
+                }
+
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId))
+                {
+                    TempData["Error"] = "User not found. Please login again.";
+                    return RedirectToAction(nameof(Flights));
+                }
+
+                var booking = new Booking
+                {
+                    BookingId = Guid.NewGuid(),
+                    UserId = userId,
+                    FlightId = flightId,
+                    NumberOfPassengers = numberOfPassengers,
+                    TotalAmount = flight.Price * numberOfPassengers,
+                    Status = "Confirmed",
+                    BookingDate = DateTime.UtcNow,
+                    // Initialize the new reschedule fields
+                    RescheduledDepartureTime = null,
+                    RescheduledArrivalTime = null
+                };
+
+                // Update available seats
+                flight.AvailableSeats -= numberOfPassengers;
+
+                _context.Bookings.Add(booking);
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "Flight booked successfully!";
+                return RedirectToAction(nameof(MyBookings));
+            }
+            catch (Exception ex)
             {
-                TempData["Error"] = "Not enough seats available.";
+                TempData["Error"] = $"An error occurred while booking the flight: {ex.Message}";
                 return RedirectToAction(nameof(Flights));
             }
-
-            var userId = _userManager.GetUserId(User);
-            var booking = new Booking
-            {
-                BookingId = Guid.NewGuid(),
-                UserId = userId!,
-                FlightId = flightId,
-                NumberOfPassengers = numberOfPassengers,
-                TotalAmount = flight.Price * numberOfPassengers,
-                Status = "Confirmed",
-                BookingDate = DateTime.UtcNow
-            };
-
-            // Update available seats
-            flight.AvailableSeats -= numberOfPassengers;
-
-            _context.Bookings.Add(booking);
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Flight booked successfully!";
-            return RedirectToAction(nameof(MyBookings));
         }
 
         // GET: User/MyBookings - Only regular users can view their bookings
         public async Task<IActionResult> MyBookings()
         {
-            var userId = _userManager.GetUserId(User);
-            var bookings = await _context.Bookings
-                .Include(b => b.Flight)
-                .Where(b => b.UserId == userId)
-                .OrderByDescending(b => b.BookingDate)
-                .ToListAsync();
+            try
+            {
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId))
+                {
+                    TempData["Error"] = "User not found. Please login again.";
+                    return RedirectToAction("Index", "Home");
+                }
 
-            return View(bookings);
+                var bookings = await _context.Bookings
+                    .Include(b => b.Flight)
+                    .Where(b => b.UserId == userId)
+                    .OrderByDescending(b => b.BookingDate)
+                    .ToListAsync();
+
+                return View(bookings);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"An error occurred while loading your bookings: {ex.Message}";
+                return View(new List<Booking>());
+            }
         }
 
         // GET: User/EditBooking/5 
         public async Task<IActionResult> EditBooking(Guid? id)
         {
-            if (id == null)
+            try
             {
-                return NotFound();
+                if (id == null)
+                {
+                    return NotFound();
+                }
+
+                var booking = await _context.Bookings
+                    .Include(b => b.Flight)
+                    .FirstOrDefaultAsync(b => b.BookingId == id);
+
+                if (booking == null)
+                {
+                    return NotFound();
+                }
+
+                // Check if user owns this booking
+                var userId = _userManager.GetUserId(User);
+                if (booking.UserId != userId)
+                {
+                    return Forbid();
+                }
+
+                // Check if booking can be edited
+                if (booking.Status != "Confirmed")
+                {
+                    TempData["Error"] = "Only confirmed bookings can be edited.";
+                    return RedirectToAction(nameof(MyBookings));
+                }
+
+                return View(booking);
             }
-
-            var booking = await _context.Bookings
-                .Include(b => b.Flight)
-                .FirstOrDefaultAsync(b => b.BookingId == id);
-
-            if (booking == null)
+            catch (Exception ex)
             {
-                return NotFound();
-            }
-
-            // Check if user owns this booking
-            var userId = _userManager.GetUserId(User);
-            if (booking.UserId != userId)
-            {
-                return Forbid();
-            }
-
-            // Check if booking can be edited
-            if (booking.Status != "Confirmed")
-            {
-                TempData["Error"] = "Only confirmed bookings can be edited.";
+                TempData["Error"] = $"An error occurred while loading the booking: {ex.Message}";
                 return RedirectToAction(nameof(MyBookings));
             }
-
-            return View(booking);
         }
 
         // POST: User/EditBooking/5 
@@ -170,61 +215,74 @@ namespace AirlineReservationSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditBooking(Guid id, int numberOfPassengers, DateTime newDepartureTime, DateTime newArrivalTime)
         {
-            var booking = await _context.Bookings
-                .Include(b => b.Flight)
-                .FirstOrDefaultAsync(b => b.BookingId == id);
-
-            if (booking == null)
+            try
             {
-                return NotFound();
-            }
+                var booking = await _context.Bookings
+                    .Include(b => b.Flight)
+                    .FirstOrDefaultAsync(b => b.BookingId == id);
 
-            // Check if user owns this booking
-            var userId = _userManager.GetUserId(User);
-            if (booking.UserId != userId)
-            {
-                return Forbid();
-            }
+                if (booking == null)
+                {
+                    return NotFound();
+                }
 
-            // Check if booking can be edited
-            if (booking.Status != "Confirmed")
-            {
-                TempData["Error"] = "Only confirmed bookings can be edited.";
+                // Check if user owns this booking
+                var userId = _userManager.GetUserId(User);
+                if (booking.UserId != userId)
+                {
+                    return Forbid();
+                }
+
+                // Check if booking can be edited
+                if (booking.Status != "Confirmed")
+                {
+                    TempData["Error"] = "Only confirmed bookings can be edited.";
+                    return RedirectToAction(nameof(MyBookings));
+                }
+
+                // Validate new times
+                if (newDepartureTime >= newArrivalTime)
+                {
+                    TempData["Error"] = "Arrival time must be after departure time.";
+                    return View(booking);
+                }
+
+                if (newDepartureTime <= DateTime.Now)
+                {
+                    TempData["Error"] = "Departure time must be in the future.";
+                    return View(booking);
+                }
+
+                // Check seat availability for passenger count change
+                int seatDifference = numberOfPassengers - booking.NumberOfPassengers;
+                if (seatDifference > 0 && booking.Flight.AvailableSeats < seatDifference)
+                {
+                    TempData["Error"] = $"Not enough seats available. Only {booking.Flight.AvailableSeats} seats left.";
+                    return View(booking);
+                }
+
+                // Update booking with rescheduled times
+                booking.RescheduledDepartureTime = newDepartureTime;
+                booking.RescheduledArrivalTime = newArrivalTime;
+                
+                // Update passenger count and adjust available seats
+                if (seatDifference != 0)
+                {
+                    booking.Flight.AvailableSeats -= seatDifference;
+                    booking.NumberOfPassengers = numberOfPassengers;
+                    booking.TotalAmount = booking.Flight.Price * numberOfPassengers;
+                }
+
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "Booking rescheduled successfully!";
                 return RedirectToAction(nameof(MyBookings));
             }
-
-            // Validate new times
-            if (newDepartureTime >= newArrivalTime)
+            catch (Exception ex)
             {
-                TempData["Error"] = "Arrival time must be after departure time.";
-                return View(booking);
+                TempData["Error"] = $"An error occurred while rescheduling the booking: {ex.Message}";
+                return RedirectToAction(nameof(MyBookings));
             }
-
-            if (newDepartureTime <= DateTime.Now)
-            {
-                TempData["Error"] = "Departure time must be in the future.";
-                return View(booking);
-            }
-
-            // Check seat availability for passenger count change
-            int seatDifference = numberOfPassengers - booking.NumberOfPassengers;
-            if (seatDifference > 0 && booking.Flight.AvailableSeats < seatDifference)
-            {
-                TempData["Error"] = $"Not enough seats available. Only {booking.Flight.AvailableSeats} seats left.";
-                return View(booking);
-            }
-
-            // Update the flight times and passenger count
-            booking.Flight.DepartureTime = newDepartureTime;
-            booking.Flight.ArrivalTime = newArrivalTime;
-            booking.Flight.AvailableSeats -= seatDifference; // Update available seats
-            booking.NumberOfPassengers = numberOfPassengers;
-            booking.TotalAmount = booking.Flight.Price * numberOfPassengers;
-
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Booking rescheduled successfully!";
-            return RedirectToAction(nameof(MyBookings));
         }
 
         // POST: User/CancelBooking/5 - Only regular users can cancel their bookings
@@ -232,30 +290,45 @@ namespace AirlineReservationSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CancelBooking(Guid id)
         {
-            var booking = await _context.Bookings
-                .Include(b => b.Flight)
-                .FirstOrDefaultAsync(b => b.BookingId == id);
-
-            if (booking == null)
+            try
             {
-                return NotFound();
-            }
+                var booking = await _context.Bookings
+                    .Include(b => b.Flight)
+                    .FirstOrDefaultAsync(b => b.BookingId == id);
 
-            // Check if user owns this booking
-            var userId = _userManager.GetUserId(User);
-            if (booking.UserId != userId)
+                if (booking == null)
+                {
+                    return NotFound();
+                }
+
+                // Check if user owns this booking
+                var userId = _userManager.GetUserId(User);
+                if (booking.UserId != userId)
+                {
+                    return Forbid();
+                }
+
+                // Check if booking can be cancelled
+                if (booking.Status != "Confirmed")
+                {
+                    TempData["Error"] = "Only confirmed bookings can be cancelled.";
+                    return RedirectToAction(nameof(MyBookings));
+                }
+
+                // Return seats to flight
+                booking.Flight.AvailableSeats += booking.NumberOfPassengers;
+                booking.Status = "Cancelled";
+
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "Booking cancelled successfully!";
+                return RedirectToAction(nameof(MyBookings));
+            }
+            catch (Exception ex)
             {
-                return Forbid();
+                TempData["Error"] = $"An error occurred while cancelling the booking: {ex.Message}";
+                return RedirectToAction(nameof(MyBookings));
             }
-
-            // Return seats to flight
-            booking.Flight.AvailableSeats += booking.NumberOfPassengers;
-            booking.Status = "Cancelled";
-
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Booking cancelled successfully!";
-            return RedirectToAction(nameof(MyBookings));
         }
 
         [AllowAnonymous]

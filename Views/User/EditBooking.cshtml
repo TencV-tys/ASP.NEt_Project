@@ -23,11 +23,22 @@
                                 <strong>Route:</strong> @Model.Flight.DepartureCity → @Model.Flight.ArrivalCity
                             </div>
                             <div class="col-md-6">
-                                <strong>Current Departure:</strong> @Model.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm")<br>
-                                <strong>Current Arrival:</strong> @Model.Flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm")<br>
+                                <strong>Original Departure:</strong> @Model.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm")<br>
+                                <strong>Original Arrival:</strong> @Model.Flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm")<br>
                                 <strong>Price per seat:</strong> $@Model.Flight.Price.ToString("N2")
                             </div>
                         </div>
+                        @if (Model.IsRescheduled)
+                        {
+                            <hr>
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <strong class="text-success">Currently Rescheduled To:</strong><br>
+                                    <strong>Departure:</strong> @Model.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm")<br>
+                                    <strong>Arrival:</strong> @Model.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm")
+                                </div>
+                            </div>
+                        }
                     </div>
 
                     <!-- Edit Form -->
@@ -41,11 +52,11 @@
                                    class="form-control" 
                                    id="newDepartureTime" 
                                    name="newDepartureTime" 
-                                   value="@Model.Flight.DepartureTime.ToString("yyyy-MM-ddTHH:mm")"
+                                   value="@(Model.RescheduledDepartureTime?.ToString("yyyy-MM-ddTHH:mm") ?? Model.Flight.DepartureTime.ToString("yyyy-MM-ddTHH:mm"))"
                                    min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"
                                    required />
                             <small class="form-text text-muted">
-                                Select new departure date and time
+                                Select your preferred departure date and time
                             </small>
                         </div>
 
@@ -56,11 +67,11 @@
                                    class="form-control" 
                                    id="newArrivalTime" 
                                    name="newArrivalTime" 
-                                   value="@Model.Flight.ArrivalTime.ToString("yyyy-MM-ddTHH:mm")"
+                                   value="@(Model.RescheduledArrivalTime?.ToString("yyyy-MM-ddTHH:mm") ?? Model.Flight.ArrivalTime.ToString("yyyy-MM-ddTHH:mm"))"
                                    min="@DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm")"
                                    required />
                             <small class="form-text text-muted">
-                                Select new arrival date and time
+                                Select your preferred arrival date and time
                             </small>
                         </div>
 
@@ -82,11 +93,11 @@
 
                         <!-- Updated Schedule Preview -->
                         <div class="alert alert-success">
-                            <h6>New Flight Schedule</h6>
+                            <h6>Your Rescheduled Flight</h6>
                             <p class="mb-1"><strong>Flight:</strong> @Model.Flight.FlightNumber</p>
                             <p class="mb-1"><strong>Route:</strong> @Model.Flight.DepartureCity → @Model.Flight.ArrivalCity</p>
-                            <p class="mb-1"><strong>New Departure:</strong> <span id="previewDeparture">@Model.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm")</span></p>
-                            <p class="mb-1"><strong>New Arrival:</strong> <span id="previewArrival">@Model.Flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm")</span></p>
+                            <p class="mb-1"><strong>Your Departure:</strong> <span id="previewDeparture">@(Model.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") ?? Model.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm"))</span></p>
+                            <p class="mb-1"><strong>Your Arrival:</strong> <span id="previewArrival">@(Model.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm") ?? Model.Flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm"))</span></p>
                             <p class="mb-1"><strong>Passengers:</strong> <span id="previewPassengers">@Model.NumberOfPassengers</span></p>
                             <p class="mb-0"><strong>Total Amount:</strong> $<span id="previewTotal">@Model.TotalAmount.ToString("N2")</span></p>
                         </div>

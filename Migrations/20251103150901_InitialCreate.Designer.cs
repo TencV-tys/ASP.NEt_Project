@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AirlineReservationSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251103125252_InitialCreate")]
+    [Migration("20251103150901_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -119,6 +119,12 @@ namespace AirlineReservationSystem.Migrations
 
                     b.Property<int>("NumberOfPassengers")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("RescheduledArrivalTime")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("RescheduledDepartureTime")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("Status")
                         .IsRequired()

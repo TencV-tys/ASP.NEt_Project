@@ -210,6 +210,9 @@
                             else
                             {
                                 <!-- Regular users only see User features -->
+                                 <li class="nav-item">
+                                <a class="dropdown-item" asp-controller="User" asp-action="Flights">Flights</a>
+                                </li>
                                 <li class="nav-item">
                                     <a class="nav-link text-white" asp-controller="User" asp-action="MyBookings">My Bookings</a>
                                 </li>

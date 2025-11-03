@@ -31,32 +31,65 @@
                         <tbody>
                             @foreach (var booking in Model)
                             {
+                                var isRescheduled = booking.RescheduledDepartureTime.HasValue && booking.RescheduledArrivalTime.HasValue;
                                 <tr>
                                     <td>
                                         <div class="d-flex flex-column">
                                             <small class="text-muted">Booking ID</small>
                                             <strong class="text-primary">@booking.BookingId.ToString().Substring(0, 8)...</strong>
                                             <small class="text-muted">@booking.BookingDate.ToString("MMM dd, yyyy")</small>
+                                            @if (isRescheduled)
+                                            {
+                                                <small class="text-warning">
+                                                    <i class="fas fa-clock me-1"></i>Rescheduled
+                                                </small>
+                                            }
                                         </div>
                                     </td>
                                     <td>
                                         <div class="d-flex flex-column">
                                             <div class="d-flex align-items-center mb-1">
                                                 <i class="fas fa-plane text-muted me-2"></i>
-                                                <strong>@booking.Flight.FlightNumber</strong>
+                                                <strong>@booking.Flight?.FlightNumber</strong>
                                             </div>
                                             <div class="route-badge mb-1">
                                                 <span class="badge bg-light text-dark">
-                                                    @booking.Flight.DepartureCity → @booking.Flight.ArrivalCity
+                                                    @booking.Flight?.DepartureCity → @booking.Flight?.ArrivalCity
                                                 </span>
                                             </div>
-                                            <small class="text-muted">@booking.Flight.Airline</small>
+                                            <small class="text-muted">@booking.Flight?.Airline</small>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="d-flex flex-column">
-                                            <strong>@booking.Flight.DepartureTime.ToString("MMM dd")</strong>
-                                            <small class="text-muted">@booking.Flight.DepartureTime.ToString("hh:mm tt")</small>
+                                            @if (isRescheduled)
+                                            {
+                                                <div class="mb-2">
+                                                    <small class="text-warning fw-bold">Rescheduled</small>
+                                                    <strong>@booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm")</strong>
+                                                    <small class="text-muted d-block">
+                                                        <i class="fas fa-arrow-right me-1"></i>
+                                                        @booking.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm")
+                                                    </small>
+                                                </div>
+                                                <div class="border-top pt-2">
+                                                    <small class="text-muted">Original</small>
+                                                    <small class="text-muted d-block">@booking.Flight?.DepartureTime.ToString("MMM dd, HH:mm")</small>
+                                                    <small class="text-muted d-block">
+                                                        <i class="fas fa-arrow-right me-1"></i>
+                                                        @booking.Flight?.ArrivalTime.ToString("MMM dd, HH:mm")
+                                                    </small>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <strong>@booking.Flight?.DepartureTime.ToString("MMM dd, yyyy")</strong>
+                                                <small class="text-muted">@booking.Flight?.DepartureTime.ToString("HH:mm")</small>
+                                                <small class="text-muted d-block">
+                                                    <i class="fas fa-arrow-right me-1"></i>
+                                                    @booking.Flight?.ArrivalTime.ToString("MMM dd, yyyy HH:mm")
+                                                </small>
+                                            }
                                         </div>
                                     </td>
                                     <td>
@@ -68,10 +101,20 @@
                                     <td>
                                         <div class="text-end">
                                             <strong class="text-success">$@booking.TotalAmount.ToString("N2")</strong>
+                                            @if (booking.NumberOfPassengers > 1)
+                                            {
+                                                <small class="d-block text-muted">
+                                                    $@((booking.TotalAmount / booking.NumberOfPassengers).ToString("N2")) each
+                                                </small>
+                                            }
                                         </div>
                                     </td>
                                     <td>
                                         <span class="badge @GetStatusBadgeClass(booking.Status)">
+                                            @if (isRescheduled && booking.Status == "Confirmed")
+                                            {
+                                                <i class="fas fa-clock me-1"></i>
+                                            }
                                             @booking.Status
                                         </span>
                                     </td>
@@ -81,13 +124,13 @@
                                             {
                                                 <div class="btn-group-vertical btn-group-sm">
                                                     <a asp-action="EditBooking" asp-route-id="@booking.BookingId" 
-                                                       class="btn btn-outline-warning mb-1" title="Edit Booking">
-                                                        <i class="fas fa-edit"></i> Edit
+                                                       class="btn btn-outline-warning mb-1" title="Reschedule Booking">
+                                                        <i class="fas fa-clock"></i> Reschedule
                                                     </a>
                                                     <form method="post" asp-action="CancelBooking" class="d-inline">
                                                         <input type="hidden" name="id" value="@booking.BookingId" />
                                                         <button type="submit" class="btn btn-outline-danger" 
-                                                                onclick="return confirm('Are you sure you want to cancel this booking?')"
+                                                                onclick="return confirmCancelBooking('@booking.Flight?.FlightNumber', '@(isRescheduled ? booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") : booking.Flight?.DepartureTime.ToString("MMM dd, yyyy HH:mm"))')"
                                                                 title="Cancel Booking">
                                                             <i class="fas fa-times"></i> Cancel
                                                         </button>
@@ -126,7 +169,7 @@
     @if (Model.Any())
     {
         <div class="row mt-4">
-            <div class="col-md-3 col-6">
+            <div class="col-md-3 col-6 mb-3">
                 <div class="card bg-primary text-white">
                     <div class="card-body text-center py-3">
                         <h4 class="mb-0">@Model.Count</h4>
@@ -134,7 +177,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
+            <div class="col-md-3 col-6 mb-3">
                 <div class="card bg-success text-white">
                     <div class="card-body text-center py-3">
                         <h4 class="mb-0">@Model.Count(b => b.Status == "Confirmed")</h4>
@@ -142,15 +185,15 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="card bg-warning text-white">
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card bg-info text-white">
                     <div class="card-body text-center py-3">
-                        <h4 class="mb-0">@Model.Count(b => b.Status == "Pending")</h4>
-                        <small>Pending</small>
+                        <h4 class="mb-0">@Model.Count(b => b.RescheduledDepartureTime.HasValue)</h4>
+                        <small>Rescheduled</small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
+            <div class="col-md-3 col-6 mb-3">
                 <div class="card bg-danger text-white">
                     <div class="card-body text-center py-3">
                         <h4 class="mb-0">@Model.Count(b => b.Status == "Cancelled")</h4>
@@ -175,82 +218,10 @@
     }
 }
 
-<style>
-    .table th {
-        border-top: none;
-        font-weight: 600;
-        font-size: 0.875rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .table td {
-        vertical-align: middle;
-        padding: 1rem 0.75rem;
-    }
-
-    .passenger-count {
-        font-size: 1.25rem;
-        font-weight: bold;
-        color: #495057;
-    }
-
-    .route-badge .badge {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-    }
-
-    .action-buttons .btn-group-vertical {
-        min-width: 80px;
-    }
-
-    .empty-state {
-        padding: 3rem 1rem;
-    }
-
-    .card {
-        border: none;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        border-radius: 12px;
-    }
-
-    .table-hover tbody tr:hover {
-        background-color: rgba(0,0,0,0.02);
-    }
-
-    /* Responsive design */
-    @@media (max-width: 768px) {
-        .table-responsive {
-            font-size: 0.875rem;
+@section Scripts {
+    <script>
+        function confirmCancelBooking(flightNumber, departureTime) {
+            return confirm(`Are you sure you want to cancel your booking for flight ${flightNumber} on ${departureTime}?\n\nThis action cannot be undone.`);
         }
-        
-        .table th,
-        .table td {
-            padding: 0.5rem;
-        }
-        
-        .action-buttons .btn-group-vertical {
-            min-width: 60px;
-        }
-        
-        .btn-group-vertical .btn {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-        }
-    }
-
-    @@media (max-width: 576px) {
-        .d-flex.justify-content-between {
-            flex-direction: column;
-            gap: 1rem;
-            text-align: center;
-        }
-        
-        .table th:nth-child(3),
-        .table td:nth-child(3),
-        .table th:nth-child(4),
-        .table td:nth-child(4) {
-            display: none;
-        }
-    }
-</style>
+    </script>
+}

@@ -13,7 +13,7 @@ namespace AirlineReservationSystem.Models
         public string UserId { get; set; } = string.Empty;
 
         [Required]
-        public Guid FlightId { get; set; }  // Changed to Guid
+        public Guid FlightId { get; set; }
 
         [Required]
         [Range(1, 10)]
@@ -28,6 +28,13 @@ namespace AirlineReservationSystem.Models
 
         [StringLength(20)]
         public string Status { get; set; } = "Confirmed"; // Confirmed, Cancelled, Completed
+
+        // New fields for rescheduling
+        public DateTime? RescheduledDepartureTime { get; set; }
+        public DateTime? RescheduledArrivalTime { get; set; }
+
+           [NotMapped]
+        public bool IsRescheduled => RescheduledDepartureTime.HasValue && RescheduledArrivalTime.HasValue;
 
         // Navigation properties
         public virtual ApplicationUser User { get; set; } = null!;
