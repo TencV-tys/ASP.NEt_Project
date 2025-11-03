@@ -4,22 +4,26 @@
 }
 
 <div class="container">
-    <h2>My Bookings</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Bookings</h2>
+        <a asp-action="Flights" class="btn btn-primary">
+            <i class="fas fa-plane"></i> Book New Flight
+        </a>
+    </div>
     
     <div class="card">
-        <div class="card-body">
+        <div class="card-body p-0">
             @if (Model.Any())
             {
                 <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <th>Booking ID</th>
+                                <th>Booking</th>
                                 <th>Flight Details</th>
                                 <th>Travel Date</th>
                                 <th>Passengers</th>
-                                <th>Total Amount</th>
-                                <th>Booking Date</th>
+                                <th>Amount</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -28,45 +32,73 @@
                             @foreach (var booking in Model)
                             {
                                 <tr>
-                                    <td>@booking.BookingId</td>
                                     <td>
-                                        <strong>@booking.Flight.FlightNumber</strong><br>
-                                        <small>@booking.Flight.DepartureCity → @booking.Flight.ArrivalCity</small><br>
-                                        <small>@booking.Flight.Airline</small>
+                                        <div class="d-flex flex-column">
+                                            <small class="text-muted">Booking ID</small>
+                                            <strong class="text-primary">@booking.BookingId.ToString().Substring(0, 8)...</strong>
+                                            <small class="text-muted">@booking.BookingDate.ToString("MMM dd, yyyy")</small>
+                                        </div>
                                     </td>
-                                    <td>@booking.Flight.DepartureTime.ToString("MMM dd, yyyy")</td>
-                                    <td>@booking.NumberOfPassengers</td>
-                                    <td>$@booking.TotalAmount.ToString("N2")</td>
-                                    <td>@booking.BookingDate.ToString("MMM dd, yyyy")</td>
                                     <td>
-                                        <span class="badge @(booking.Status == "Confirmed" ? "bg-success" : 
-                                                      booking.Status == "Cancelled" ? "bg-danger" : "bg-warning")">
+                                        <div class="d-flex flex-column">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <i class="fas fa-plane text-muted me-2"></i>
+                                                <strong>@booking.Flight.FlightNumber</strong>
+                                            </div>
+                                            <div class="route-badge mb-1">
+                                                <span class="badge bg-light text-dark">
+                                                    @booking.Flight.DepartureCity → @booking.Flight.ArrivalCity
+                                                </span>
+                                            </div>
+                                            <small class="text-muted">@booking.Flight.Airline</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <strong>@booking.Flight.DepartureTime.ToString("MMM dd")</strong>
+                                            <small class="text-muted">@booking.Flight.DepartureTime.ToString("hh:mm tt")</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-center">
+                                            <span class="passenger-count">@booking.NumberOfPassengers</span>
+                                            <small class="d-block text-muted">passenger@(booking.NumberOfPassengers != 1 ? "s" : "")</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-end">
+                                            <strong class="text-success">$@booking.TotalAmount.ToString("N2")</strong>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge @GetStatusBadgeClass(booking.Status)">
                                             @booking.Status
                                         </span>
                                     </td>
                                     <td>
-                                        @if (booking.Status == "Confirmed")
-                                        {
-                                            <!-- Edit Button -->
-                                            <a asp-action="EditBooking" asp-route-id="@booking.BookingId" 
-                                               class="btn btn-sm btn-warning me-1" title="Edit Booking">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </a>
-                                            
-                                            <!-- Cancel Button -->
-                                            <form method="post" asp-action="CancelBooking" class="d-inline">
-                                                <input type="hidden" name="id" value="@booking.BookingId" />
-                                                <button type="submit" class="btn btn-sm btn-danger" 
-                                                        onclick="return confirm('Are you sure you want to cancel this booking?')"
-                                                        title="Cancel Booking">
-                                                    <i class="fas fa-times"></i> Cancel
-                                                </button>
-                                            </form>
-                                        }
-                                        else if (booking.Status == "Cancelled")
-                                        {
-                                            <span class="text-muted">Cancelled</span>
-                                        }
+                                        <div class="action-buttons">
+                                            @if (booking.Status == "Confirmed")
+                                            {
+                                                <div class="btn-group-vertical btn-group-sm">
+                                                    <a asp-action="EditBooking" asp-route-id="@booking.BookingId" 
+                                                       class="btn btn-outline-warning mb-1" title="Edit Booking">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </a>
+                                                    <form method="post" asp-action="CancelBooking" class="d-inline">
+                                                        <input type="hidden" name="id" value="@booking.BookingId" />
+                                                        <button type="submit" class="btn btn-outline-danger" 
+                                                                onclick="return confirm('Are you sure you want to cancel this booking?')"
+                                                                title="Cancel Booking">
+                                                            <i class="fas fa-times"></i> Cancel
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">No actions</span>
+                                            }
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -76,13 +108,149 @@
             }
             else
             {
-                <div class="text-center py-4">
-                    <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
-                    <h4>No bookings found</h4>
-                    <p class="text-muted">You haven't made any bookings yet.</p>
-                    <a asp-action="Flights" class="btn btn-primary">Book Your First Flight</a>
+                <div class="text-center py-5">
+                    <div class="empty-state">
+                        <i class="fas fa-ticket-alt fa-4x text-muted mb-4"></i>
+                        <h3 class="text-muted">No Bookings Yet</h3>
+                        <p class="text-muted mb-4">You haven't made any flight bookings yet.</p>
+                        <a asp-action="Flights" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plane me-2"></i>Book Your First Flight
+                        </a>
+                    </div>
                 </div>
             }
         </div>
     </div>
+
+    <!-- Booking Stats -->
+    @if (Model.Any())
+    {
+        <div class="row mt-4">
+            <div class="col-md-3 col-6">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-0">@Model.Count</h4>
+                        <small>Total Bookings</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-0">@Model.Count(b => b.Status == "Confirmed")</h4>
+                        <small>Confirmed</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-0">@Model.Count(b => b.Status == "Pending")</h4>
+                        <small>Pending</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-0">@Model.Count(b => b.Status == "Cancelled")</h4>
+                        <small>Cancelled</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Confirmed" => "bg-success",
+            "Cancelled" => "bg-danger",
+            "Pending" => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+<style>
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .table td {
+        vertical-align: middle;
+        padding: 1rem 0.75rem;
+    }
+
+    .passenger-count {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: #495057;
+    }
+
+    .route-badge .badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .action-buttons .btn-group-vertical {
+        min-width: 80px;
+    }
+
+    .empty-state {
+        padding: 3rem 1rem;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-radius: 12px;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,0,0,0.02);
+    }
+
+    /* Responsive design */
+    @@media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+        
+        .table th,
+        .table td {
+            padding: 0.5rem;
+        }
+        
+        .action-buttons .btn-group-vertical {
+            min-width: 60px;
+        }
+        
+        .btn-group-vertical .btn {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+        
+        .table th:nth-child(3),
+        .table td:nth-child(3),
+        .table th:nth-child(4),
+        .table td:nth-child(4) {
+            display: none;
+        }
+    }
+</style>

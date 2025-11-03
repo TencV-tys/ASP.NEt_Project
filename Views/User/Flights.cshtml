@@ -6,11 +6,58 @@
 <div class="container">
     <h2>Available Flights</h2>
     
-    <div class="row">
+    <!-- Live Search Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Search Flights</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="searchDeparture" class="form-label">Departure City</label>
+                    <input type="text" class="form-control" id="searchDeparture" 
+                           placeholder="From..." onkeyup="filterFlights()">
+                </div>
+                <div class="col-md-4">
+                    <label for="searchArrival" class="form-label">Arrival City</label>
+                    <input type="text" class="form-control" id="searchArrival" 
+                           placeholder="To..." onkeyup="filterFlights()">
+                </div>
+                <div class="col-md-4">
+                    <label for="searchPrice" class="form-label">Max Price</label>
+                    <input type="number" class="form-control" id="searchPrice" 
+                           placeholder="$ Maximum price" min="0" onkeyup="filterFlights()">
+                </div>
+            </div>
+            
+            <!-- Clear Button -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearSearch()">
+                        <i class="fas fa-times"></i> Clear Search
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Count -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <p class="mb-0">
+            Showing <strong id="resultsCount">@Model.Count</strong> 
+            <span id="resultsText">@(Model.Count == 1 ? "flight" : "flights")</span>
+        </p>
+    </div>
+
+    <!-- Flights Grid -->
+    <div class="row" id="flightsContainer">
         @foreach (var flight in Model)
         {
-            <div class="col-md-6 mb-4">
-                <div class="card flight-card h-100">
+            <div class="col-md-6 mb-4 flight-card" 
+                 data-departure="@flight.DepartureCity.ToLower()" 
+                 data-arrival="@flight.ArrivalCity.ToLower()"
+                 data-price="@flight.Price">
+                <div class="card h-100">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">@flight.Airline - @flight.FlightNumber</h5>
                     </div>
@@ -44,11 +91,83 @@
         }
     </div>
     
-    @if (!Model.Any())
-    {
-        <div class="alert alert-info text-center">
-            <h4>No flights available at the moment.</h4>
-            <p>Please check back later for new flight schedules.</p>
-        </div>
-    }
+    <!-- No Results Message -->
+    <div id="noResults" class="alert alert-info text-center" style="display: none;">
+        <i class="fas fa-plane-slash fa-3x mb-3"></i>
+        <h4>No flights found</h4>
+        <p>Try adjusting your search criteria.</p>
+        <button type="button" class="btn btn-primary" onclick="clearSearch()">Clear Search</button>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Store all flight cards for filtering
+        let allFlightCards = document.querySelectorAll('.flight-card');
+
+        function filterFlights() {
+            const departureFilter = document.getElementById('searchDeparture').value.toLowerCase();
+            const arrivalFilter = document.getElementById('searchArrival').value.toLowerCase();
+            const priceFilter = parseFloat(document.getElementById('searchPrice').value) || 0;
+
+            let visibleCount = 0;
+
+            allFlightCards.forEach(card => {
+                const departure = card.getAttribute('data-departure');
+                const arrival = card.getAttribute('data-arrival');
+                const price = parseFloat(card.getAttribute('data-price'));
+
+                const matchesDeparture = !departureFilter || departure.includes(departureFilter);
+                const matchesArrival = !arrivalFilter || arrival.includes(arrivalFilter);
+                const matchesPrice = !priceFilter || price <= priceFilter;
+
+                if (matchesDeparture && matchesArrival && matchesPrice) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Update results count
+            document.getElementById('resultsCount').textContent = visibleCount;
+            document.getElementById('resultsText').textContent = visibleCount === 1 ? 'flight' : 'flights';
+
+            // Show/hide no results message
+            const noResults = document.getElementById('noResults');
+            if (visibleCount === 0) {
+                noResults.style.display = 'block';
+            } else {
+                noResults.style.display = 'none';
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('searchDeparture').value = '';
+            document.getElementById('searchArrival').value = '';
+            document.getElementById('searchPrice').value = '';
+            filterFlights();
+        }
+
+        // Initialize - make sure all cards are visible initially
+        document.addEventListener('DOMContentLoaded', function() {
+            allFlightCards.forEach(card => card.style.display = 'block');
+            
+            // Auto-focus on first search input
+            document.getElementById('searchDeparture').focus();
+        });
+    </script>
+}
+
+<style>
+    .flight-card {
+        transition: all 0.3s ease;
+    }
+    .flight-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .card {
+        border: 1px solid #e0e0e0;
+    }
+</style>

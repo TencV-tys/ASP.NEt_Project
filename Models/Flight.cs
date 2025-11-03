@@ -6,7 +6,8 @@ namespace AirlineReservationSystem.Models
     public class Flight
     {
         [Key]
-        public int FlightId { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public Guid FlightId { get; set; } = Guid.NewGuid();
 
         [StringLength(50)]
         public string FlightNumber { get; set; } = string.Empty; // Will be auto-generated

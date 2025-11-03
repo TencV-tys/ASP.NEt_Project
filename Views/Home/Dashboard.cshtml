@@ -6,11 +6,105 @@
 <div class="container">
     <h2>My Dashboard</h2>
     
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card mb-4">
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">@Model.UserBookings.Count</h4>
+                            <p class="mb-0">Total Bookings</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-ticket-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">@Model.UserBookings.Count(b => b.Status == "Confirmed")</h4>
+                            <p class="mb-0">Confirmed</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">@Model.UserBookings.Count(b => b.Status == "Pending")</h4>
+                            <p class="mb-0">Pending</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">@Model.UserBookings.Count(b => b.Status == "Cancelled")</h4>
+                            <p class="mb-0">Cancelled</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-times-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
                 <div class="card-header">
-                    <h5>My Recent Bookings</h5>
+                    <h5>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a asp-controller="User" asp-action="Flights" class="btn btn-primary w-100">
+                                <i class="fas fa-plane"></i> Book New Flight
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a asp-controller="User" asp-action="MyBookings" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-list"></i> View All Bookings
+                            </a>
+                        </div>
+                    
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Bookings -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Bookings</h5>
+                    <a asp-controller="User" asp-action="MyBookings" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
                 </div>
                 <div class="card-body">
                     @if (Model.UserBookings.Any())
@@ -20,41 +114,63 @@
                                 <thead>
                                     <tr>
                                         <th>Booking ID</th>
-                                        <th>Flight</th>
-                                        <th>Departure</th>
-                                        <th>Arrival</th>
+                                        <th>Flight Details</th>
+                                        <th>Travel Date</th>
                                         <th>Passengers</th>
                                         <th>Amount</th>
+                                        <th>Booking Date</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var booking in Model.UserBookings)
+                                    @foreach (var booking in Model.UserBookings.Take(5))
                                     {
                                         <tr>
-                                            <td>@booking.BookingId</td>
-                                            <td>@booking.Flight.FlightNumber</td>
-                                            <td>@booking.Flight.DepartureCity</td>
-                                            <td>@booking.Flight.ArrivalCity</td>
+                                            <td>
+                                                <small class="text-muted">@booking.BookingId.ToString().Substring(0, 8)...</small>
+                                            </td>
+                                            <td>
+                                                <strong>@booking.Flight.FlightNumber</strong><br>
+                                                <small>@booking.Flight.DepartureCity → @booking.Flight.ArrivalCity</small><br>
+                                                <small class="text-muted">@booking.Flight.Airline</small>
+                                            </td>
+                                            <td>@booking.Flight.DepartureTime.ToString("MMM dd, yyyy")</td>
                                             <td>@booking.NumberOfPassengers</td>
                                             <td>$@booking.TotalAmount.ToString("N2")</td>
+                                            <td>@booking.BookingDate.ToString("MMM dd, yyyy")</td>
                                             <td>
                                                 <span class="badge @(booking.Status == "Confirmed" ? "bg-success" : 
-                                                              booking.Status == "Cancelled" ? "bg-danger" : "bg-warning")">
+                                                              booking.Status == "Cancelled" ? "bg-danger" : 
+                                                              booking.Status == "Pending" ? "bg-warning" : "bg-secondary")">
                                                     @booking.Status
                                                 </span>
                                             </td>
                                             <td>
                                                 @if (booking.Status == "Confirmed")
                                                 {
-                                                    <form method="post" asp-controller="User" asp-action="CancelBooking" class="d-inline">
-                                                        <input type="hidden" name="id" value="@booking.BookingId" />
-                                                        <button type="submit" class="btn btn-sm btn-danger" 
-                                                                onclick="return confirm('Are you sure you want to cancel this booking?')">
-                                                            Cancel
-                                                        </button>
-                                                    </form>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a asp-controller="User" asp-action="EditBooking" asp-route-id="@booking.BookingId" 
+                                                           class="btn btn-warning" title="Edit Booking">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <form method="post" asp-controller="User" asp-action="CancelBooking" class="d-inline">
+                                                            <input type="hidden" name="id" value="@booking.BookingId" />
+                                                            <button type="submit" class="btn btn-danger" 
+                                                                    onclick="return confirm('Are you sure you want to cancel this booking?')"
+                                                                    title="Cancel Booking">
+                                                                <i class="fas fa-times"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                }
+                                                else if (booking.Status == "Cancelled")
+                                                {
+                                                    <span class="text-muted small">Cancelled</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">@booking.Status</span>
                                                 }
                                             </td>
                                         </tr>
@@ -65,52 +181,80 @@
                     }
                     else
                     {
-                        <p class="text-muted">You have no bookings yet. <a asp-controller="User" asp-action="Flights">Book your first flight!</a></p>
+                        <div class="text-center py-4">
+                            <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
+                            <h4>No bookings yet</h4>
+                            <p class="text-muted">You haven't made any bookings yet.</p>
+                            <a asp-controller="User" asp-action="Flights" class="btn btn-primary">
+                                <i class="fas fa-plane"></i> Book Your First Flight
+                            </a>
+                        </div>
                     }
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Available Flights</h5>
-                </div>
-                <div class="card-body">
-                    @if (Model.AvailableFlights.Any())
-                    {
-                        foreach (var flight in Model.AvailableFlights)
-                        {
-                            <div class="card mb-3 flight-card">
-                                <div class="card-body">
-                                    <h6>@flight.FlightNumber - @flight.Airline</h6>
-                                    <p class="mb-1">
-                                        <strong>@flight.DepartureCity</strong> → <strong>@flight.ArrivalCity</strong>
-                                    </p>
-                                    <p class="mb-1 small">
-                                        @flight.DepartureTime.ToString("MMM dd, yyyy hh:mm tt")
-                                    </p>
-                                    <p class="mb-2">
-                                        <strong>$@flight.Price.ToString("N2")</strong>
-                                        <span class="text-muted">• @flight.AvailableSeats seats left</span>
-                                    </p>
-                                    <a asp-controller="User" asp-action="BookFlight" asp-route-id="@flight.FlightId" 
-                                       class="btn btn-primary btn-sm w-100">Book Now</a>
-                                </div>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <p class="text-muted">No available flights at the moment.</p>
-                    }
-                    <div class="text-center">
-                        <a asp-controller="User" asp-action="Flights" class="btn btn-outline-primary btn-sm">
-                            View All Flights
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Upcoming Trips -->
+    @{
+        var upcomingTrips = Model.UserBookings
+            .Where(b => b.Status == "Confirmed" && b.Flight.DepartureTime > DateTime.Now)
+            .OrderBy(b => b.Flight.DepartureTime)
+            .Take(3)
+            .ToList();
+    }
+    
+    @if (upcomingTrips.Any())
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Upcoming Trips</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var trip in upcomingTrips)
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-success">
+                                        <div class="card-body">
+                                            <h6 class="card-title">@trip.Flight.DepartureCity → @trip.Flight.ArrivalCity</h6>
+                                            <p class="card-text mb-1">
+                                                <small class="text-muted">Flight: @trip.Flight.FlightNumber</small>
+                                            </p>
+                                            <p class="card-text mb-1">
+                                                <strong>Departure:</strong><br>
+                                                @trip.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm")
+                                            </p>
+                                            <p class="card-text mb-2">
+                                                <strong>Arrival:</strong><br>
+                                                @trip.Flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm")
+                                            </p>
+                                            <p class="card-text">
+                                                <span class="badge bg-info">@trip.NumberOfPassengers passenger(s)</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
+<style>
+    .flight-card {
+        transition: transform 0.2s;
+    }
+    .flight-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .card {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+</style>

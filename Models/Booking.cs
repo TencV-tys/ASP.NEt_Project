@@ -6,13 +6,14 @@ namespace AirlineReservationSystem.Models
     public class Booking
     {
         [Key]
-        public int BookingId { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public Guid BookingId { get; set; } = Guid.NewGuid();
 
         [Required]
         public string UserId { get; set; } = string.Empty;
 
         [Required]
-        public int FlightId { get; set; }
+        public Guid FlightId { get; set; }  // Changed to Guid
 
         [Required]
         [Range(1, 10)]

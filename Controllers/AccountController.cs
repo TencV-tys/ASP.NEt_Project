@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
-using AirlineReservationSystem.Models;
+using AirlineReservationSystem.Models; 
 using Microsoft.AspNetCore.Authorization;
 
 namespace AirlineReservationSystem.Controllers

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AirlineReservationSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251103115603_InitialCreate")]
+    [Migration("20251103125252_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -107,17 +107,15 @@ namespace AirlineReservationSystem.Migrations
 
             modelBuilder.Entity("AirlineReservationSystem.Models.Booking", b =>
                 {
-                    b.Property<int>("BookingId")
+                    b.Property<Guid>("BookingId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("BookingId"));
+                        .HasColumnType("char(36)");
 
                     b.Property<DateTime>("BookingDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("FlightId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("FlightId")
+                        .HasColumnType("char(36)");
 
                     b.Property<int>("NumberOfPassengers")
                         .HasColumnType("int");
@@ -146,11 +144,9 @@ namespace AirlineReservationSystem.Migrations
 
             modelBuilder.Entity("AirlineReservationSystem.Models.Flight", b =>
                 {
-                    b.Property<int>("FlightId")
+                    b.Property<Guid>("FlightId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("FlightId"));
+                        .HasColumnType("char(36)");
 
                     b.Property<string>("Airline")
                         .IsRequired()

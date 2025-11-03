@@ -78,7 +78,7 @@ namespace AirlineReservationSystem.Data
             // Seed sample flights with auto-generated flight numbers
             if (!context.Flights.Any())
             {
-                context.Flights.AddRange(
+                 context.Flights.AddRange(
                     new Flight
                     {
                         FlightNumber = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper(),

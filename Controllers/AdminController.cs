@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AirlineReservationSystem.Data;
@@ -23,8 +22,7 @@ namespace AirlineReservationSystem.Controllers
             _roleManager = roleManager;
         }
 
-    
-          public async Task<IActionResult> Dashboard()
+        public async Task<IActionResult> Dashboard()
         {
             var dashboardStats = new AdminDashboardViewModel
             {
@@ -129,7 +127,7 @@ namespace AirlineReservationSystem.Controllers
             return View(await _context.Flights.OrderBy(f => f.DepartureTime).ToListAsync());
         }
 
-       // GET: Admin/CreateFlight
+        // GET: Admin/CreateFlight
         public IActionResult CreateFlight()
         {
             return View();
@@ -142,6 +140,7 @@ namespace AirlineReservationSystem.Controllers
         {
             if (ModelState.IsValid)
             {
+                flight.FlightId = Guid.NewGuid();
                 // Auto-generate flight number using GUID (short version)
                 flight.FlightNumber = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
                 flight.AvailableSeats = flight.TotalSeats;
@@ -155,7 +154,7 @@ namespace AirlineReservationSystem.Controllers
         }
 
         // GET: Admin/EditFlight/5
-        public async Task<IActionResult> EditFlight(int? id)
+        public async Task<IActionResult> EditFlight(Guid? id)
         {
             if (id == null)
             {
@@ -173,7 +172,7 @@ namespace AirlineReservationSystem.Controllers
         // POST: Admin/EditFlight/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditFlight(int id, Flight flight)
+        public async Task<IActionResult> EditFlight(Guid id, Flight flight)
         {
             if (id != flight.FlightId)
             {
@@ -211,13 +210,10 @@ namespace AirlineReservationSystem.Controllers
             return View(flight);
         }
 
-
-
-
         // POST: Admin/DeleteFlight/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteFlight(int id)
+        public async Task<IActionResult> DeleteFlight(Guid id)
         {
             var flight = await _context.Flights.FindAsync(id);
             if (flight != null)
@@ -241,10 +237,10 @@ namespace AirlineReservationSystem.Controllers
             return View(bookings);
         }
 
-       //POST: Admin/UpdateBookingStatus
+        // POST: Admin/UpdateBookingStatus
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateBookingStatus(int bookingId, string status)
+        public async Task<IActionResult> UpdateBookingStatus(Guid bookingId, string status)
         {
             var booking = await _context.Bookings
                 .Include(b => b.Flight)
@@ -280,7 +276,7 @@ namespace AirlineReservationSystem.Controllers
         }
 
         // GET: Admin/EditBookingStatus/5 - For modal or separate page
-        public async Task<IActionResult> EditBookingStatus(int? id)
+        public async Task<IActionResult> EditBookingStatus(Guid? id)
         {
             if (id == null)
             {
@@ -303,7 +299,7 @@ namespace AirlineReservationSystem.Controllers
         // POST: Admin/EditBookingStatus/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditBookingStatus(int id, string status)
+        public async Task<IActionResult> EditBookingStatus(Guid id, string status)
         {
             var booking = await _context.Bookings
                 .Include(b => b.Flight)
@@ -337,12 +333,9 @@ namespace AirlineReservationSystem.Controllers
             return RedirectToAction(nameof(Bookings));
         }
 
-
-        private bool FlightExists(int id)
+        private bool FlightExists(Guid id)
         {
             return _context.Flights.Any(e => e.FlightId == id);
         }
-       
-
     }
 }

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace AirlineReservationSystem.Controllers
 {
-    [Authorize(Roles = "User")] // Only users with "User" role can access
+    [Authorize(Roles = "User")]
     public class UserController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -19,21 +19,44 @@ namespace AirlineReservationSystem.Controllers
             _userManager = userManager;
         }
 
-        // GET: User/Flights - Available to all authenticated users
+        // GET: User/Flights with search - Available to all authenticated users
         [AllowAnonymous]
-        public async Task<IActionResult> Flights()
+        public async Task<IActionResult> Flights(string departureCity, string arrivalCity, DateTime? departureDate, decimal? maxPrice, string sort = "departure_asc")
         {
-            var flights = await _context.Flights
+            var query = _context.Flights
                 .Where(f => f.IsActive && f.DepartureTime > DateTime.Now && f.AvailableSeats > 0)
-                .OrderBy(f => f.DepartureTime)
-                .ToListAsync();
+                .AsQueryable();
 
+            // Apply filters
+            if (!string.IsNullOrEmpty(departureCity))
+                query = query.Where(f => f.DepartureCity.Contains(departureCity));
+            
+            if (!string.IsNullOrEmpty(arrivalCity))
+                query = query.Where(f => f.ArrivalCity.Contains(arrivalCity));
+            
+            if (departureDate.HasValue)
+                query = query.Where(f => f.DepartureTime.Date == departureDate.Value.Date);
+            
+            if (maxPrice.HasValue)
+                query = query.Where(f => f.Price <= maxPrice.Value);
+
+            // Apply sorting
+            query = sort switch
+            {
+                "price_asc" => query.OrderBy(f => f.Price),
+                "price_desc" => query.OrderByDescending(f => f.Price),
+                "departure_desc" => query.OrderByDescending(f => f.DepartureTime),
+                "duration_asc" => query.OrderBy(f => (f.ArrivalTime - f.DepartureTime)),
+                _ => query.OrderBy(f => f.DepartureTime) // default: departure_asc
+            };
+
+            var flights = await query.ToListAsync();
             return View(flights);
         }
 
         // GET: User/BookFlight/5 - Available to all authenticated users
         [AllowAnonymous]
-        public async Task<IActionResult> BookFlight(int? id)
+        public async Task<IActionResult> BookFlight(Guid? id)
         {
             if (id == null)
             {
@@ -52,7 +75,7 @@ namespace AirlineReservationSystem.Controllers
         // POST: User/BookFlight - Only regular users can book flights
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BookFlight(int flightId, int numberOfPassengers)
+        public async Task<IActionResult> BookFlight(Guid flightId, int numberOfPassengers)
         {
             // Prevent admin users from booking flights
             var user = await _userManager.GetUserAsync(User);
@@ -76,11 +99,13 @@ namespace AirlineReservationSystem.Controllers
             var userId = _userManager.GetUserId(User);
             var booking = new Booking
             {
+                BookingId = Guid.NewGuid(),
                 UserId = userId!,
                 FlightId = flightId,
                 NumberOfPassengers = numberOfPassengers,
                 TotalAmount = flight.Price * numberOfPassengers,
-                Status = "Confirmed"
+                Status = "Confirmed",
+                BookingDate = DateTime.UtcNow
             };
 
             // Update available seats
@@ -107,7 +132,7 @@ namespace AirlineReservationSystem.Controllers
         }
 
         // GET: User/EditBooking/5 
-      public async Task<IActionResult> EditBooking(int? id)
+        public async Task<IActionResult> EditBooking(Guid? id)
         {
             if (id == null)
             {
@@ -139,10 +164,11 @@ namespace AirlineReservationSystem.Controllers
 
             return View(booking);
         }
+
         // POST: User/EditBooking/5 
-         [HttpPost]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditBooking(int id, int numberOfPassengers, DateTime newDepartureTime, DateTime newArrivalTime)
+        public async Task<IActionResult> EditBooking(Guid id, int numberOfPassengers, DateTime newDepartureTime, DateTime newArrivalTime)
         {
             var booking = await _context.Bookings
                 .Include(b => b.Flight)
@@ -201,11 +227,10 @@ namespace AirlineReservationSystem.Controllers
             return RedirectToAction(nameof(MyBookings));
         }
 
-
         // POST: User/CancelBooking/5 - Only regular users can cancel their bookings
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CancelBooking(int id)
+        public async Task<IActionResult> CancelBooking(Guid id)
         {
             var booking = await _context.Bookings
                 .Include(b => b.Flight)
