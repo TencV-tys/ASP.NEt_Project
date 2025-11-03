@@ -1,0 +1,156 @@
+@model AirlineReservationSystem.Models.Booking
+@{
+    ViewData["Title"] = "Reschedule Flight";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-clock"></i> Reschedule Flight
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Current Flight Information -->
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Current Flight Schedule</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Flight:</strong> @Model.Flight.FlightNumber<br>
+                                <strong>Airline:</strong> @Model.Flight.Airline<br>
+                                <strong>Route:</strong> @Model.Flight.DepartureCity → @Model.Flight.ArrivalCity
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Current Departure:</strong> @Model.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm")<br>
+                                <strong>Current Arrival:</strong> @Model.Flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm")<br>
+                                <strong>Price per seat:</strong> $@Model.Flight.Price.ToString("N2")
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Edit Form -->
+                    <form method="post" asp-action="EditBooking">
+                        <input type="hidden" name="id" value="@Model.BookingId" />
+                        
+                        <!-- New Departure Time -->
+                        <div class="form-group mb-3">
+                            <label for="newDepartureTime" class="form-label fw-bold">New Departure Time</label>
+                            <input type="datetime-local" 
+                                   class="form-control" 
+                                   id="newDepartureTime" 
+                                   name="newDepartureTime" 
+                                   value="@Model.Flight.DepartureTime.ToString("yyyy-MM-ddTHH:mm")"
+                                   min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"
+                                   required />
+                            <small class="form-text text-muted">
+                                Select new departure date and time
+                            </small>
+                        </div>
+
+                        <!-- New Arrival Time -->
+                        <div class="form-group mb-3">
+                            <label for="newArrivalTime" class="form-label fw-bold">New Arrival Time</label>
+                            <input type="datetime-local" 
+                                   class="form-control" 
+                                   id="newArrivalTime" 
+                                   name="newArrivalTime" 
+                                   value="@Model.Flight.ArrivalTime.ToString("yyyy-MM-ddTHH:mm")"
+                                   min="@DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm")"
+                                   required />
+                            <small class="form-text text-muted">
+                                Select new arrival date and time
+                            </small>
+                        </div>
+
+                        <!-- Number of Passengers -->
+                        <div class="form-group mb-4">
+                            <label for="numberOfPassengers" class="form-label fw-bold">Number of Passengers</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="numberOfPassengers" 
+                                   name="numberOfPassengers" 
+                                   value="@Model.NumberOfPassengers" 
+                                   min="1" 
+                                   max="@(Model.NumberOfPassengers + Model.Flight.AvailableSeats)"
+                                   required />
+                            <small class="form-text text-muted">
+                                You can book up to @(Model.NumberOfPassengers + Model.Flight.AvailableSeats) passengers total.
+                            </small>
+                        </div>
+
+                        <!-- Updated Schedule Preview -->
+                        <div class="alert alert-success">
+                            <h6>New Flight Schedule</h6>
+                            <p class="mb-1"><strong>Flight:</strong> @Model.Flight.FlightNumber</p>
+                            <p class="mb-1"><strong>Route:</strong> @Model.Flight.DepartureCity → @Model.Flight.ArrivalCity</p>
+                            <p class="mb-1"><strong>New Departure:</strong> <span id="previewDeparture">@Model.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm")</span></p>
+                            <p class="mb-1"><strong>New Arrival:</strong> <span id="previewArrival">@Model.Flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm")</span></p>
+                            <p class="mb-1"><strong>Passengers:</strong> <span id="previewPassengers">@Model.NumberOfPassengers</span></p>
+                            <p class="mb-0"><strong>Total Amount:</strong> $<span id="previewTotal">@Model.TotalAmount.ToString("N2")</span></p>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="MyBookings" class="btn btn-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save"></i> Reschedule Flight
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Real-time preview updates
+        document.getElementById('newDepartureTime').addEventListener('change', updatePreview);
+        document.getElementById('newArrivalTime').addEventListener('change', updatePreview);
+        document.getElementById('numberOfPassengers').addEventListener('input', updatePreview);
+
+        function updatePreview() {
+            const departureInput = document.getElementById('newDepartureTime');
+            const arrivalInput = document.getElementById('newArrivalTime');
+            const passengersInput = document.getElementById('numberOfPassengers');
+            
+            const departureDate = new Date(departureInput.value);
+            const arrivalDate = new Date(arrivalInput.value);
+            const passengerCount = parseInt(passengersInput.value) || 0;
+            const pricePerSeat = @Model.Flight.Price;
+            
+            // Format dates for display
+            const options = { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit', 
+                minute: '2-digit'
+            };
+            
+            const formattedDeparture = departureDate.toLocaleDateString('en-US', options);
+            const formattedArrival = arrivalDate.toLocaleDateString('en-US', options);
+            const totalAmount = passengerCount * pricePerSeat;
+            
+            // Update preview
+            document.getElementById('previewDeparture').textContent = formattedDeparture;
+            document.getElementById('previewArrival').textContent = formattedArrival;
+            document.getElementById('previewPassengers').textContent = passengerCount;
+            document.getElementById('previewTotal').textContent = totalAmount.toFixed(2);
+            
+            // Validate arrival is after departure
+            if (arrivalDate <= departureDate) {
+                arrivalInput.setCustomValidity('Arrival time must be after departure time');
+            } else {
+                arrivalInput.setCustomValidity('');
+            }
+        }
+
+        // Initialize preview on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePreview();
+        });
+    </script>
+}

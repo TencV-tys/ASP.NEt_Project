@@ -22,7 +22,12 @@
                     
                     <div class="form-group mb-4">
                         <label asp-for="Password" class="form-label"></label>
-                        <input asp-for="Password" class="form-control" placeholder="Enter your password" />
+                        <div class="input-group">
+                            <input asp-for="Password" type="password" class="form-control" placeholder="Enter your password" id="password" />
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('password', 'passwordToggle')">
+                                <i class="fas fa-eye" id="passwordToggle"></i>
+                            </button>
+                        </div>
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
                     
@@ -65,4 +70,20 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        function togglePassword(inputId, iconId) {
+            const passwordInput = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
 }

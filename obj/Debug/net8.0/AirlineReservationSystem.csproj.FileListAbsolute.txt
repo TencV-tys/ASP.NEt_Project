@@ -100,6 +100,7 @@
 /home/vincent-tayros/AirlineReservationSystem/obj/Debug/net8.0/AirlineReservationSystem.MvcApplicationPartsAssemblyInfo.cache
 /home/vincent-tayros/AirlineReservationSystem/obj/Debug/net8.0/AirlineReservationSystem.RazorAssemblyInfo.cache
 /home/vincent-tayros/AirlineReservationSystem/obj/Debug/net8.0/AirlineReservationSystem.RazorAssemblyInfo.cs
+/home/vincent-tayros/AirlineReservationSystem/obj/Debug/net8.0/AirlineReservationSystem.sourcelink.json
 /home/vincent-tayros/AirlineReservationSystem/obj/Debug/net8.0/staticwebassets.build.json
 /home/vincent-tayros/AirlineReservationSystem/obj/Debug/net8.0/staticwebassets.development.json
 /home/vincent-tayros/AirlineReservationSystem/obj/Debug/net8.0/staticwebassets/msbuild.AirlineReservationSystem.Microsoft.AspNetCore.StaticWebAssets.props
@@ -116,4 +117,3 @@
 /home/vincent-tayros/AirlineReservationSystem/obj/Debug/net8.0/AirlineReservationSystem.pdb
 /home/vincent-tayros/AirlineReservationSystem/obj/Debug/net8.0/AirlineReservationSystem.genruntimeconfig.cache
 /home/vincent-tayros/AirlineReservationSystem/obj/Debug/net8.0/ref/AirlineReservationSystem.dll
-/home/vincent-tayros/AirlineReservationSystem/obj/Debug/net8.0/AirlineReservationSystem.sourcelink.json

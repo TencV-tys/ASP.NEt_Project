@@ -106,6 +106,102 @@ namespace AirlineReservationSystem.Controllers
             return View(bookings);
         }
 
+        // GET: User/EditBooking/5 
+      public async Task<IActionResult> EditBooking(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var booking = await _context.Bookings
+                .Include(b => b.Flight)
+                .FirstOrDefaultAsync(b => b.BookingId == id);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            // Check if user owns this booking
+            var userId = _userManager.GetUserId(User);
+            if (booking.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            // Check if booking can be edited
+            if (booking.Status != "Confirmed")
+            {
+                TempData["Error"] = "Only confirmed bookings can be edited.";
+                return RedirectToAction(nameof(MyBookings));
+            }
+
+            return View(booking);
+        }
+        // POST: User/EditBooking/5 
+         [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditBooking(int id, int numberOfPassengers, DateTime newDepartureTime, DateTime newArrivalTime)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.Flight)
+                .FirstOrDefaultAsync(b => b.BookingId == id);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            // Check if user owns this booking
+            var userId = _userManager.GetUserId(User);
+            if (booking.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            // Check if booking can be edited
+            if (booking.Status != "Confirmed")
+            {
+                TempData["Error"] = "Only confirmed bookings can be edited.";
+                return RedirectToAction(nameof(MyBookings));
+            }
+
+            // Validate new times
+            if (newDepartureTime >= newArrivalTime)
+            {
+                TempData["Error"] = "Arrival time must be after departure time.";
+                return View(booking);
+            }
+
+            if (newDepartureTime <= DateTime.Now)
+            {
+                TempData["Error"] = "Departure time must be in the future.";
+                return View(booking);
+            }
+
+            // Check seat availability for passenger count change
+            int seatDifference = numberOfPassengers - booking.NumberOfPassengers;
+            if (seatDifference > 0 && booking.Flight.AvailableSeats < seatDifference)
+            {
+                TempData["Error"] = $"Not enough seats available. Only {booking.Flight.AvailableSeats} seats left.";
+                return View(booking);
+            }
+
+            // Update the flight times and passenger count
+            booking.Flight.DepartureTime = newDepartureTime;
+            booking.Flight.ArrivalTime = newArrivalTime;
+            booking.Flight.AvailableSeats -= seatDifference; // Update available seats
+            booking.NumberOfPassengers = numberOfPassengers;
+            booking.TotalAmount = booking.Flight.Price * numberOfPassengers;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Booking rescheduled successfully!";
+            return RedirectToAction(nameof(MyBookings));
+        }
+
+
         // POST: User/CancelBooking/5 - Only regular users can cancel their bookings
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -138,10 +234,9 @@ namespace AirlineReservationSystem.Controllers
         }
 
         [AllowAnonymous]
-       public IActionResult AccessDenied()
-       {
-        return View();
-       }
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
     }
-   
 }
