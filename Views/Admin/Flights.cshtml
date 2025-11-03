@@ -6,25 +6,27 @@
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Manage Flights</h2>
-        <a asp-action="CreateFlight" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add New Flight
-        </a>
+        <div>
+            <span class="text-muted me-3">
+                <i class="fas fa-plane me-1"></i>@Model.Count flights
+            </span>
+            <a asp-action="CreateFlight" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Flight
+            </a>
+        </div>
     </div>
     
     <div class="card">
-        <div class="card-body">
+        <div class="card-body p-0">
             @if (Model.Any())
             {
                 <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <th>Flight Number</th>
-                                <th>Airline</th>
-                                <th>Route</th>
-                                <th>Departure</th>
-                                <th>Arrival</th>
-                                <th>Seats</th>
+                                <th>Flight Details</th>
+                                <th>Route & Schedule</th>
+                                <th>Capacity</th>
                                 <th>Price</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -34,29 +36,79 @@
                             @foreach (var flight in Model)
                             {
                                 <tr>
-                                    <td>@flight.FlightNumber</td>
-                                    <td>@flight.Airline</td>
-                                    <td>@flight.DepartureCity → @flight.ArrivalCity</td>
-                                    <td>@flight.DepartureTime.ToString("MMM dd, yyyy HH:mm")</td>
-                                    <td>@flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm")</td>
-                                    <td>@flight.AvailableSeats / @flight.TotalSeats</td>
-                                    <td>$@flight.Price.ToString("N2")</td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <i class="fas fa-plane text-muted me-2"></i>
+                                                <strong class="text-dark">@flight.FlightNumber</strong>
+                                            </div>
+                                            <small class="text-muted">@flight.Airline</small>
+                                            <small class="text-muted">Created: @flight.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <div class="route-badge mb-2">
+                                                <span class="badge bg-light text-dark">
+                                                    @flight.DepartureCity → @flight.ArrivalCity
+                                                </span>
+                                            </div>
+                                            <div class="schedule-times">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-plane-departure me-1"></i>
+                                                    @flight.DepartureTime.ToString("MMM dd, HH:mm")
+                                                </small>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-plane-arrival me-1"></i>
+                                                    @flight.ArrivalTime.ToString("MMM dd, HH:mm")
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-center">
+                                            <div class="capacity-info">
+                                                <span class="seats-available">@flight.AvailableSeats</span>
+                                                <small class="d-block text-muted">of @flight.TotalSeats seats</small>
+                                            </div>
+                                            @if (flight.AvailableSeats == 0)
+                                            {
+                                                <span class="badge bg-danger mt-1">Full</span>
+                                            }
+                                            else if (flight.AvailableSeats < 10)
+                                            {
+                                                <span class="badge bg-warning mt-1">Few left</span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-end">
+                                            <strong class="text-success">$@flight.Price.ToString("N2")</strong>
+                                            <small class="d-block text-muted">per seat</small>
+                                        </div>
+                                    </td>
                                     <td>
                                         <span class="badge @(flight.IsActive ? "bg-success" : "bg-danger")">
+                                            <i class="fas @(flight.IsActive ? "fa-check" : "fa-times") me-1"></i>
                                             @(flight.IsActive ? "Active" : "Inactive")
                                         </span>
                                     </td>
                                     <td>
-                                        <a asp-action="EditFlight" asp-route-id="@flight.FlightId" class="btn btn-sm btn-primary">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </a>
-                                        <form method="post" asp-action="DeleteFlight" class="d-inline">
-                                            <input type="hidden" name="id" value="@flight.FlightId" />
-                                            <button type="submit" class="btn btn-sm btn-danger" 
-                                                    onclick="return confirm('Are you sure you want to delete this flight?')">
-                                                <i class="fas fa-trash"></i> Delete
-                                            </button>
-                                        </form>
+                                        <div class="action-buttons">
+                                            <a asp-action="EditFlight" asp-route-id="@flight.FlightId" 
+                                               class="btn btn-sm btn-outline-primary mb-1" title="Edit Flight">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <form method="post" asp-action="DeleteFlight" class="d-inline">
+                                                <input type="hidden" name="id" value="@flight.FlightId" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="return confirmDeleteFlight('@flight.FlightNumber')"
+                                                        title="Delete Flight">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -66,13 +118,286 @@
             }
             else
             {
-                <div class="text-center py-4">
-                    <i class="fas fa-plane fa-3x text-muted mb-3"></i>
-                    <h4>No flights found</h4>
-                    <p class="text-muted">Get started by adding your first flight.</p>
-                    <a asp-action="CreateFlight" class="btn btn-primary">Add Flight</a>
+                <div class="text-center py-5">
+                    <div class="empty-state">
+                        <i class="fas fa-plane fa-4x text-muted mb-4"></i>
+                        <h3 class="text-muted">No Flights Found</h3>
+                        <p class="text-muted mb-4">Get started by adding your first flight to the system.</p>
+                        <a asp-action="CreateFlight" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i>Add First Flight
+                        </a>
+                    </div>
                 </div>
             }
         </div>
     </div>
+
+    <!-- Flight Statistics -->
+    @if (Model.Any())
+    {
+        <div class="row mt-4">
+            <div class="col-md-3 col-6">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-0">@Model.Count</h4>
+                        <small>Total Flights</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-0">@Model.Count(f => f.IsActive)</h4>
+                        <small>Active Flights</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-0">@Model.Sum(f => f.AvailableSeats)</h4>
+                        <small>Available Seats</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-0">@Model.Count(f => f.AvailableSeats == 0)</h4>
+                        <small>Full Flights</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
+@section Scripts {
+    <script>
+        function confirmDeleteFlight(flightNumber) {
+            return confirm(`Are you sure you want to delete flight ${flightNumber}?\n\nThis action cannot be undone and will remove the flight from the system.`);
+        }
+    </script>
+}
+<style>
+    .card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    .card-body {
+        background: #ffffff;
+    }
+
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background-color: #f8f9fa;
+        color: #2c3e50;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .table td {
+        vertical-align: middle;
+        padding: 1rem 0.75rem;
+        border-bottom: 1px solid #e9ecef;
+        background: #ffffff;
+    }
+
+    .seats-available {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .route-badge .badge {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem;
+        background-color: #e3f2fd !important;
+        color: #1565c0 !important;
+        border: 1px solid #bbdefb;
+    }
+
+    .action-buttons {
+        min-width: 120px;
+    }
+
+    .action-buttons .btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 0.25rem;
+        border: 1px solid;
+    }
+
+    .empty-state {
+        padding: 3rem 1rem;
+        background: #ffffff;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .schedule-times small {
+        line-height: 1.4;
+        color: #6c757d;
+    }
+
+    /* Statistics Cards - Enhanced Readability */
+    .card.bg-primary {
+        background: linear-gradient(135deg, #3498db, #2980b9) !important;
+        border: 1px solid #2980b9;
+    }
+
+    .card.bg-success {
+        background: linear-gradient(135deg, #27ae60, #219a52) !important;
+        border: 1px solid #219a52;
+    }
+
+    .card.bg-info {
+        background: linear-gradient(135deg, #17a2b8, #138496) !important;
+        border: 1px solid #138496;
+    }
+
+    .card.bg-warning {
+        background: linear-gradient(135deg, #f39c12, #e67e22) !important;
+        border: 1px solid #e67e22;
+    }
+
+    .card .card-body {
+        background: transparent !important;
+    }
+
+    .card .card-body h4 {
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .card .card-body small {
+        opacity: 0.95;
+        font-weight: 500;
+    }
+
+    /* Status badges */
+    .badge.bg-success {
+        background: linear-gradient(135deg, #27ae60, #219a52) !important;
+        border: 1px solid #1e8449;
+    }
+
+    .badge.bg-danger {
+        background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+        border: 1px solid #b03a2e;
+    }
+
+    .badge.bg-warning {
+        background: linear-gradient(135deg, #f39c12, #e67e22) !important;
+        border: 1px solid #d68910;
+        color: #fff !important;
+    }
+
+    /* Table row styling */
+    .table > :not(caption) > * > * {
+        background: #ffffff;
+        box-shadow: none;
+    }
+
+    /* Responsive design */
+    @@media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.875rem;
+            background: #ffffff;
+        }
+        
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            background: #ffffff;
+        }
+        
+        .action-buttons {
+            min-width: 100px;
+        }
+        
+        .action-buttons .btn {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.6rem;
+        }
+        
+        .seats-available {
+            font-size: 1.1rem;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+        
+        .table th:nth-child(3),
+        .table td:nth-child(3),
+        .table th:nth-child(4),
+        .table td:nth-child(4) {
+            display: none;
+        }
+        
+        .action-buttons .btn {
+            display: inline-block;
+            width: auto;
+            margin-right: 0.25rem;
+        }
+
+        .card {
+            margin-bottom: 1rem;
+        }
+    }
+
+    @@media (max-width: 400px) {
+        .table th:nth-child(2),
+        .table td:nth-child(2) {
+            display: none;
+        }
+        
+        .action-buttons .btn {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.5rem;
+        }
+        
+        .route-badge .badge {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.6rem;
+        }
+    }
+
+    /* Additional enhancements for better readability */
+    .text-muted {
+        color: #6c757d !important;
+    }
+
+    .text-dark {
+        color: #2c3e50 !important;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        border: 1px solid #2980b9;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #2980b9, #2471a3);
+        border: 1px solid #2471a3;
+    }
+
+    .table-hover tbody tr {
+        transition: all 0.3s ease;
+    }
+</style>

@@ -4,23 +4,27 @@
 }
 
 <div class="container">
-    <h2>Manage Bookings</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Manage Bookings</h2>
+        <div class="text-muted fw-medium">
+            <i class="fas fa-ticket-alt me-2"></i>Total: @Model.Count bookings
+        </div>
+    </div>
     
-    <div class="card">
-        <div class="card-body">
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
             @if (Model.Any())
             {
                 <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
                             <tr>
-                                <th>Booking ID</th>
+                                <th>Booking</th>
                                 <th>User</th>
-                                <th>Flight</th>
-                                <th>Route</th>
+                                <th>Flight Details</th>
                                 <th>Passengers</th>
-                                <th>Total Amount</th>
-                                <th>Booking Date</th>
+                                <th>Amount</th>
+                                <th>Date</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -29,28 +33,82 @@
                             @foreach (var booking in Model)
                             {
                                 <tr>
-                                    <td>@booking.BookingId</td>
-                                    <td>@booking.User?.Email</td>
-                                    <td>@booking.Flight?.FlightNumber</td>
-                                    <td>@booking.Flight?.DepartureCity → @booking.Flight?.ArrivalCity</td>
-                                    <td>@booking.NumberOfPassengers</td>
-                                    <td>$@booking.TotalAmount.ToString("N2")</td>
-                                    <td>@booking.BookingDate.ToString("MMM dd, yyyy")</td>
                                     <td>
-                                        <span class="badge @(booking.Status == "Confirmed" ? "bg-success" : 
-                                                      booking.Status == "Cancelled" ? "bg-danger" : "bg-warning")">
+                                        <div class="d-flex flex-column">
+                                            <small class="text-muted mb-1">Booking ID</small>
+                                            <strong class="text-primary">@booking.BookingId.ToString().Substring(0, 8)...</strong>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <strong class="text-dark">@booking.User?.Email</strong>
+                                            <small class="text-muted">@booking.User?.FirstName @booking.User?.LastName</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <i class="fas fa-plane text-primary me-2"></i>
+                                                <strong class="text-dark">@booking.Flight?.FlightNumber</strong>
+                                            </div>
+                                            <div class="route-badge mb-1">
+                                                <span class="badge bg-light text-dark border">
+                                                    <i class="fas fa-route me-1"></i>
+                                                    @booking.Flight?.DepartureCity → @booking.Flight?.ArrivalCity
+                                                </span>
+                                            </div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-building me-1"></i>@booking.Flight?.Airline
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-center">
+                                            <span class="passenger-count">@booking.NumberOfPassengers</span>
+                                            <small class="d-block text-muted">
+                                                passenger@(booking.NumberOfPassengers != 1 ? "s" : "")
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-end">
+                                            <strong class="text-success fs-6">$@booking.TotalAmount.ToString("N2")</strong>
+                                            <small class="d-block text-muted">Total</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <small class="text-muted">Booked on</small>
+                                            <strong class="text-dark">@booking.BookingDate.ToString("MMM dd, yyyy")</strong>
+                                            <small class="text-muted">@booking.BookingDate.ToString("HH:mm")</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge @GetStatusBadgeClass(booking.Status) px-2 py-1">
+                                            <i class="fas @GetStatusIcon(booking.Status) me-1"></i>
                                             @booking.Status
                                         </span>
                                     </td>
                                     <td>
-                                        <form method="post" asp-action="UpdateBookingStatus" class="d-inline">
-                                            <input type="hidden" name="bookingId" value="@booking.BookingId" />
-                                            <select name="status" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
-                                                <option value="Confirmed" selected="@(booking.Status == "Confirmed")">Confirmed</option>
-                                                <option value="Cancelled" selected="@(booking.Status == "Cancelled")">Cancelled</option>
-                                                <option value="Completed" selected="@(booking.Status == "Completed")">Completed</option>
-                                            </select>
-                                        </form>
+                                        <div class="action-dropdown">
+                                            <form method="post" asp-action="UpdateBookingStatus" class="mb-2">
+                                                <input type="hidden" name="bookingId" value="@booking.BookingId" />
+                                                <select name="status" class="form-select form-select-sm status-select border" 
+                                                        onchange="updateBookingStatus(this)" 
+                                                        data-booking-id="@booking.BookingId">
+                                                    <option value="Confirmed" selected="@(booking.Status == "Confirmed")">Confirmed</option>
+                                                    <option value="Pending" selected="@(booking.Status == "Pending")">Pending</option>
+                                                    <option value="Cancelled" selected="@(booking.Status == "Cancelled")">Cancelled</option>
+                                                    <option value="Completed" selected="@(booking.Status == "Completed")">Completed</option>
+                                                </select>
+                                            </form>
+                                            <button class="btn btn-sm btn-outline-primary w-100" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#bookingDetailsModal"
+                                                    onclick="loadBookingDetails('@booking.BookingId', '@booking.User?.FirstName @booking.User?.LastName', '@booking.User?.Email', '@booking.Flight?.FlightNumber', '@booking.Flight?.DepartureCity', '@booking.Flight?.ArrivalCity', '@booking.Flight?.DepartureTime.ToString("MMM dd, yyyy HH:mm")', '@booking.Flight?.ArrivalTime.ToString("MMM dd, yyyy HH:mm")', '@booking.NumberOfPassengers', '@booking.TotalAmount', '@booking.BookingDate.ToString("MMM dd, yyyy HH:mm")', '@booking.Status')">
+                                                <i class="fas fa-eye me-1"></i>View
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -60,12 +118,325 @@
             }
             else
             {
-                <div class="text-center py-4">
-                    <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
-                    <h4>No bookings found</h4>
-                    <p class="text-muted">There are no bookings in the system yet.</p>
+                <div class="text-center py-5">
+                    <div class="empty-state">
+                        <i class="fas fa-ticket-alt fa-4x text-muted mb-4"></i>
+                        <h3 class="text-muted mb-3">No Bookings Found</h3>
+                        <p class="text-muted mb-4">There are no bookings in the system yet.</p>
+                        <a href="#" class="btn btn-primary">
+                            <i class="fas fa-sync-alt me-2"></i>Refresh
+                        </a>
+                    </div>
                 </div>
             }
         </div>
     </div>
+
+    <!-- Booking Statistics -->
+    @if (Model.Any())
+    {
+        <div class="row mt-4">
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-1">@Model.Count</h4>
+                        <small class="opacity-90">Total Bookings</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-1">@Model.Count(b => b.Status == "Confirmed")</h4>
+                        <small class="opacity-90">Confirmed</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-1">@Model.Count(b => b.Status == "Pending")</h4>
+                        <small class="opacity-90">Pending</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-1">@Model.Count(b => b.Status == "Cancelled")</h4>
+                        <small class="opacity-90">Cancelled</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
+<!-- Booking Details Modal -->
+<div class="modal fade" id="bookingDetailsModal" tabindex="-1" aria-labelledby="bookingDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="bookingDetailsModalLabel">
+                    <i class="fas fa-ticket-alt me-2"></i>Booking Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Booking Information -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Booking Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="col-6">
+                                        <small class="text-muted">Booking ID</small>
+                                        <p class="fw-bold" id="modalBookingId">-</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Status</small>
+                                        <p><span class="badge bg-success" id="modalBookingStatus">-</span></p>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6">
+                                        <small class="text-muted">Passengers</small>
+                                        <p class="fw-bold" id="modalPassengers">-</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Total Amount</small>
+                                        <p class="fw-bold text-success" id="modalTotalAmount">-</p>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <small class="text-muted">Booking Date</small>
+                                        <p class="fw-bold" id="modalBookingDate">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Information -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-user me-2"></i>User Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <small class="text-muted">Full Name</small>
+                                    <p class="fw-bold" id="modalUserName">-</p>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">Email</small>
+                                    <p class="fw-bold" id="modalUserEmail">-</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Flight Information -->
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-plane me-2"></i>Flight Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Flight Number</small>
+                                        <p class="fw-bold" id="modalFlightNumber">-</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Route</small>
+                                        <p class="fw-bold" id="modalRoute">-</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Departure</small>
+                                        <p class="fw-bold" id="modalDepartureTime">-</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Arrival</small>
+                                        <p class="fw-bold" id="modalArrivalTime">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Close
+                </button>
+                <button type="button" class="btn btn-primary" onclick="printBookingDetails()">
+                    <i class="fas fa-print me-2"></i>Print
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Confirmed" => "bg-success",
+            "Cancelled" => "bg-danger",
+            "Completed" => "bg-info",
+            "Pending" => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+
+    public string GetStatusIcon(string status)
+    {
+        return status switch
+        {
+            "Confirmed" => "fa-check-circle",
+            "Cancelled" => "fa-times-circle",
+            "Completed" => "fa-flag-checkered",
+            "Pending" => "fa-clock",
+            _ => "fa-circle"
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        function updateBookingStatus(selectElement) {
+            const bookingId = selectElement.getAttribute('data-booking-id');
+            const newStatus = selectElement.value;
+            const originalStatus = selectElement.getAttribute('data-original-value');
+            
+            if (newStatus === originalStatus) {
+                return;
+            }
+
+            if (confirm(`Are you sure you want to change booking status to "${newStatus}"?`)) {
+                selectElement.form.submit();
+            } else {
+                // Reset to original value if cancelled
+                selectElement.value = originalStatus;
+            }
+        }
+
+        function loadBookingDetails(bookingId, userName, userEmail, flightNumber, departureCity, arrivalCity, departureTime, arrivalTime, passengers, totalAmount, bookingDate, status) {
+            // Update modal content with booking details
+            document.getElementById('modalBookingId').textContent = bookingId;
+            document.getElementById('modalUserName').textContent = userName || 'Not available';
+            document.getElementById('modalUserEmail').textContent = userEmail || 'Not available';
+            document.getElementById('modalFlightNumber').textContent = flightNumber || 'Not available';
+            document.getElementById('modalRoute').textContent = `${departureCity || 'N/A'} → ${arrivalCity || 'N/A'}`;
+            document.getElementById('modalDepartureTime').textContent = departureTime || 'Not available';
+            document.getElementById('modalArrivalTime').textContent = arrivalTime || 'Not available';
+            document.getElementById('modalPassengers').textContent = passengers || '0';
+            document.getElementById('modalTotalAmount').textContent = totalAmount ? `$${parseFloat(totalAmount).toFixed(2)}` : '$0.00';
+            document.getElementById('modalBookingDate').textContent = bookingDate || 'Not available';
+            
+            // Update status badge
+            const statusBadge = document.getElementById('modalBookingStatus');
+            statusBadge.textContent = status || 'Unknown';
+            statusBadge.className = 'badge ' + getStatusBadgeClass(status);
+        }
+
+        function getStatusBadgeClass(status) {
+            switch(status) {
+                case 'Confirmed': return 'bg-success';
+                case 'Cancelled': return 'bg-danger';
+                case 'Completed': return 'bg-info';
+                case 'Pending': return 'bg-warning';
+                default: return 'bg-secondary';
+            }
+        }
+
+        function printBookingDetails() {
+            const modalContent = document.querySelector('#bookingDetailsModal .modal-content').cloneNode(true);
+            const printWindow = window.open('', '_blank');
+            
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Booking Details</title>
+                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+                        <style>
+                            body { padding: 20px; }
+                            .card { border: 1px solid #dee2e6; margin-bottom: 20px; }
+                            .badge { font-size: 0.8em; }
+                        </style>
+                    </head>
+                    <body>
+                        <h2 class="mb-4"><i class="fas fa-ticket-alt me-2"></i>Booking Details</h2>
+                        ${modalContent.innerHTML}
+                    </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Store original values on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.status-select').forEach(select => {
+                select.setAttribute('data-original-value', select.value);
+            });
+        });
+    </script>
+}
+
+<style>
+    /* ... (keep all the previous CSS styles from the previous version) ... */
+
+    /* Modal specific styles */
+    .modal-header {
+        border-bottom: 2px solid rgba(255,255,255,0.1);
+    }
+
+    .modal-content {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .card {
+        border: 1px solid #e3e6f0;
+        border-radius: 8px;
+    }
+
+    .card-header {
+        background-color: #f8f9fa !important;
+        border-bottom: 1px solid #e3e6f0;
+        font-weight: 600;
+    }
+
+    .modal-body .card-body {
+        padding: 1.25rem;
+    }
+
+    .modal-body p {
+        margin-bottom: 0.5rem;
+    }
+
+    .modal-body .text-muted {
+        font-size: 0.875rem;
+    }
+
+    /* Responsive modal */
+    @@media (max-width: 768px) {
+        .modal-dialog {
+            margin: 1rem;
+        }
+        
+        .modal-body .row .col-md-6 {
+            margin-bottom: 1rem;
+        }
+    }
+</style>

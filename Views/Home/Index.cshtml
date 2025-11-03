@@ -2,70 +2,285 @@
     ViewData["Title"] = "Home";
 }
 
-<div class="hero-section bg-primary text-white py-5 mb-5">
+<!-- Hero Section -->
+<section class="hero-section bg-primary text-white py-4 py-lg-5">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h1 class="display-4 fw-bold">Welcome to Airline Reservation System</h1>
-                <p class="lead">Book your flights easily and manage your travel plans with our comprehensive airline reservation system.</p>
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h1 class="display-5 display-lg-4 fw-bold mb-3">Welcome to Airline Reservation System</h1>
+                <p class="lead mb-4">Book flights easily and manage your travel plans with our comprehensive airline reservation platform.</p>
                 
-                <div class="mt-4">
-                    <a class="btn btn-light btn-lg me-3" asp-controller="User" asp-action="Flights">
-                        <i class="fas fa-search"></i> Find Flights
-                    </a>
-                    
+                <div class="d-flex flex-wrap gap-2">
+                   
                     @if (User.IsInRole("Admin"))
                     {
-                        <a class="btn btn-outline-light btn-lg" asp-controller="Admin" asp-action="Dashboard">
-                            <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+                        <a class="btn btn-outline-light btn-lg flex-fill flex-md-grow-0" asp-controller="Admin" asp-action="Dashboard">
+                            <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
                         </a>
                     }
                     else
                     {
-                        <a class="btn btn-outline-light btn-lg me-2" asp-controller="Home" asp-action="Dashboard">
-                            <i class="fas fa-tachometer-alt"></i> My Dashboard
+                         <a class="btn btn-light btn-lg flex-fill flex-md-grow-0" asp-controller="User" asp-action="Flights">
+                        <i class="fas fa-search me-2"></i>Find Flights
+                    </a>
+                    
+                        <a class="btn btn-outline-light btn-lg flex-fill flex-md-grow-0" asp-controller="Home" asp-action="Dashboard">
+                            <i class="fas fa-tachometer-alt me-2"></i>My Dashboard
                         </a>
-                        <a class="btn btn-outline-light btn-lg" asp-controller="User" asp-action="MyBookings">
-                            <i class="fas fa-ticket-alt"></i> My Bookings
+                        <a class="btn btn-outline-light btn-lg flex-fill flex-md-grow-0" asp-controller="User" asp-action="MyBookings">
+                            <i class="fas fa-ticket-alt me-2"></i>My Bookings
                         </a>
                     }
                 </div>
             </div>
             <div class="col-lg-6 text-center">
-                <i class="fas fa-plane-departure" style="font-size: 15rem; opacity: 0.8;"></i>
+                <i class="fas fa-plane-departure hero-icon"></i>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<div class="container">
-    <div class="row text-center mb-5">
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <i class="fas fa-search text-primary mb-3" style="font-size: 3rem;"></i>
-                    <h4>Search Flights</h4>
-                    <p>Find the perfect flight from our extensive database of available routes.</p>
+<!-- Features Section -->
+<section class="features-section py-4 py-lg-5">
+    <div class="container">
+        <div class="row g-3 g-md-4">
+            <div class="col-md-4">
+                <div class="card feature-card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-3 p-md-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-search text-primary"></i>
+                        </div>
+                        <h5 class="card-title mb-2">Search Flights</h5>
+                        <p class="card-text text-muted">Find the perfect flight from our extensive database of available routes and schedules.</p>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <i class="fas fa-ticket-alt text-success mb-3" style="font-size: 3rem;"></i>
-                    <h4>Book Instantly</h4>
-                    <p>Secure your seats with our easy and fast booking process.</p>
+            <div class="col-md-4">
+                <div class="card feature-card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-3 p-md-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-ticket-alt text-success"></i>
+                        </div>
+                        <h5 class="card-title mb-2">Book Instantly</h5>
+                        <p class="card-text text-muted">Secure your seats with our fast and easy booking process. Get instant confirmation.</p>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <i class="fas fa-cog text-warning mb-3" style="font-size: 3rem;"></i>
-                    <h4>Manage Bookings</h4>
-                    <p>Easily view, modify, or cancel your bookings anytime.</p>
+            <div class="col-md-4">
+                <div class="card feature-card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-3 p-md-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-cog text-warning"></i>
+                        </div>
+                        <h5 class="card-title mb-2">Manage Bookings</h5>
+                        <p class="card-text text-muted">Easily view, modify, or cancel your bookings anytime from your dashboard.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<!-- Quick Stats (if user is logged in) -->
+@if (User.Identity.IsAuthenticated)
+{
+    <section class="stats-section py-4 bg-light">
+        <div class="container">
+            <h3 class="text-center mb-4">Quick Access</h3>
+            <div class="row g-3">
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="col-6 col-md-3">
+                        <a asp-controller="Admin" asp-action="Flights" class="card stat-card text-decoration-none">
+                            <div class="card-body text-center p-3">
+                                <i class="fas fa-plane text-primary mb-2"></i>
+                                <h6 class="mb-1">Manage Flights</h6>
+                                <small class="text-muted">Add/Edit flights</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a asp-controller="Admin" asp-action="Bookings" class="card stat-card text-decoration-none">
+                            <div class="card-body text-center p-3">
+                                <i class="fas fa-ticket-alt text-success mb-2"></i>
+                                <h6 class="mb-1">All Bookings</h6>
+                                <small class="text-muted">View all bookings</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a asp-controller="Admin" asp-action="Users" class="card stat-card text-decoration-none">
+                            <div class="card-body text-center p-3">
+                                <i class="fas fa-users text-info mb-2"></i>
+                                <h6 class="mb-1">Manage Users</h6>
+                                <small class="text-muted">User management</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a asp-controller="Admin" asp-action="Dashboard" class="card stat-card text-decoration-none">
+                            <div class="card-body text-center p-3">
+                                <i class="fas fa-chart-bar text-warning mb-2"></i>
+                                <h6 class="mb-1">Analytics</h6>
+                                <small class="text-muted">View reports</small>
+                            </div>
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="col-6 col-md-3">
+                        <a asp-controller="User" asp-action="Flights" class="card stat-card text-decoration-none">
+                            <div class="card-body text-center p-3">
+                                <i class="fas fa-search text-primary mb-2"></i>
+                                <h6 class="mb-1">Find Flights</h6>
+                                <small class="text-muted">Search & book</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a asp-controller="User" asp-action="MyBookings" class="card stat-card text-decoration-none">
+                            <div class="card-body text-center p-3">
+                                <i class="fas fa-ticket-alt text-success mb-2"></i>
+                                <h6 class="mb-1">My Bookings</h6>
+                                <small class="text-muted">View bookings</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a asp-controller="Home" asp-action="Dashboard" class="card stat-card text-decoration-none">
+                            <div class="card-body text-center p-3">
+                                <i class="fas fa-tachometer-alt text-info mb-2"></i>
+                                <h6 class="mb-1">Dashboard</h6>
+                                <small class="text-muted">Overview</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a asp-controller="User" asp-action="Flights" class="card stat-card text-decoration-none">
+                            <div class="card-body text-center p-3">
+                                <i class="fas fa-plus-circle text-warning mb-2"></i>
+                                <h6 class="mb-1">New Booking</h6>
+                                <small class="text-muted">Book flight</small>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<style>
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    }
+
+    .hero-icon {
+        font-size: 8rem;
+        opacity: 0.8;
+    }
+
+    /* Features Section */
+    .feature-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-radius: 12px;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    }
+
+    .feature-icon {
+        font-size: 3rem;
+    }
+
+    /* Stats Section */
+    .stat-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        color: inherit;
+    }
+
+    .stat-card:hover {
+        border-color: #0d6efd;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .hero-icon {
+            font-size: 5rem;
+        }
+        
+        .display-5 {
+            font-size: 2.5rem;
+        }
+        
+        .btn-lg {
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .hero-section {
+            padding: 2rem 0;
+        }
+        
+        .hero-icon {
+            font-size: 4rem;
+        }
+        
+        .display-5 {
+            font-size: 2rem;
+        }
+        
+        .lead {
+            font-size: 1.1rem;
+        }
+        
+        .features-section {
+            padding: 2rem 0;
+        }
+        
+        .feature-card {
+            margin-bottom: 1rem;
+        }
+        
+        .d-flex.flex-wrap {
+            flex-direction: column;
+        }
+        
+        .d-flex.flex-wrap .btn {
+            margin-bottom: 0.5rem;
+        }
+    }
+
+    @@media (max-width: 400px) {
+        .hero-icon {
+            font-size: 3rem;
+        }
+        
+        .display-5 {
+            font-size: 1.75rem;
+        }
+        
+        .btn-lg {
+            font-size: 0.9rem;
+            padding: 0.6rem 0.8rem;
+        }
+    }
+</style>

@@ -4,19 +4,23 @@
 }
 
 <div class="container">
-    <h2>Manage Users</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manage Users</h2>
+        <div class="text-muted">
+            <i class="fas fa-users me-2"></i>Total: @Model.Count users
+        </div>
+    </div>
     
     <div class="card">
-        <div class="card-body">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Date of Birth</th>
-                            <th>Registered</th>
-                            <th>Roles</th>
+                            <th>User</th>
+                            <th>Contact</th>
+                            <th>Details</th>
+                            <th>Role</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -24,31 +28,53 @@
                         @foreach (var userWithRoles in Model)
                         {
                             <tr>
-                                <td>@userWithRoles.User.FirstName @userWithRoles.User.LastName</td>
-                                <td>@userWithRoles.User.Email</td>
-                                <td>@userWithRoles.User.DateOfBirth.ToString("MMM dd, yyyy")</td>
-                                <td>@userWithRoles.User.CreatedAt.ToString("MMM dd, yyyy")</td>
                                 <td>
-                                    @foreach (var role in userWithRoles.Roles)
-                                    {
-                                        <span class="badge bg-primary">@role</span>
-                                    }
+                                    <div class="d-flex flex-column">
+                                        <strong class="text-dark">@userWithRoles.User.FirstName @userWithRoles.User.LastName</strong>
+                                        <small class="text-muted">ID: @userWithRoles.User.Id.Substring(0, 8)...</small>
+                                    </div>
                                 </td>
                                 <td>
-                                    <form method="post" asp-action="AssignRole" class="d-inline">
-                                        <input type="hidden" name="userId" value="@userWithRoles.User.Id" />
-                                        <select name="role" class="form-select form-select-sm d-inline w-auto">
-                                            <option value="User" selected="@(userWithRoles.Roles.Contains("User"))">User</option>
-                                            <option value="Admin" selected="@(userWithRoles.Roles.Contains("Admin"))">Admin</option>
-                                        </select>
-                                        <button type="submit" class="btn btn-sm btn-primary">Assign Role</button>
-                                    </form>
-                                    
-                                    <form method="post" asp-action="DeleteUser" class="d-inline" 
-                                          onsubmit="return confirm('Are you sure you want to delete this user?')">
-                                        <input type="hidden" name="userId" value="@userWithRoles.User.Id" />
-                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                    </form>
+                                    <div class="d-flex flex-column">
+                                        <strong class="text-dark">@userWithRoles.User.Email</strong>
+                                        <small class="text-muted">
+                                            <i class="fas fa-phone me-1"></i>
+                                            @(string.IsNullOrEmpty(userWithRoles.User.PhoneNumber) ? "No phone" : userWithRoles.User.PhoneNumber)
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <small class="text-muted">
+                                            <i class="fas fa-birthday-cake me-1"></i>
+                                            @userWithRoles.User.DateOfBirth.ToString("MMM dd, yyyy")
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            Joined @userWithRoles.User.CreatedAt.ToString("MMM dd, yyyy")
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="role-badges">
+                                        @foreach (var role in userWithRoles.Roles)
+                                        {
+                                            <span class="badge @GetRoleBadgeClass(role)">
+                                                <i class="fas @GetRoleIcon(role) me-1"></i>@role
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <form method="post" asp-action="DeleteUser" class="d-inline">
+                                            <input type="hidden" name="userId" value="@userWithRoles.User.Id" />
+                                            <button type="submit" class="btn btn-sm btn-danger" 
+                                                    onclick="return confirmDeleteUser('@userWithRoles.User.FirstName @userWithRoles.User.LastName')">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         }
@@ -57,4 +83,242 @@
             </div>
         </div>
     </div>
+
+    <!-- User Statistics -->
+    <div class="row mt-4">
+        <div class="col-md-4 col-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center py-3">
+                    <h3 class="mb-1">@Model.Count</h3>
+                    <small class="opacity-90">Total Users</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-6 mb-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center py-3">
+                    <h3 class="mb-1">@Model.Count(u => u.Roles.Contains("Admin"))</h3>
+                    <small class="opacity-90">Administrators</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center py-3">
+                    <h3 class="mb-1">@Model.Count(u => u.Roles.Contains("User"))</h3>
+                    <small class="opacity-90">Regular Users</small>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+@functions {
+    public string GetRoleBadgeClass(string role)
+    {
+        return role switch
+        {
+            "Admin" => "bg-danger",
+            "User" => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+
+    public string GetRoleIcon(string role)
+    {
+        return role switch
+        {
+            "Admin" => "fa-shield-alt",
+            "User" => "fa-user",
+            _ => "fa-circle"
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        function confirmDeleteUser(userName) {
+            return confirm(`Are you sure you want to delete user "${userName}"?\n\nThis action cannot be undone and will permanently remove the user account.`);
+        }
+
+        // Prevent deleting your own account
+        document.addEventListener('DOMContentLoaded', function() {
+            const deleteButtons = document.querySelectorAll('form[asp-action="DeleteUser"]');
+            deleteButtons.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const userId = this.querySelector('input[name="userId"]').value;
+                    const currentUserId = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
+                    
+                    if (userId === currentUserId) {
+                        e.preventDefault();
+                        alert('You cannot delete your own account!');
+                        return false;
+                    }
+                });
+            });
+        });
+    </script>
+}
+
+<style>
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background-color: #f8f9fa;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .table td {
+        vertical-align: middle;
+        padding: 1rem 0.75rem;
+        border-color: #e9ecef;
+        background-color: #ffffff;
+    }
+
+    .table tbody tr {
+        transition: background-color 0.15s ease;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .role-badges .badge {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        margin: 0.1rem;
+        font-weight: 500;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .action-buttons .btn {
+        min-width: 85px;
+        font-weight: 500;
+        border: 1px solid transparent;
+        transition: all 0.15s ease;
+    }
+
+    .action-buttons .btn:hover {
+        transform: scale(1.02);
+    }
+
+    .card {
+        border: 1px solid #e3e6f0;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    .card.bg-primary {
+        background: linear-gradient(135deg, #3498db, #2980b9) !important;
+        border: none;
+    }
+
+    .card.bg-danger {
+        background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+        border: none;
+    }
+
+    .card.bg-success {
+        background: linear-gradient(135deg, #27ae60, #219a52) !important;
+        border: none;
+    }
+
+    /* Improved text readability */
+    .text-dark {
+        color: #2c3e50 !important;
+        font-weight: 600;
+    }
+
+    .text-muted {
+        color: #6c757d !important;
+    }
+
+    /* Responsive design */
+    @@media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.875rem;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: #ffffff;
+        }
+        
+        .table th,
+        .table td {
+            padding: 0.75rem 0.5rem;
+        }
+        
+        .action-buttons .btn {
+            min-width: 70px;
+            font-size: 0.75rem;
+            padding: 0.4rem 0.6rem;
+        }
+        
+        .role-badges .badge {
+            font-size: 0.7rem;
+            padding: 0.4rem 0.6rem;
+            display: block;
+            margin: 0.1rem 0;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+        
+        .table th:nth-child(3),
+        .table td:nth-child(3) {
+            display: none;
+        }
+        
+        .row .col-6 {
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+        }
+
+        .action-buttons .btn {
+            min-width: 60px;
+            font-size: 0.7rem;
+            padding: 0.35rem 0.5rem;
+        }
+    }
+
+    @@media (max-width: 400px) {
+        .table th:nth-child(2),
+        .table td:nth-child(2) {
+            display: none;
+        }
+        
+        .role-badges .badge {
+            font-size: 0.65rem;
+            padding: 0.3rem 0.5rem;
+        }
+
+        .container {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+    }
+
+    /* Remove any horizontal sliding effects */
+    .table tbody tr {
+        transform: none !important;
+    }
+
+    .action-buttons .btn:hover {
+        transform: scale(1.02) !important;
+    }
+</style>
