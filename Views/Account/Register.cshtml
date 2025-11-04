@@ -5,9 +5,9 @@
 
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-7">
+        <div class="col-md-6 col-lg-5">
             <div class="card shadow-sm">
-                <div class="card-header bg-success text-white text-center py-4">
+                <div class="card-header bg-primary text-white text-center py-4">
                     <h3 class="mb-0">
                         <i class="fas fa-user-plus me-2"></i>Create Account
                     </h3>
@@ -17,31 +17,26 @@
                     <form method="post">
                         <div asp-validation-summary="All" class="alert alert-danger"></div>
                         
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-4">
-                                    <label asp-for="FirstName" class="form-label fw-bold">First Name</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light">
-                                            <i class="fas fa-user text-primary"></i>
-                                        </span>
-                                        <input asp-for="FirstName" class="form-control" placeholder="Enter your first name" />
-                                    </div>
-                                    <span asp-validation-for="FirstName" class="text-danger small"></span>
-                                </div>
+                        <div class="form-group mb-4">
+                            <label asp-for="FirstName" class="form-label fw-bold">First Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-user text-primary"></i>
+                                </span>
+                                <input asp-for="FirstName" class="form-control" placeholder="Enter your first name" />
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group mb-4">
-                                    <label asp-for="LastName" class="form-label fw-bold">Last Name</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light">
-                                            <i class="fas fa-user text-primary"></i>
-                                        </span>
-                                        <input asp-for="LastName" class="form-control" placeholder="Enter your last name" />
-                                    </div>
-                                    <span asp-validation-for="LastName" class="text-danger small"></span>
-                                </div>
+                            <span asp-validation-for="FirstName" class="text-danger small"></span>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label asp-for="LastName" class="form-label fw-bold">Last Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-user text-primary"></i>
+                                </span>
+                                <input asp-for="LastName" class="form-control" placeholder="Enter your last name" />
                             </div>
+                            <span asp-validation-for="LastName" class="text-danger small"></span>
                         </div>
                         
                         <div class="form-group mb-4">
@@ -66,41 +61,36 @@
                             <span asp-validation-for="DateOfBirth" class="text-danger small"></span>
                         </div>
                         
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-4">
-                                    <label asp-for="Password" class="form-label fw-bold">Password</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light">
-                                            <i class="fas fa-lock text-primary"></i>
-                                        </span>
-                                        <input asp-for="Password" type="password" class="form-control" placeholder="Create a password" id="registerPassword" />
-                                        <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('registerPassword', 'registerPasswordToggle')">
-                                            <i class="fas fa-eye" id="registerPasswordToggle"></i>
-                                        </button>
-                                    </div>
-                                    <span asp-validation-for="Password" class="text-danger small"></span>
-                                </div>
+                        <div class="form-group mb-4">
+                            <label asp-for="Password" class="form-label fw-bold">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-lock text-primary"></i>
+                                </span>
+                                <input asp-for="Password" type="password" class="form-control password-input" placeholder="Create a password" id="registerPassword" />
+                                <button type="button" class="btn btn-outline-secondary password-toggle" onclick="togglePassword('registerPassword', this)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group mb-4">
-                                    <label asp-for="ConfirmPassword" class="form-label fw-bold">Confirm Password</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light">
-                                            <i class="fas fa-lock text-primary"></i>
-                                        </span>
-                                        <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm your password" id="confirmPassword" />
-                                        <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('confirmPassword', 'confirmPasswordToggle')">
-                                            <i class="fas fa-eye" id="confirmPasswordToggle"></i>
-                                        </button>
-                                    </div>
-                                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
-                                </div>
-                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
                         </div>
                         
                         <div class="form-group mb-4">
-                            <button type="submit" class="btn btn-success w-100 py-2 fw-bold">
+                            <label asp-for="ConfirmPassword" class="form-label fw-bold">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-lock text-primary"></i>
+                                </span>
+                                <input asp-for="ConfirmPassword" type="password" class="form-control password-input" placeholder="Confirm your password" id="confirmPassword" />
+                                <button type="button" class="btn btn-outline-secondary password-toggle" onclick="togglePassword('confirmPassword', this)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
                                 <i class="fas fa-user-plus me-2"></i> Create Account
                             </button>
                         </div>
@@ -108,7 +98,7 @@
                 </div>
                 <div class="card-footer text-center py-3">
                     <p class="mb-0">Already have an account? 
-                        <a asp-action="Login" asp-controller="Account" class="fw-bold text-success">Login here</a>
+                        <a asp-action="Login" asp-controller="Account" class="fw-bold text-primary">Login here</a>
                     </p>
                 </div>
             </div>
@@ -119,18 +109,20 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        function togglePassword(inputId, iconId) {
+        function togglePassword(inputId, button) {
             const passwordInput = document.getElementById(inputId);
-            const icon = document.getElementById(iconId);
+            const icon = button.querySelector('i');
             
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
                 icon.classList.remove('fa-eye');
                 icon.classList.add('fa-eye-slash');
+                button.classList.add('active');
             } else {
                 passwordInput.type = 'password';
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
+                button.classList.remove('active');
             }
         }
 
@@ -140,6 +132,11 @@
             const maxDate = new Date();
             maxDate.setFullYear(maxDate.getFullYear() - 18);
             dateOfBirthInput.max = maxDate.toISOString().split('T')[0];
+            
+            // Set min date (120 years ago)
+            const minDate = new Date();
+            minDate.setFullYear(minDate.getFullYear() - 120);
+            dateOfBirthInput.min = minDate.toISOString().split('T')[0];
         });
     </script>
 }
@@ -156,8 +153,8 @@
         border-bottom: 1px solid rgba(255,255,255,0.1);
     }
 
-    .bg-success {
-        background: linear-gradient(135deg, #27ae60, #219a52) !important;
+    .bg-primary {
+        background: linear-gradient(135deg, #3498db, #2980b9) !important;
     }
 
     .form-control {
@@ -176,18 +173,55 @@
         background-color: #f8f9fa;
         border: 1px solid #d1d3e2;
         color: #495057;
+        border-right: none;
     }
 
-    .btn-success {
-        background: linear-gradient(135deg, #27ae60, #219a52);
+    .password-input {
+        border-left: none;
+        border-right: none;
+        border-radius: 0;
+    }
+
+    .password-toggle {
+        border: 1px solid #d1d3e2;
+        border-left: none;
+        border-radius: 0 8px 8px 0;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+
+    .password-toggle:hover {
+        background-color: #e9ecef;
+        border-color: #d1d3e2;
+    }
+
+    .password-toggle.active {
+        background-color: #e9ecef;
+        border-color: #3498db;
+    }
+
+    .input-group:focus-within .input-group-text {
+        border-color: #3498db;
+    }
+
+    .input-group:focus-within .password-input {
+        border-color: #3498db;
+    }
+
+    .input-group:focus-within .password-toggle {
+        border-color: #3498db;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #3498db, #2980b9);
         border: none;
         border-radius: 8px;
         font-weight: 600;
         transition: all 0.3s ease;
     }
 
-    .btn-success:hover {
-        background: linear-gradient(135deg, #219a52, #1e8449);
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #2980b9, #2471a3);
         transform: translateY(-1px);
     }
 
@@ -207,9 +241,24 @@
         .card-body {
             padding: 1.5rem !important;
         }
-        
-        .row .col-md-6 {
-            margin-bottom: 1rem;
-        }
+    }
+
+    /* Form label styling */
+    .form-label {
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Input group focus states */
+    .input-group:focus-within {
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.1);
+        border-radius: 8px;
+    }
+
+    /* Smooth transitions */
+    .input-group,
+    .form-control,
+    .password-toggle {
+        transition: all 0.3s ease;
     }
 </style>

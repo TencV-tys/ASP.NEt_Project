@@ -4,93 +4,166 @@
 }
 
 <div class="container">
-    <h2>Create New Flight</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Create New Flight</h2>
+        <a asp-action="Flights" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Flights
+        </a>
+    </div>
     
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plane me-2"></i>Create New Flight
+                    </h4>
+                    <small class="opacity-75">Add a new flight to the system</small>
+                </div>
+                <div class="card-body p-4">
                     <form asp-action="CreateFlight" method="post">
-                        <div class="row">
-                            
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label asp-for="Airline" class="form-label"></label>
-                                    <input asp-for="Airline" class="form-control" />
-                                    <span asp-validation-for="Airline" class="text-danger"></span>
-                                </div>
+                        <!-- Airline Information -->
+                        <div class="form-group mb-4">
+                            <label asp-for="Airline" class="form-label fw-bold">Airline Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-building text-primary"></i>
+                                </span>
+                                <input asp-for="Airline" class="form-control" placeholder="Enter airline name" />
                             </div>
+                            <span asp-validation-for="Airline" class="text-danger small"></span>
                         </div>
                         
-                        <div class="row">
+                        <!-- Route Information -->
+                        <div class="row mb-4">
                             <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label asp-for="DepartureCity" class="form-label"></label>
-                                    <input asp-for="DepartureCity" class="form-control" />
-                                    <span asp-validation-for="DepartureCity" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label asp-for="ArrivalCity" class="form-label"></label>
-                                    <input asp-for="ArrivalCity" class="form-control" />
-                                    <span asp-validation-for="ArrivalCity" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label asp-for="DepartureTime" class="form-label"></label>
-                                    <input asp-for="DepartureTime" type="datetime-local" class="form-control" />
-                                    <span asp-validation-for="DepartureTime" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label asp-for="ArrivalTime" class="form-label"></label>
-                                    <input asp-for="ArrivalTime" type="datetime-local" class="form-control" />
-                                    <span asp-validation-for="ArrivalTime" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group mb-3">
-                                    <label asp-for="TotalSeats" class="form-label"></label>
-                                    <input asp-for="TotalSeats" class="form-control" />
-                                    <span asp-validation-for="TotalSeats" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group mb-3">
-                                    <label asp-for="Price" class="form-label"></label>
-                                    <input asp-for="Price" class="form-control" />
-                                    <span asp-validation-for="Price" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group mb-3">
-                                    <label asp-for="IsActive" class="form-label"></label>
-                                    <div class="form-check form-switch mt-2">
-                                        <input asp-for="IsActive" class="form-check-input" checked />
-                                        <label class="form-check-label" asp-for="IsActive"></label>
+                                <div class="form-group">
+                                    <label asp-for="DepartureCity" class="form-label fw-bold">Departure City</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-plane-departure text-primary"></i>
+                                        </span>
+                                        <input asp-for="DepartureCity" class="form-control" placeholder="Departure city" />
                                     </div>
+                                    <span asp-validation-for="DepartureCity" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="ArrivalCity" class="form-label fw-bold">Arrival City</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-plane-arrival text-primary"></i>
+                                        </span>
+                                        <input asp-for="ArrivalCity" class="form-control" placeholder="Arrival city" />
+                                    </div>
+                                    <span asp-validation-for="ArrivalCity" class="text-danger small"></span>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-success w-100">Create Flight</button>
+                        <!-- Schedule Times -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="DepartureTime" class="form-label fw-bold">Departure Time</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-calendar-alt text-primary"></i>
+                                        </span>
+                                        <input asp-for="DepartureTime" type="datetime-local" class="form-control" />
+                                    </div>
+                                    <span asp-validation-for="DepartureTime" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="ArrivalTime" class="form-label fw-bold">Arrival Time</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-calendar-check text-primary"></i>
+                                        </span>
+                                        <input asp-for="ArrivalTime" type="datetime-local" class="form-control" />
+                                    </div>
+                                    <span asp-validation-for="ArrivalTime" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Capacity and Pricing -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="TotalSeats" class="form-label fw-bold">Total Seats</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-chair text-primary"></i>
+                                        </span>
+                                        <input asp-for="TotalSeats" class="form-control" min="1" max="1000" value="150" />
+                                    </div>
+                                    <span asp-validation-for="TotalSeats" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="Price" class="form-label fw-bold">Price ($)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-success fw-bold">$</span>
+                                        <input asp-for="Price" class="form-control" step="0.01" min="0" placeholder="0.00" />
+                                    </div>
+                                    <span asp-validation-for="Price" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label fw-bold">Available Seats</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-ticket-alt text-primary"></i>
+                                        </span>
+                                        <input class="form-control" value="150" readonly />
+                                        <span class="input-group-text bg-light text-muted small">Auto-set from total seats</span>
+                                    </div>
+                                    <small class="text-muted">Available seats will be set equal to total seats initially</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Status Toggle -->
+                        <div class="form-group mb-4">
+                            <div class="card bg-light">
+                                <div class="card-body py-3">
+                                    <div class="form-check form-switch mb-0">
+                                        <input asp-for="IsActive" class="form-check-input" style="transform: scale(1.2);" checked />
+                                        <label class="form-check-label fw-bold fs-6" asp-for="IsActive">
+                                            Flight is Active
+                                        </label>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        When active, this flight will be available for bookings.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="form-group mt-4 pt-3 border-top">
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <button type="submit" class="btn btn-success w-100 py-2 fw-bold">
+                                        <i class="fas fa-plus-circle me-2"></i>Create Flight
+                                    </button>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <a asp-action="Flights" class="btn btn-outline-secondary w-100 py-2">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
-            </div>
-            
-            <div class="text-center mt-3">
-                <a asp-action="Flights" class="btn btn-outline-secondary">Back to Flights</a>
             </div>
         </div>
     </div>
@@ -98,4 +171,191 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const totalSeatsInput = document.querySelector('input[name="TotalSeats"]');
+            const availableSeatsInput = document.querySelector('input[name="AvailableSeats"]');
+            
+            // Set available seats equal to total seats when total seats changes
+            if (totalSeatsInput) {
+                totalSeatsInput.addEventListener('change', function() {
+                    if (availableSeatsInput) {
+                        availableSeatsInput.value = this.value;
+                    }
+                });
+            }
+
+            // Validate arrival time is after departure time
+            const departureInput = document.querySelector('input[name="DepartureTime"]');
+            const arrivalInput = document.querySelector('input[name="ArrivalTime"]');
+            
+            if (departureInput && arrivalInput) {
+                departureInput.addEventListener('change', function() {
+                    if (arrivalInput.value && new Date(arrivalInput.value) <= new Date(this.value)) {
+                        arrivalInput.setCustomValidity('Arrival time must be after departure time');
+                    } else {
+                        arrivalInput.setCustomValidity('');
+                    }
+                });
+                
+                arrivalInput.addEventListener('change', function() {
+                    if (departureInput.value && new Date(this.value) <= new Date(departureInput.value)) {
+                        this.setCustomValidity('Arrival time must be after departure time');
+                    } else {
+                        this.setCustomValidity('');
+                    }
+                });
+            }
+
+            // Set minimum datetime for departure and arrival to current time
+            const now = new Date();
+            const timezoneOffset = now.getTimezoneOffset() * 60000;
+            const localISOTime = new Date(now - timezoneOffset).toISOString().slice(0, 16);
+            
+            if (departureInput) {
+                departureInput.min = localISOTime;
+            }
+            if (arrivalInput) {
+                arrivalInput.min = localISOTime;
+            }
+        });
+    </script>
 }
+
+<style>
+    .card {
+        border: 1px solid #e3e6f0;
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+        border-bottom: 1px solid #e3e6f0;
+        background: linear-gradient(135deg, #3498db, #2980b9) !important;
+    }
+
+    .form-label {
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+        border: 1px solid #d1d3e2;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+        background: #ffffff;
+    }
+
+    .form-control:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        background: #ffffff;
+    }
+
+    .form-control:read-only {
+        background-color: #f8f9fa;
+        border-color: #e9ecef;
+        color: #6c757d;
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+        border: 1px solid #d1d3e2;
+        color: #495057;
+        min-width: 45px;
+        justify-content: center;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #27ae60, #219a52);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-success:hover {
+        background: linear-gradient(135deg, #219a52, #1e8449);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+    }
+
+    .btn-outline-secondary {
+        border: 2px solid #6c757d;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        transform: translateY(-1px);
+    }
+
+    .form-check-input:checked {
+        background-color: #27ae60;
+        border-color: #27ae60;
+    }
+
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.2rem rgba(39, 174, 96, 0.25);
+    }
+
+    .text-danger {
+        font-weight: 500;
+    }
+
+    .bg-light {
+        background-color: #f8f9fa !important;
+    }
+
+    /* Responsive design */
+    @@media (max-width: 768px) {
+        .container {
+            padding: 0 15px;
+        }
+        
+        .card-body {
+            padding: 1.5rem !important;
+        }
+        
+        .input-group-text {
+            min-width: 40px;
+        }
+        
+        .btn {
+            padding: 0.6rem 1.5rem;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+        
+        .card-body {
+            padding: 1rem !important;
+        }
+        
+        .row .col-md-6,
+        .row .col-md-4 {
+            margin-bottom: 1rem;
+        }
+    }
+
+    /* Animation for form elements */
+    .form-group {
+        transition: all 0.3s ease;
+    }
+
+    .form-group:focus-within {
+        transform: translateY(-2px);
+    }
+</style>

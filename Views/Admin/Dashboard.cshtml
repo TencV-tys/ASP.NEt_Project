@@ -113,19 +113,19 @@
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                        <span class="text-muted">Confirmed Bookings</span>
+                        <span class="text-dark fw-medium">Confirmed Bookings</span>
                         <span class="badge bg-success">@Model.RecentBookings.Count(b => b.Status == "Confirmed")</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                        <span class="text-muted">Pending Bookings</span>
-                        <span class="badge bg-warning">@Model.RecentBookings.Count(b => b.Status == "Pending")</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                        <span class="text-muted">Cancelled Bookings</span>
+                        <span class="text-dark fw-medium">Cancelled Bookings</span>
                         <span class="badge bg-danger">@Model.RecentBookings.Count(b => b.Status == "Cancelled")</span>
                     </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                        <span class="text-dark fw-medium">Completed Bookings</span>
+                        <span class="badge bg-info">@Model.RecentBookings.Count(b => b.Status == "Completed")</span>
+                    </div>
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted">Today's Bookings</span>
+                        <span class="text-dark fw-medium">Today's Bookings</span>
                         <span class="badge bg-primary">@Model.RecentBookings.Count(b => b.BookingDate.Date == DateTime.Today)</span>
                     </div>
                 </div>
@@ -229,24 +229,24 @@
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-4 col-6">
-                            <a asp-controller="Admin" asp-action="Flights" class="btn btn-outline-primary w-100 h-100 py-3">
+                            <a asp-controller="Admin" asp-action="Flights" class="btn btn-primary w-100 h-100 py-3 text-white">
                                 <i class="fas fa-plane fa-2x mb-2"></i>
-                                <div>Manage Flights</div>
-                                <small class="text-muted">Add, edit flights</small>
+                                <div class="fw-bold">Manage Flights</div>
+                                <small class="text-light opacity-90">Add, edit flights</small>
                             </a>
                         </div>
                         <div class="col-md-4 col-6">
-                            <a asp-controller="Admin" asp-action="Bookings" class="btn btn-outline-success w-100 h-100 py-3">
+                            <a asp-controller="Admin" asp-action="Bookings" class="btn btn-success w-100 h-100 py-3 text-white">
                                 <i class="fas fa-ticket-alt fa-2x mb-2"></i>
-                                <div>Manage Bookings</div>
-                                <small class="text-muted">View all bookings</small>
+                                <div class="fw-bold">Manage Bookings</div>
+                                <small class="text-light opacity-90">View all bookings</small>
                             </a>
                         </div>
                         <div class="col-md-4 col-6">
-                            <a asp-controller="Admin" asp-action="Users" class="btn btn-outline-warning w-100 h-100 py-3">
+                            <a asp-controller="Admin" asp-action="Users" class="btn btn-warning w-100 h-100 py-3 text-white">
                                 <i class="fas fa-users fa-2x mb-2"></i>
-                                <div>Manage Users</div>
-                                <small class="text-muted">User management</small>
+                                <div class="fw-bold">Manage Users</div>
+                                <small class="text-light opacity-90">User management</small>
                             </a>
                         </div>
                     </div>
@@ -264,7 +264,6 @@
             "Confirmed" => "bg-success",
             "Cancelled" => "bg-danger",
             "Completed" => "bg-info",
-            "Pending" => "bg-warning",
             _ => "bg-secondary"
         };
     }
@@ -276,7 +275,6 @@
             "Confirmed" => "fa-check-circle",
             "Cancelled" => "fa-times-circle",
             "Completed" => "fa-flag-checkered",
-            "Pending" => "fa-clock",
             _ => "fa-circle"
         };
     }
@@ -357,31 +355,42 @@
         padding: 0.5rem 0.75rem;
     }
 
-    .btn-outline-primary,
-    .btn-outline-success,
-    .btn-outline-warning {
-        border: 2px solid;
+    /* Improved Quick Actions buttons */
+    .btn-primary, .btn-success, .btn-warning {
+        border: none;
         border-radius: 8px;
-        font-weight: 500;
+        font-weight: 600;
         transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 
-    .btn-outline-primary:hover {
-        background-color: #3498db;
-        border-color: #3498db;
-        transform: translateY(-2px);
+    .btn-primary:hover, .btn-success:hover, .btn-warning:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
 
-    .btn-outline-success:hover {
-        background-color: #27ae60;
-        border-color: #27ae60;
-        transform: translateY(-2px);
+    .btn-primary {
+        background: linear-gradient(135deg, #3498db, #2980b9);
     }
 
-    .btn-outline-warning:hover {
-        background-color: #f39c12;
-        border-color: #f39c12;
-        transform: translateY(-2px);
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #2980b9, #2471a3);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #27ae60, #219a52);
+    }
+
+    .btn-success:hover {
+        background: linear-gradient(135deg, #219a52, #1e8449);
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+    }
+
+    .btn-warning:hover {
+        background: linear-gradient(135deg, #e67e22, #d35400);
     }
 
     /* Text readability improvements */

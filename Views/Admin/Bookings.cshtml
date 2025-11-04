@@ -5,19 +5,22 @@
 
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Manage Bookings</h2>
-        <div class="text-muted fw-medium">
-            <i class="fas fa-ticket-alt me-2"></i>Total: @Model.Count bookings
+        <h2>Manage Bookings</h2>
+        <div>
+            <span class="text-muted me-3">
+                <i class="fas fa-ticket-alt me-1"></i>@Model.Count bookings
+            </span>
+          
         </div>
     </div>
     
-    <div class="card shadow-sm">
+    <div class="card">
         <div class="card-body p-0">
             @if (Model.Any())
             {
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-dark">
+                    <table class="table table-hover mb-0 admin-bookings-table">
+                        <thead class="table-light">
                             <tr>
                                 <th>Booking</th>
                                 <th>User</th>
@@ -48,12 +51,11 @@
                                     <td>
                                         <div class="d-flex flex-column">
                                             <div class="d-flex align-items-center mb-1">
-                                                <i class="fas fa-plane text-primary me-2"></i>
+                                                <i class="fas fa-plane text-muted me-2"></i>
                                                 <strong class="text-dark">@booking.Flight?.FlightNumber</strong>
                                             </div>
-                                            <div class="route-badge mb-1">
+                                            <div class="admin-bookings-route-badge mb-2">
                                                 <span class="badge bg-light text-dark border">
-                                                    <i class="fas fa-route me-1"></i>
                                                     @booking.Flight?.DepartureCity → @booking.Flight?.ArrivalCity
                                                 </span>
                                             </div>
@@ -64,15 +66,17 @@
                                     </td>
                                     <td>
                                         <div class="text-center">
-                                            <span class="passenger-count">@booking.NumberOfPassengers</span>
-                                            <small class="d-block text-muted">
-                                                passenger@(booking.NumberOfPassengers != 1 ? "s" : "")
-                                            </small>
+                                            <div class="admin-bookings-passenger-info">
+                                                <span class="admin-bookings-passenger-count">@booking.NumberOfPassengers</span>
+                                                <small class="d-block text-muted">
+                                                    passenger@(booking.NumberOfPassengers != 1 ? "s" : "")
+                                                </small>
+                                            </div>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="text-end">
-                                            <strong class="text-success fs-6">$@booking.TotalAmount.ToString("N2")</strong>
+                                            <strong class="text-success">$@booking.TotalAmount.ToString("N2")</strong>
                                             <small class="d-block text-muted">Total</small>
                                         </div>
                                     </td>
@@ -90,21 +94,20 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <div class="action-dropdown">
+                                        <div class="admin-bookings-action-buttons">
                                             <form method="post" asp-action="UpdateBookingStatus" class="mb-2">
                                                 <input type="hidden" name="bookingId" value="@booking.BookingId" />
-                                                <select name="status" class="form-select form-select-sm status-select border" 
+                                                <select name="status" class="form-select form-select-sm admin-bookings-status-select border" 
                                                         onchange="updateBookingStatus(this)" 
                                                         data-booking-id="@booking.BookingId">
                                                     <option value="Confirmed" selected="@(booking.Status == "Confirmed")">Confirmed</option>
-                                                    <option value="Pending" selected="@(booking.Status == "Pending")">Pending</option>
                                                     <option value="Cancelled" selected="@(booking.Status == "Cancelled")">Cancelled</option>
                                                     <option value="Completed" selected="@(booking.Status == "Completed")">Completed</option>
                                                 </select>
                                             </form>
                                             <button class="btn btn-sm btn-outline-primary w-100" 
                                                     data-bs-toggle="modal" 
-                                                    data-bs-target="#bookingDetailsModal"
+                                                    data-bs-target="#adminBookingsDetailsModal"
                                                     onclick="loadBookingDetails('@booking.BookingId', '@booking.User?.FirstName @booking.User?.LastName', '@booking.User?.Email', '@booking.Flight?.FlightNumber', '@booking.Flight?.DepartureCity', '@booking.Flight?.ArrivalCity', '@booking.Flight?.DepartureTime.ToString("MMM dd, yyyy HH:mm")', '@booking.Flight?.ArrivalTime.ToString("MMM dd, yyyy HH:mm")', '@booking.NumberOfPassengers', '@booking.TotalAmount', '@booking.BookingDate.ToString("MMM dd, yyyy HH:mm")', '@booking.Status')">
                                                 <i class="fas fa-eye me-1"></i>View
                                             </button>
@@ -119,12 +122,12 @@
             else
             {
                 <div class="text-center py-5">
-                    <div class="empty-state">
+                    <div class="admin-bookings-empty-state">
                         <i class="fas fa-ticket-alt fa-4x text-muted mb-4"></i>
-                        <h3 class="text-muted mb-3">No Bookings Found</h3>
+                        <h3 class="text-muted">No Bookings Found</h3>
                         <p class="text-muted mb-4">There are no bookings in the system yet.</p>
-                        <a href="#" class="btn btn-primary">
-                            <i class="fas fa-sync-alt me-2"></i>Refresh
+                        <a href="#" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i>Add First Booking
                         </a>
                     </div>
                 </div>
@@ -137,34 +140,34 @@
     {
         <div class="row mt-4">
             <div class="col-md-3 col-6 mb-3">
-                <div class="card bg-primary text-white">
+                <div class="card bg-primary text-white admin-bookings-stat-card">
                     <div class="card-body text-center py-3">
-                        <h4 class="mb-1">@Model.Count</h4>
-                        <small class="opacity-90">Total Bookings</small>
+                        <h4 class="mb-0">@Model.Count</h4>
+                        <small>Total Bookings</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3 col-6 mb-3">
-                <div class="card bg-success text-white">
+                <div class="card bg-success text-white admin-bookings-stat-card">
                     <div class="card-body text-center py-3">
-                        <h4 class="mb-1">@Model.Count(b => b.Status == "Confirmed")</h4>
-                        <small class="opacity-90">Confirmed</small>
+                        <h4 class="mb-0">@Model.Count(b => b.Status == "Confirmed")</h4>
+                        <small>Confirmed</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3 col-6 mb-3">
-                <div class="card bg-warning text-white">
+                <div class="card bg-info text-white admin-bookings-stat-card">
                     <div class="card-body text-center py-3">
-                        <h4 class="mb-1">@Model.Count(b => b.Status == "Pending")</h4>
-                        <small class="opacity-90">Pending</small>
+                        <h4 class="mb-0">@Model.Count(b => b.Status == "Completed")</h4>
+                        <small>Completed</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3 col-6 mb-3">
-                <div class="card bg-danger text-white">
+                <div class="card bg-warning text-white admin-bookings-stat-card">
                     <div class="card-body text-center py-3">
-                        <h4 class="mb-1">@Model.Count(b => b.Status == "Cancelled")</h4>
-                        <small class="opacity-90">Cancelled</small>
+                        <h4 class="mb-0">@Model.Count(b => b.Status == "Cancelled")</h4>
+                        <small>Cancelled</small>
                     </div>
                 </div>
             </div>
@@ -173,48 +176,48 @@
 </div>
 
 <!-- Booking Details Modal -->
-<div class="modal fade" id="bookingDetailsModal" tabindex="-1" aria-labelledby="bookingDetailsModalLabel" aria-hidden="true">
+<div class="modal fade" id="adminBookingsDetailsModal" tabindex="-1" aria-labelledby="adminBookingsDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="bookingDetailsModalLabel">
+        <div class="modal-content admin-bookings-modal-content">
+            <div class="modal-header bg-primary text-white admin-bookings-modal-header">
+                <h5 class="modal-title" id="adminBookingsDetailsModalLabel">
                     <i class="fas fa-ticket-alt me-2"></i>Booking Details
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body admin-bookings-modal-body">
                 <div class="row">
                     <!-- Booking Information -->
                     <div class="col-md-6">
-                        <div class="card mb-4">
-                            <div class="card-header bg-light">
+                        <div class="card mb-4 admin-bookings-modal-card">
+                            <div class="card-header admin-bookings-modal-card-header">
                                 <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Booking Information</h6>
                             </div>
                             <div class="card-body">
                                 <div class="row mb-2">
                                     <div class="col-6">
                                         <small class="text-muted">Booking ID</small>
-                                        <p class="fw-bold" id="modalBookingId">-</p>
+                                        <p class="fw-bold" id="adminBookingsModalBookingId">-</p>
                                     </div>
                                     <div class="col-6">
                                         <small class="text-muted">Status</small>
-                                        <p><span class="badge bg-success" id="modalBookingStatus">-</span></p>
+                                        <p><span class="badge bg-success" id="adminBookingsModalBookingStatus">-</span></p>
                                     </div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-6">
                                         <small class="text-muted">Passengers</small>
-                                        <p class="fw-bold" id="modalPassengers">-</p>
+                                        <p class="fw-bold" id="adminBookingsModalPassengers">-</p>
                                     </div>
                                     <div class="col-6">
                                         <small class="text-muted">Total Amount</small>
-                                        <p class="fw-bold text-success" id="modalTotalAmount">-</p>
+                                        <p class="fw-bold text-success" id="adminBookingsModalTotalAmount">-</p>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-12">
                                         <small class="text-muted">Booking Date</small>
-                                        <p class="fw-bold" id="modalBookingDate">-</p>
+                                        <p class="fw-bold" id="adminBookingsModalBookingDate">-</p>
                                     </div>
                                 </div>
                             </div>
@@ -223,18 +226,18 @@
 
                     <!-- User Information -->
                     <div class="col-md-6">
-                        <div class="card mb-4">
-                            <div class="card-header bg-light">
+                        <div class="card mb-4 admin-bookings-modal-card">
+                            <div class="card-header admin-bookings-modal-card-header">
                                 <h6 class="mb-0"><i class="fas fa-user me-2"></i>User Information</h6>
                             </div>
                             <div class="card-body">
                                 <div class="mb-2">
                                     <small class="text-muted">Full Name</small>
-                                    <p class="fw-bold" id="modalUserName">-</p>
+                                    <p class="fw-bold" id="adminBookingsModalUserName">-</p>
                                 </div>
                                 <div class="mb-2">
                                     <small class="text-muted">Email</small>
-                                    <p class="fw-bold" id="modalUserEmail">-</p>
+                                    <p class="fw-bold" id="adminBookingsModalUserEmail">-</p>
                                 </div>
                             </div>
                         </div>
@@ -242,27 +245,27 @@
 
                     <!-- Flight Information -->
                     <div class="col-12">
-                        <div class="card">
-                            <div class="card-header bg-light">
+                        <div class="card admin-bookings-modal-card">
+                            <div class="card-header admin-bookings-modal-card-header">
                                 <h6 class="mb-0"><i class="fas fa-plane me-2"></i>Flight Information</h6>
                             </div>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-3">
                                         <small class="text-muted">Flight Number</small>
-                                        <p class="fw-bold" id="modalFlightNumber">-</p>
+                                        <p class="fw-bold" id="adminBookingsModalFlightNumber">-</p>
                                     </div>
                                     <div class="col-md-3">
                                         <small class="text-muted">Route</small>
-                                        <p class="fw-bold" id="modalRoute">-</p>
+                                        <p class="fw-bold" id="adminBookingsModalRoute">-</p>
                                     </div>
                                     <div class="col-md-3">
                                         <small class="text-muted">Departure</small>
-                                        <p class="fw-bold" id="modalDepartureTime">-</p>
+                                        <p class="fw-bold" id="adminBookingsModalDepartureTime">-</p>
                                     </div>
                                     <div class="col-md-3">
                                         <small class="text-muted">Arrival</small>
-                                        <p class="fw-bold" id="modalArrivalTime">-</p>
+                                        <p class="fw-bold" id="adminBookingsModalArrivalTime">-</p>
                                     </div>
                                 </div>
                             </div>
@@ -290,7 +293,6 @@
             "Confirmed" => "bg-success",
             "Cancelled" => "bg-danger",
             "Completed" => "bg-info",
-            "Pending" => "bg-warning",
             _ => "bg-secondary"
         };
     }
@@ -302,7 +304,6 @@
             "Confirmed" => "fa-check-circle",
             "Cancelled" => "fa-times-circle",
             "Completed" => "fa-flag-checkered",
-            "Pending" => "fa-clock",
             _ => "fa-circle"
         };
     }
@@ -329,19 +330,19 @@
 
         function loadBookingDetails(bookingId, userName, userEmail, flightNumber, departureCity, arrivalCity, departureTime, arrivalTime, passengers, totalAmount, bookingDate, status) {
             // Update modal content with booking details
-            document.getElementById('modalBookingId').textContent = bookingId;
-            document.getElementById('modalUserName').textContent = userName || 'Not available';
-            document.getElementById('modalUserEmail').textContent = userEmail || 'Not available';
-            document.getElementById('modalFlightNumber').textContent = flightNumber || 'Not available';
-            document.getElementById('modalRoute').textContent = `${departureCity || 'N/A'} → ${arrivalCity || 'N/A'}`;
-            document.getElementById('modalDepartureTime').textContent = departureTime || 'Not available';
-            document.getElementById('modalArrivalTime').textContent = arrivalTime || 'Not available';
-            document.getElementById('modalPassengers').textContent = passengers || '0';
-            document.getElementById('modalTotalAmount').textContent = totalAmount ? `$${parseFloat(totalAmount).toFixed(2)}` : '$0.00';
-            document.getElementById('modalBookingDate').textContent = bookingDate || 'Not available';
+            document.getElementById('adminBookingsModalBookingId').textContent = bookingId;
+            document.getElementById('adminBookingsModalUserName').textContent = userName || 'Not available';
+            document.getElementById('adminBookingsModalUserEmail').textContent = userEmail || 'Not available';
+            document.getElementById('adminBookingsModalFlightNumber').textContent = flightNumber || 'Not available';
+            document.getElementById('adminBookingsModalRoute').textContent = `${departureCity || 'N/A'} → ${arrivalCity || 'N/A'}`;
+            document.getElementById('adminBookingsModalDepartureTime').textContent = departureTime || 'Not available';
+            document.getElementById('adminBookingsModalArrivalTime').textContent = arrivalTime || 'Not available';
+            document.getElementById('adminBookingsModalPassengers').textContent = passengers || '0';
+            document.getElementById('adminBookingsModalTotalAmount').textContent = totalAmount ? `$${parseFloat(totalAmount).toFixed(2)}` : '$0.00';
+            document.getElementById('adminBookingsModalBookingDate').textContent = bookingDate || 'Not available';
             
             // Update status badge
-            const statusBadge = document.getElementById('modalBookingStatus');
+            const statusBadge = document.getElementById('adminBookingsModalBookingStatus');
             statusBadge.textContent = status || 'Unknown';
             statusBadge.className = 'badge ' + getStatusBadgeClass(status);
         }
@@ -351,13 +352,12 @@
                 case 'Confirmed': return 'bg-success';
                 case 'Cancelled': return 'bg-danger';
                 case 'Completed': return 'bg-info';
-                case 'Pending': return 'bg-warning';
                 default: return 'bg-secondary';
             }
         }
 
         function printBookingDetails() {
-            const modalContent = document.querySelector('#bookingDetailsModal .modal-content').cloneNode(true);
+            const modalContent = document.querySelector('#adminBookingsDetailsModal .admin-bookings-modal-content').cloneNode(true);
             const printWindow = window.open('', '_blank');
             
             printWindow.document.write(`
@@ -385,7 +385,7 @@
 
         // Store original values on page load
         document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.status-select').forEach(select => {
+            document.querySelectorAll('.admin-bookings-status-select').forEach(select => {
                 select.setAttribute('data-original-value', select.value);
             });
         });
@@ -393,50 +393,294 @@
 }
 
 <style>
-    /* ... (keep all the previous CSS styles from the previous version) ... */
+    /* Consistent Card Styling */
+    .card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        background: #ffffff;
+    }
 
-    /* Modal specific styles */
-    .modal-header {
+    .card-body {
+        background: #ffffff;
+    }
+
+    /* Table Styling */
+    .admin-bookings-table th {
+        border-top: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background-color: #f8f9fa;
+        color: #2c3e50;
+        border-bottom: 2px solid #dee2e6;
+        padding: 1rem 0.75rem;
+    }
+
+    .admin-bookings-table td {
+        vertical-align: middle;
+        padding: 1rem 0.75rem;
+        border-bottom: 1px solid #e9ecef;
+        background: #ffffff;
+        color: #2c3e50 !important;
+    }
+
+    .admin-bookings-table tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    .admin-bookings-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* Passenger Count Styling */
+    .admin-bookings-passenger-count {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    /* Route Badge Styling */
+    .admin-bookings-route-badge .badge {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem;
+        background-color: #e3f2fd !important;
+        color: #1565c0 !important;
+        border: 1px solid #bbdefb;
+        font-weight: 500;
+    }
+
+    /* Action Buttons Styling */
+    .admin-bookings-action-buttons {
+        min-width: 140px;
+    }
+
+    .admin-bookings-action-buttons .btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 0.25rem;
+        border: 1px solid;
+    }
+
+    .admin-bookings-status-select {
+        min-width: 130px;
+        border: 1px solid #d1d3e2;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        padding: 0.4rem 0.75rem;
+    }
+
+    /* Empty State Styling */
+    .admin-bookings-empty-state {
+        padding: 3rem 1rem;
+        background: #ffffff;
+    }
+
+    /* Statistics Cards - Enhanced Readability */
+    .admin-bookings-stat-card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        transition: transform 0.2s ease;
+    }
+
+    .admin-bookings-stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .admin-bookings-stat-card.bg-primary {
+        background: linear-gradient(135deg, #3498db, #2980b9) !important;
+        border: 1px solid #2980b9;
+    }
+
+    .admin-bookings-stat-card.bg-success {
+        background: linear-gradient(135deg, #27ae60, #219a52) !important;
+        border: 1px solid #219a52;
+    }
+
+    .admin-bookings-stat-card.bg-info {
+        background: linear-gradient(135deg, #17a2b8, #138496) !important;
+        border: 1px solid #138496;
+    }
+
+    .admin-bookings-stat-card.bg-warning {
+        background: linear-gradient(135deg, #f39c12, #e67e22) !important;
+        border: 1px solid #e67e22;
+    }
+
+    .admin-bookings-stat-card .card-body {
+        background: transparent !important;
+    }
+
+    .admin-bookings-stat-card .card-body h4 {
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .admin-bookings-stat-card .card-body small {
+        opacity: 0.95;
+        font-weight: 500;
+    }
+
+    /* Status Badges */
+    .badge.bg-success {
+        background: linear-gradient(135deg, #27ae60, #219a52) !important;
+        border: 1px solid #1e8449;
+    }
+
+    .badge.bg-danger {
+        background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+        border: 1px solid #b03a2e;
+    }
+
+    .badge.bg-info {
+        background: linear-gradient(135deg, #17a2b8, #138496) !important;
+        border: 1px solid #117a8b;
+    }
+
+    .badge.bg-warning {
+        background: linear-gradient(135deg, #f39c12, #e67e22) !important;
+        border: 1px solid #d68910;
+        color: #fff !important;
+    }
+
+    /* Modal Styling */
+    .admin-bookings-modal-header {
         border-bottom: 2px solid rgba(255,255,255,0.1);
     }
 
-    .modal-content {
+    .admin-bookings-modal-content {
         border: none;
         border-radius: 12px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
 
-    .card {
+    .admin-bookings-modal-card {
         border: 1px solid #e3e6f0;
         border-radius: 8px;
     }
 
-    .card-header {
+    .admin-bookings-modal-card-header {
         background-color: #f8f9fa !important;
         border-bottom: 1px solid #e3e6f0;
         font-weight: 600;
     }
 
-    .modal-body .card-body {
+    .admin-bookings-modal-body .card-body {
         padding: 1.25rem;
     }
 
-    .modal-body p {
+    .admin-bookings-modal-body p {
         margin-bottom: 0.5rem;
     }
 
-    .modal-body .text-muted {
+    .admin-bookings-modal-body .text-muted {
         font-size: 0.875rem;
     }
 
-    /* Responsive modal */
+    /* Button Styling */
+    .btn-primary {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        border: 1px solid #2980b9;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #2980b9, #2471a3);
+        border: 1px solid #2471a3;
+    }
+
+    /* Responsive Design */
     @@media (max-width: 768px) {
-        .modal-dialog {
-            margin: 1rem;
+        .admin-bookings-table-responsive {
+            font-size: 0.875rem;
+            background: #ffffff;
         }
         
-        .modal-body .row .col-md-6 {
+        .admin-bookings-table th,
+        .admin-bookings-table td {
+            padding: 0.75rem;
+            background: #ffffff;
+        }
+        
+        .admin-bookings-action-buttons {
+            min-width: 120px;
+        }
+        
+        .admin-bookings-action-buttons .btn {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.6rem;
+        }
+        
+        .admin-bookings-status-select {
+            min-width: 110px;
+            font-size: 0.75rem;
+        }
+        
+        .admin-bookings-passenger-count {
+            font-size: 1.1rem;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+        
+        .admin-bookings-table th:nth-child(2),
+        .admin-bookings-table td:nth-child(2),
+        .admin-bookings-table th:nth-child(6),
+        .admin-bookings-table td:nth-child(6) {
+            display: none;
+        }
+        
+        .admin-bookings-action-buttons .btn {
+            display: inline-block;
+            width: auto;
+            margin-right: 0.25rem;
+        }
+
+        .admin-bookings-stat-card {
             margin-bottom: 1rem;
         }
+    }
+
+    @@media (max-width: 400px) {
+        .admin-bookings-table th:nth-child(3),
+        .admin-bookings-table td:nth-child(3) {
+            display: none;
+        }
+        
+        .admin-bookings-action-buttons .btn {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.5rem;
+        }
+        
+        .admin-bookings-route-badge .badge {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.6rem;
+        }
+        
+        .admin-bookings-status-select {
+            min-width: 90px;
+        }
+    }
+
+    /* Additional enhancements for better readability */
+    .text-muted {
+        color: #6c757d !important;
+    }
+
+    .text-dark {
+        color: #2c3e50 !important;
+    }
+
+    .table > :not(caption) > * > * {
+        background: #ffffff;
+        box-shadow: none;
     }
 </style>
