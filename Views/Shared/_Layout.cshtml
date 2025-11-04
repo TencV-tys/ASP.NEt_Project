@@ -12,6 +12,18 @@
         .flight-card:hover { transform: translateY(-2px); }
         .logout-btn { cursor: pointer; }
         
+        /* Active page highlighting */
+        .nav-item.active .nav-link {
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1));
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .dropdown-item.active {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
         /* Consistent gradient backgrounds throughout */
         .bg-primary {
             background: linear-gradient(135deg, #3498db, #2980b9) !important;
@@ -183,40 +195,45 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
+                        <!-- Home link - always visible -->
+                        
                         @if (User.Identity.IsAuthenticated)
                         {
-                            <!-- Flights page is available to all authenticated users -->
-                
                             @if (User.IsInRole("Admin"))
                             {
+                                <li class="nav-item @(ViewContext.RouteData.Values["Action"]?.ToString() == "Index" && ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")">
+                            <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                
                                 <!-- Admin users only see Admin features -->
-                                <li class="nav-item">
+                                <li class="nav-item @(ViewContext.RouteData.Values["Action"]?.ToString() == "Dashboard" && ViewContext.RouteData.Values["Controller"]?.ToString() == "Admin" ? "active" : "")">
                                     <a class="nav-link text-white" asp-controller="Admin" asp-action="Dashboard">Dashboard</a>
                                 </li>
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown">
+                                    <a class="nav-link dropdown-toggle text-white @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["Action"]?.ToString() != "Dashboard" ? "active" : "")" href="#" role="button" data-bs-toggle="dropdown">
                                         Admin
                                     </a>
                                     <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="Users">Users</a></li>
-                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="Flights">Flights</a></li>
-                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="Bookings">Bookings</a></li>
+                                        <li><a class="dropdown-item @(ViewContext.RouteData.Values["Action"]?.ToString() == "Users" ? "active" : "")" asp-controller="Admin" asp-action="Users">Users</a></li>
+                                        <li><a class="dropdown-item @(ViewContext.RouteData.Values["Action"]?.ToString() == "Flights" ? "active" : "")" asp-controller="Admin" asp-action="Flights">Flights</a></li>
+                                        <li><a class="dropdown-item @(ViewContext.RouteData.Values["Action"]?.ToString() == "Bookings" ? "active" : "")" asp-controller="Admin" asp-action="Bookings">Bookings</a></li>
                                     </ul>
                                 </li>
                             }
                             else
                             {
+                                <li class="nav-item @(ViewContext.RouteData.Values["Action"]?.ToString() == "Index" && ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")">
+                            <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                
                                 <!-- Regular users only see User features -->
-                                 <li class="nav-item">
-                                <a class="dropdown-item" asp-controller="User" asp-action="Flights">Flights</a>
+                                <li class="nav-item @(ViewContext.RouteData.Values["Action"]?.ToString() == "Flights" && ViewContext.RouteData.Values["Controller"]?.ToString() == "User" ? "active" : "")">
+                                    <a class="nav-link text-white" asp-controller="User" asp-action="Flights">Flights</a>
                                 </li>
-                                <li class="nav-item">
+                                <li class="nav-item @(ViewContext.RouteData.Values["Action"]?.ToString() == "MyBookings" && ViewContext.RouteData.Values["Controller"]?.ToString() == "User" ? "active" : "")">
                                     <a class="nav-link text-white" asp-controller="User" asp-action="MyBookings">My Bookings</a>
                                 </li>
-                                <li class="nav-item">
+                                <li class="nav-item @(ViewContext.RouteData.Values["Action"]?.ToString() == "Dashboard" && ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")">
                                     <a class="nav-link text-white" asp-controller="Home" asp-action="Dashboard">Dashboard</a>
                                 </li>
                             }
@@ -242,10 +259,10 @@
                         }
                         else
                         {
-                            <li class="nav-item">
+                            <li class="nav-item @(ViewContext.RouteData.Values["Action"]?.ToString() == "Login" ? "active" : "")">
                                 <a class="nav-link text-white" asp-controller="Account" asp-action="Login">Login</a>
                             </li>
-                            <li class="nav-item">
+                            <li class="nav-item @(ViewContext.RouteData.Values["Action"]?.ToString() == "Register" ? "active" : "")">
                                 <a class="nav-link text-white" asp-controller="Account" asp-action="Register">Register</a>
                             </li>
                         }
@@ -325,6 +342,22 @@
                     performLogout();
                 }
             }
+        });
+
+        // Add active class to dropdown items when their parent is active
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdownItems = document.querySelectorAll('.dropdown-item');
+            dropdownItems.forEach(item => {
+                if (item.classList.contains('active')) {
+                    const dropdown = item.closest('.dropdown');
+                    if (dropdown) {
+                        const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
+                        if (dropdownToggle) {
+                            dropdownToggle.classList.add('active');
+                        }
+                    }
+                }
+            });
         });
     </script>
     @await RenderSectionAsync("Scripts", required: false)

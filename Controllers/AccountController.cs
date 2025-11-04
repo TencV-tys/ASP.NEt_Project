@@ -82,6 +82,7 @@ namespace AirlineReservationSystem.Controllers
                     FirstName = model.FirstName,
                     LastName = model.LastName,
                     DateOfBirth = model.DateOfBirth,
+                    CreatedAt = DateTime.UtcNow,
                     EmailConfirmed = true // Auto-confirm email since we removed email confirmation
                 };
                 
@@ -91,9 +92,9 @@ namespace AirlineReservationSystem.Controllers
                     // Assign User role by default
                     await _userManager.AddToRoleAsync(user, "User");
                     
-                    // Sign in the user immediately after registration
-                    await _signInManager.SignInAsync(user, isPersistent: false);
-                    return RedirectToLocal(returnUrl);
+                    // Show success message and redirect to login
+                    TempData["Success"] = "Account created successfully! Please login with your credentials.";
+                    return RedirectToAction("Login");
                 }
                 AddErrors(result);
             }
@@ -105,6 +106,7 @@ namespace AirlineReservationSystem.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
+            TempData["Success"] = "You have been logged out successfully.";
             return RedirectToAction("Login", "Account");
         }
 
