@@ -67,13 +67,10 @@
                                 </td>
                                 <td>
                                     <div class="action-buttons">
-                                        <form method="post" asp-action="DeleteUser" class="d-inline">
-                                            <input type="hidden" name="userId" value="@userWithRoles.User.Id" />
-                                            <button type="submit" class="btn btn-sm btn-danger" 
-                                                    onclick="return confirmDeleteUser('@userWithRoles.User.FirstName @userWithRoles.User.LastName')">
-                                                <i class="fas fa-trash"></i> Delete
-                                            </button>
-                                        </form>
+                                        <button type="button" class="btn btn-sm btn-danger" 
+                                                onclick="confirmDeleteUser('@userWithRoles.User.Id', '@userWithRoles.User.FirstName @userWithRoles.User.LastName', '@userWithRoles.User.Email', '@string.Join(", ", userWithRoles.Roles)')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -113,6 +110,65 @@
     </div>
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteUserModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm User Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger mb-3">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone!
+                </div>
+                <p>Are you sure you want to delete the following user account?</p>
+                <div class="card border-danger mb-3">
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-12">
+                                <strong id="modalUserName" class="text-danger"></strong>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-12">
+                                <small class="text-muted" id="modalUserEmail"></small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <small class="text-muted">Role: <span id="modalUserRole" class="badge bg-danger"></span></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Note:</strong> This will permanently remove the user account and all associated data including bookings and personal information.
+                </div>
+                <div class="alert alert-info" id="selfDeleteWarning" style="display: none;">
+                    <i class="fas fa-ban me-2"></i>
+                    <strong>Security Restriction:</strong> You cannot delete your own account for security reasons.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <form id="confirmDeleteForm" method="post" asp-action="DeleteUser">
+                    <input type="hidden" name="userId" id="deleteUserId" />
+                    <button type="submit" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="fas fa-trash me-1"></i>Yes, Delete User
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @functions {
     public string GetRoleBadgeClass(string role)
     {
@@ -137,24 +193,48 @@
 
 @section Scripts {
     <script>
-        function confirmDeleteUser(userName) {
-            return confirm(`Are you sure you want to delete user "${userName}"?\n\nThis action cannot be undone and will permanently remove the user account.`);
+        function confirmDeleteUser(userId, userName, userEmail, userRoles) {
+            const currentUserId = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
+            const isSelfDelete = userId === currentUserId;
+
+            // Set modal content
+            document.getElementById('modalUserName').textContent = userName;
+            document.getElementById('modalUserEmail').textContent = userEmail;
+            document.getElementById('modalUserRole').textContent = userRoles;
+            document.getElementById('deleteUserId').value = userId;
+
+            // Show/hide self-delete warning
+            const selfDeleteWarning = document.getElementById('selfDeleteWarning');
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            
+            if (isSelfDelete) {
+                selfDeleteWarning.style.display = 'block';
+                confirmDeleteBtn.disabled = true;
+                confirmDeleteBtn.innerHTML = '<i class="fas fa-ban me-1"></i>Cannot Delete Own Account';
+            } else {
+                selfDeleteWarning.style.display = 'none';
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.innerHTML = '<i class="fas fa-trash me-1"></i>Yes, Delete User';
+            }
+
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+            modal.show();
+            
+            return false; // Prevent default form submission
         }
 
-        // Prevent deleting your own account
+        // Auto-refresh page every 5 minutes
+        setInterval(() => {
+            console.log('Auto-refreshing users page...');
+            window.location.reload();
+        }, 300000); // 5 minutes
+
+        // Initialize tooltips
         document.addEventListener('DOMContentLoaded', function() {
-            const deleteButtons = document.querySelectorAll('form[asp-action="DeleteUser"]');
-            deleteButtons.forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    const userId = this.querySelector('input[name="userId"]').value;
-                    const currentUserId = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
-                    
-                    if (userId === currentUserId) {
-                        e.preventDefault();
-                        alert('You cannot delete your own account!');
-                        return false;
-                    }
-                });
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
             });
         });
     </script>
@@ -225,6 +305,18 @@
     .card.bg-success {
         background: linear-gradient(135deg, #27ae60, #219a52) !important;
         border: none;
+    }
+
+    /* Modal Styling */
+    .modal-header.bg-danger {
+        background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+        border-bottom: 2px solid rgba(255,255,255,0.1);
+    }
+
+    .modal-content {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
 
     /* Improved text readability */
@@ -321,4 +413,21 @@
     .action-buttons .btn:hover {
         transform: scale(1.02) !important;
     }
-</style>
+
+    /* Button styling */
+    .btn-danger {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        border: 1px solid #c0392b;
+    }
+
+    .btn-danger:hover {
+        background: linear-gradient(135deg, #c0392b, #a93226);
+        border-color: #a93226;
+    }
+
+    .btn-danger:disabled {
+        background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+        border-color: #7f8c8d;
+        cursor: not-allowed;
+    }
+</style> 

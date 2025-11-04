@@ -1,4 +1,4 @@
-@model List<AirlineReservationSystem.Models.Flight>
+ @model List<AirlineReservationSystem.Models.Flight>
 @{
     ViewData["Title"] = "Manage Flights";
 }
@@ -100,14 +100,11 @@
                                                class="btn btn-sm btn-outline-primary mb-1" title="Edit Flight">
                                                 <i class="fas fa-edit"></i> Edit
                                             </a>
-                                            <form method="post" asp-action="DeleteFlight" class="d-inline">
-                                                <input type="hidden" name="id" value="@flight.FlightId" />
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" 
-                                                        onclick="return confirmDeleteFlight('@flight.FlightNumber')"
-                                                        title="Delete Flight">
-                                                    <i class="fas fa-trash"></i> Delete
-                                                </button>
-                                            </form>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="confirmDeleteFlight('@flight.FlightId', '@flight.FlightNumber', '@flight.DepartureCity', '@flight.ArrivalCity', '@flight.DepartureTime.ToString("MMM dd, yyyy HH:mm")')"
+                                                    title="Delete Flight">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -172,11 +169,90 @@
     }
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteFlightModal" tabindex="-1" aria-labelledby="deleteFlightModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteFlightModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Flight Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger mb-3">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone!
+                </div>
+                <p>Are you sure you want to delete the following flight?</p>
+                <div class="card border-danger mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <strong id="modalFlightNumber" class="text-danger"></strong>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <small class="text-muted" id="modalFlightRoute"></small>
+                            </div>
+                        </div>
+                        <div class="row mt-1">
+                            <div class="col-12">
+                                <small class="text-muted" id="modalFlightSchedule"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Note:</strong> This will permanently remove the flight from the system. Any existing bookings for this flight will be affected.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <form id="confirmDeleteForm" method="post" asp-action="DeleteFlight">
+                    <input type="hidden" name="id" id="deleteFlightId" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Yes, Delete Flight
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
-        function confirmDeleteFlight(flightNumber) {
-            return confirm(`Are you sure you want to delete flight ${flightNumber}?\n\nThis action cannot be undone and will remove the flight from the system.`);
+        function confirmDeleteFlight(flightId, flightNumber, departureCity, arrivalCity, departureTime) {
+            // Set modal content
+            document.getElementById('modalFlightNumber').textContent = `Flight ${flightNumber}`;
+            document.getElementById('modalFlightRoute').textContent = `${departureCity} → ${arrivalCity}`;
+            document.getElementById('modalFlightSchedule').textContent = `Departure: ${departureTime}`;
+            document.getElementById('deleteFlightId').value = flightId;
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('deleteFlightModal'));
+            modal.show();
+            
+            return false; // Prevent default form submission
         }
+
+        // Auto-refresh page every 1 minute to update flight statuses
+        setInterval(() => {
+            console.log('Auto-refreshing flights page...');
+            window.location.reload();
+        }, 60000); // 1 minute
+
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
     </script>
 }
 <style>
@@ -303,6 +379,18 @@
         color: #fff !important;
     }
 
+    /* Modal Styling */
+    .modal-header.bg-danger {
+        background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+        border-bottom: 2px solid rgba(255,255,255,0.1);
+    }
+
+    .modal-content {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
     /* Table row styling */
     .table > :not(caption) > * > * {
         background: #ffffff;
@@ -399,5 +487,12 @@
 
     .table-hover tbody tr {
         transition: all 0.3s ease;
+    }
+
+    /* Delete button styling */
+    .btn-outline-danger:hover {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        border-color: #c0392b;
+        color: white;
     }
 </style>

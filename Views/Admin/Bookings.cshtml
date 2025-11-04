@@ -1,4 +1,3 @@
-
 @model List<AirlineReservationSystem.Models.Booking>
 @{
     ViewData["Title"] = "Manage Bookings";
@@ -37,9 +36,9 @@
                                 <th>Booking</th>
                                 <th>User</th>
                                 <th>Flight Details</th>
+                                <th>Travel Date</th>
                                 <th>Passengers</th>
                                 <th>Amount</th>
-                                <th>Date</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -56,6 +55,7 @@
                                         <div class="d-flex flex-column">
                                             <small class="text-muted mb-1">Booking ID</small>
                                             <strong class="text-primary">@booking.BookingId.ToString().Substring(0, 8)...</strong>
+                                            <small class="text-muted">Booked: @booking.BookingDate.ToString("MMM dd, yyyy")</small>
                                             @if (isRescheduled)
                                             {
                                                 <span class="badge bg-warning text-white mt-1">
@@ -93,6 +93,63 @@
                                         </div>
                                     </td>
                                     <td>
+                                        <div class="d-flex flex-column">
+                                            @if (isRescheduled)
+                                            {
+                                                <!-- Rescheduled Flight Times -->
+                                                <div class="rescheduled-flight-times mb-2 p-2 bg-warning bg-opacity-20 rounded border border-warning">
+                                                    <small class="text-dark fw-bold d-block mb-1">
+                                                        <i class="fas fa-clock me-1 text-warning"></i>New Schedule
+                                                    </small>
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <i class="fas fa-plane-departure text-warning me-2"></i>
+                                                        <strong class="text-dark">@booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy")</strong>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between small">
+                                                        <span class="text-dark fw-bold">@booking.RescheduledDepartureTime?.ToString("HH:mm")</span>
+                                                        <i class="fas fa-arrow-right text-dark mx-2"></i>
+                                                        <span class="text-dark fw-bold">@booking.RescheduledArrivalTime?.ToString("HH:mm")</span>
+                                                    </div>
+                                                    <small class="text-dark d-block mt-1">
+                                                        @booking.RescheduledArrivalTime?.ToString("MMM dd")
+                                                    </small>
+                                                </div>
+                                                
+                                                <!-- Original Flight Times -->
+                                                <div class="original-flight-times p-2 bg-light rounded border">
+                                                    <small class="text-muted d-block mb-1">Original Schedule</small>
+                                                    <div class="d-flex justify-content-between small text-muted">
+                                                        <span>@booking.Flight?.DepartureTime.ToString("MMM dd, HH:mm")</span>
+                                                        <i class="fas fa-arrow-right mx-2"></i>
+                                                        <span>@booking.Flight?.ArrivalTime.ToString("MMM dd, HH:mm")</span>
+                                                    </div>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <!-- Regular Flight Times -->
+                                                <div class="regular-flight-times">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <i class="fas fa-plane-departure text-primary me-2"></i>
+                                                        <strong class="text-dark">@booking.Flight?.DepartureTime.ToString("MMM dd, yyyy")</strong>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <span class="fw-bold text-dark">@booking.Flight?.DepartureTime.ToString("HH:mm")</span>
+                                                        <i class="fas fa-arrow-right text-muted mx-2"></i>
+                                                        <span class="fw-bold text-dark">@booking.Flight?.ArrivalTime.ToString("HH:mm")</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between small text-muted">
+                                                        <span>@booking.Flight?.DepartureCity</span>
+                                                        <span>@booking.Flight?.ArrivalCity</span>
+                                                    </div>
+                                                    <small class="text-muted d-block mt-1">
+                                                        Duration: @GetFlightDuration(booking.Flight?.DepartureTime, booking.Flight?.ArrivalTime)
+                                                    </small>
+                                                </div>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>
                                         <div class="text-center">
                                             <div class="admin-bookings-passenger-info">
                                                 <span class="admin-bookings-passenger-count">@booking.NumberOfPassengers</span>
@@ -105,18 +162,10 @@
                                     <td>
                                         <div class="text-end">
                                             <strong class="text-success">$@booking.TotalAmount.ToString("N2")</strong>
-                                            <small class="d-block text-muted">Total</small>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                            <small class="text-muted">Booked on</small>
-                                            <strong class="text-dark">@booking.BookingDate.ToString("MMM dd, yyyy")</strong>
-                                            <small class="text-muted">@booking.BookingDate.ToString("HH:mm")</small>
-                                            @if (isRescheduled)
+                                            @if (booking.NumberOfPassengers > 1)
                                             {
-                                                <small class="text-warning mt-1">
-                                                    <i class="fas fa-clock me-1"></i>Rescheduled flight
+                                                <small class="d-block text-muted">
+                                                    $@((booking.TotalAmount / booking.NumberOfPassengers).ToString("N2")) each
                                                 </small>
                                             }
                                         </div>
@@ -133,49 +182,12 @@
                                     </td>
                                     <td>
                                         <div class="admin-bookings-action-buttons">
-                                            @if (booking.Status == "Confirmed")
-                                            {
-                                                <form method="post" asp-action="UpdateBookingStatus" class="mb-2">
-                                                    <input type="hidden" name="bookingId" value="@booking.BookingId" />
-                                                    <select name="status" class="form-select form-select-sm admin-bookings-status-select border" 
-                                                            onchange="updateBookingStatus(this)" 
-                                                            data-booking-id="@booking.BookingId">
-                                                        <option value="Confirmed" selected="@(booking.Status == "Confirmed")">Confirmed</option>
-                                                        <option value="Cancelled" selected="@(booking.Status == "Cancelled")">Cancelled</option>
-                                                        <option value="Completed" selected="@(booking.Status == "Completed")">Completed</option>
-                                                    </select>
-                                                </form>
-                                                <button class="btn btn-sm btn-outline-primary w-100" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#adminBookingsDetailsModal"
-                                                        onclick="loadBookingDetails('@booking.BookingId', '@booking.User?.FirstName @booking.User?.LastName', '@booking.User?.Email', '@booking.Flight?.FlightNumber', '@booking.Flight?.DepartureCity', '@booking.Flight?.ArrivalCity', '@booking.Flight?.DepartureTime.ToString("MMM dd, yyyy HH:mm")', '@booking.Flight?.ArrivalTime.ToString("MMM dd, yyyy HH:mm")', '@booking.NumberOfPassengers', '@booking.TotalAmount', '@booking.BookingDate.ToString("MMM dd, yyyy HH:mm")', '@booking.Status', '@isRescheduled', '@(isRescheduled ? booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") : "")', '@(isRescheduled ? booking.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm") : "")')">
-                                                    <i class="fas fa-eye me-1"></i>View
-                                                </button>
-                                            }
-                                            else if (booking.Status == "Completed")
-                                            {
-                                                <div class="text-center">
-                                                    <small class="text-muted d-block mb-2">Flight Completed</small>
-                                                    <button class="btn btn-sm btn-outline-info w-100" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#adminBookingsDetailsModal"
-                                                            onclick="loadBookingDetails('@booking.BookingId', '@booking.User?.FirstName @booking.User?.LastName', '@booking.User?.Email', '@booking.Flight?.FlightNumber', '@booking.Flight?.DepartureCity', '@booking.Flight?.ArrivalCity', '@booking.Flight?.DepartureTime.ToString("MMM dd, yyyy HH:mm")', '@booking.Flight?.ArrivalTime.ToString("MMM dd, yyyy HH:mm")', '@booking.NumberOfPassengers', '@booking.TotalAmount', '@booking.BookingDate.ToString("MMM dd, yyyy HH:mm")', '@booking.Status', '@isRescheduled', '@(isRescheduled ? booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") : "")', '@(isRescheduled ? booking.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm") : "")')">
-                                                        <i class="fas fa-eye me-1"></i>View Details
-                                                    </button>
-                                                </div>
-                                            }
-                                            else if (booking.Status == "Cancelled")
-                                            {
-                                                <div class="text-center">
-                                                    <small class="text-muted d-block mb-2">Booking Cancelled</small>
-                                                    <button class="btn btn-sm btn-outline-secondary w-100" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#adminBookingsDetailsModal"
-                                                            onclick="loadBookingDetails('@booking.BookingId', '@booking.User?.FirstName @booking.User?.LastName', '@booking.User?.Email', '@booking.Flight?.FlightNumber', '@booking.Flight?.DepartureCity', '@booking.Flight?.ArrivalCity', '@booking.Flight?.DepartureTime.ToString("MMM dd, yyyy HH:mm")', '@booking.Flight?.ArrivalTime.ToString("MMM dd, yyyy HH:mm")', '@booking.NumberOfPassengers', '@booking.TotalAmount', '@booking.BookingDate.ToString("MMM dd, yyyy HH:mm")', '@booking.Status', '@isRescheduled', '@(isRescheduled ? booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") : "")', '@(isRescheduled ? booking.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm") : "")')">
-                                                        <i class="fas fa-eye me-1"></i>View Details
-                                                    </button>
-                                                </div>
-                                            }
+                                            <button class="btn btn-sm btn-outline-primary w-100" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#adminBookingsDetailsModal"
+                                                    onclick="loadBookingDetails('@booking.BookingId', '@booking.User?.FirstName @booking.User?.LastName', '@booking.User?.Email', '@booking.Flight?.FlightNumber', '@booking.Flight?.DepartureCity', '@booking.Flight?.ArrivalCity', '@booking.Flight?.DepartureTime.ToString("MMM dd, yyyy HH:mm")', '@booking.Flight?.ArrivalTime.ToString("MMM dd, yyyy HH:mm")', '@booking.NumberOfPassengers', '@booking.TotalAmount', '@booking.BookingDate.ToString("MMM dd, yyyy HH:mm")', '@booking.Status', '@isRescheduled', '@(isRescheduled ? booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") : "")', '@(isRescheduled ? booking.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm") : "")')">
+                                                <i class="fas fa-eye me-1"></i>View Details
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -191,9 +203,6 @@
                         <i class="fas fa-ticket-alt fa-4x text-muted mb-4"></i>
                         <h3 class="text-muted">No Bookings Found</h3>
                         <p class="text-muted mb-4">There are no bookings in the system yet.</p>
-                        <a href="#" class="btn btn-primary btn-lg">
-                            <i class="fas fa-plus me-2"></i>Add First Booking
-                        </a>
                     </div>
                 </div>
             }
@@ -357,27 +366,19 @@
             _ => "fa-circle"
         };
     }
+
+    public string GetFlightDuration(DateTime? departure, DateTime? arrival)
+    {
+        if (!departure.HasValue || !arrival.HasValue)
+            return "N/A";
+
+        var duration = arrival.Value - departure.Value;
+        return $"{(int)duration.TotalHours}h {duration.Minutes}m";
+    }
 }
 
 @section Scripts {
     <script>
-        function updateBookingStatus(selectElement) {
-            const bookingId = selectElement.getAttribute('data-booking-id');
-            const newStatus = selectElement.value;
-            const originalStatus = selectElement.getAttribute('data-original-value');
-            
-            if (newStatus === originalStatus) {
-                return;
-            }
-
-            if (confirm(`Are you sure you want to change booking status to "${newStatus}"?`)) {
-                selectElement.form.submit();
-            } else {
-                // Reset to original value if cancelled
-                selectElement.value = originalStatus;
-            }
-        }
-
         function loadBookingDetails(bookingId, userName, userEmail, flightNumber, departureCity, arrivalCity, departureTime, arrivalTime, passengers, totalAmount, bookingDate, status, isRescheduled, rescheduledDeparture, rescheduledArrival) {
             // Update modal content with booking details
             document.getElementById('adminBookingsModalBookingId').textContent = bookingId;
@@ -505,13 +506,6 @@
         setInterval(() => {
             window.location.reload();
         }, 300000); // 5 minutes
-
-        // Store original values on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.admin-bookings-status-select').forEach(select => {
-                select.setAttribute('data-original-value', select.value);
-            });
-        });
     </script>
 }
 <style>
@@ -558,6 +552,23 @@
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
+    /* Travel Date Styling */
+    .rescheduled-flight-times {
+        border-left: 4px solid #e67e22 !important;
+        background: linear-gradient(135deg, rgba(230, 126, 34, 0.15), rgba(230, 126, 34, 0.08)) !important;
+        border: 1px solid #e67e22 !important;
+    }
+
+    .original-flight-times {
+        border-left: 2px solid #e9ecef;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+    }
+
+    .regular-flight-times {
+        padding: 0.5rem 0;
+    }
+
     /* Passenger Count Styling */
     .admin-bookings-passenger-count {
         font-size: 1.25rem;
@@ -577,22 +588,13 @@
 
     /* Action Buttons Styling */
     .admin-bookings-action-buttons {
-        min-width: 140px;
+        min-width: 120px;
     }
 
     .admin-bookings-action-buttons .btn {
         display: block;
         width: 100%;
-        margin-bottom: 0.25rem;
         border: 1px solid;
-    }
-
-    .admin-bookings-status-select {
-        min-width: 130px;
-        border: 1px solid #d1d3e2;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        padding: 0.4rem 0.75rem;
     }
 
     /* Empty State Styling */
@@ -713,7 +715,8 @@
         background: linear-gradient(135deg, #2980b9, #2471a3);
         border: 1px solid #2471a3;
     }
- .badge.bg-info {
+
+    .badge.bg-info {
         background: linear-gradient(135deg, #17a2b8, #138496) !important;
         border: 1px solid #117a8b;
     }
@@ -722,13 +725,6 @@
         color: #17a2b8 !important;
     }
 
-    /* Responsive adjustments */
-    @@media (max-width: 768px) {
-        .admin-bookings-action-buttons .btn {
-            font-size: 0.7rem;
-            padding: 0.3rem 0.5rem;
-        }
-    }
     /* Responsive Design */
     @@media (max-width: 768px) {
         .admin-bookings-table-responsive {
@@ -743,17 +739,12 @@
         }
         
         .admin-bookings-action-buttons {
-            min-width: 120px;
+            min-width: 100px;
         }
         
         .admin-bookings-action-buttons .btn {
             font-size: 0.75rem;
             padding: 0.4rem 0.6rem;
-        }
-        
-        .admin-bookings-status-select {
-            min-width: 110px;
-            font-size: 0.75rem;
         }
         
         .admin-bookings-passenger-count {
@@ -769,9 +760,7 @@
         }
         
         .admin-bookings-table th:nth-child(2),
-        .admin-bookings-table td:nth-child(2),
-        .admin-bookings-table th:nth-child(6),
-        .admin-bookings-table td:nth-child(6) {
+        .admin-bookings-table td:nth-child(2) {
             display: none;
         }
         
@@ -801,10 +790,6 @@
             font-size: 0.7rem;
             padding: 0.3rem 0.6rem;
         }
-        
-        .admin-bookings-status-select {
-            min-width: 90px;
-        }
     }
 
     /* Additional enhancements for better readability */
@@ -820,4 +805,4 @@
         background: #ffffff;
         box-shadow: none;
     }
-</style>
+</style>  

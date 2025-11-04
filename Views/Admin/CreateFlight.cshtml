@@ -21,7 +21,7 @@
                     <small class="opacity-75">Add a new flight to the system</small>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="CreateFlight" method="post">
+                    <form id="createFlightForm" asp-action="CreateFlight" method="post">
                         <!-- Airline Information -->
                         <div class="form-group mb-4">
                             <label asp-for="Airline" class="form-label fw-bold">Airline Name</label>
@@ -74,6 +74,10 @@
                                         <input asp-for="DepartureTime" type="datetime-local" class="form-control" />
                                     </div>
                                     <span asp-validation-for="DepartureTime" class="text-danger small"></span>
+                                    <small class="text-muted mt-1">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Departure time must be in the future
+                                    </small>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -86,6 +90,10 @@
                                         <input asp-for="ArrivalTime" type="datetime-local" class="form-control" />
                                     </div>
                                     <span asp-validation-for="ArrivalTime" class="text-danger small"></span>
+                                    <small class="text-muted mt-1">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Arrival time must be after departure time
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -151,7 +159,7 @@
                         <div class="form-group mt-4 pt-3 border-top">
                             <div class="row">
                                 <div class="col-md-6 mb-2">
-                                    <button type="submit" class="btn btn-success w-100 py-2 fw-bold">
+                                    <button type="button" class="btn btn-success w-100 py-2 fw-bold" onclick="confirmFlightCreation()">
                                         <i class="fas fa-plus-circle me-2"></i>Create Flight
                                     </button>
                                 </div>
@@ -169,9 +177,135 @@
     </div>
 </div>
 
+<!-- Create Confirmation Modal -->
+<div class="modal fade" id="createFlightModal" tabindex="-1" aria-labelledby="createFlightModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="createFlightModalLabel">
+                    <i class="fas fa-check-circle me-2"></i>Confirm Flight Creation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to create the following flight?</p>
+                <div class="card border-success mb-3">
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-12">
+                                <strong id="modalAirline" class="text-success"></strong>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-12">
+                                <small class="text-muted" id="modalFlightRoute"></small>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                <small class="text-muted">Departure:</small>
+                                <div><strong id="modalDepartureTime"></strong></div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Arrival:</small>
+                                <div><strong id="modalArrivalTime"></strong></div>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-6">
+                                <small class="text-muted">Seats:</small>
+                                <div><strong id="modalFlightSeats"></strong></div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Price:</small>
+                                <div><strong id="modalFlightPrice" class="text-success"></strong></div>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <small class="text-muted">Status:</small>
+                                <div><span class="badge bg-success" id="modalFlightStatus"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Note:</strong> This will add a new flight to the system. Make sure all information is correct before proceeding.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-success" onclick="submitFlightForm()">
+                    <i class="fas fa-check me-1"></i>Yes, Create Flight
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        function confirmFlightCreation() {
+            // Validate form first
+            const form = document.getElementById('createFlightForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            // Get form values for modal display
+            const airline = document.querySelector('input[name="Airline"]').value;
+            const departureCity = document.querySelector('input[name="DepartureCity"]').value;
+            const arrivalCity = document.querySelector('input[name="ArrivalCity"]').value;
+            const departureTime = document.querySelector('input[name="DepartureTime"]').value;
+            const arrivalTime = document.querySelector('input[name="ArrivalTime"]').value;
+            const totalSeats = document.querySelector('input[name="TotalSeats"]').value;
+            const price = document.querySelector('input[name="Price"]').value;
+            const isActive = document.querySelector('input[name="IsActive"]').checked;
+
+            // Format dates for display
+            const departureDate = new Date(departureTime).toLocaleString('en-US', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const arrivalDate = new Date(arrivalTime).toLocaleString('en-US', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            // Update modal content
+            document.getElementById('modalAirline').textContent = airline;
+            document.getElementById('modalFlightRoute').textContent = `${departureCity} → ${arrivalCity}`;
+            document.getElementById('modalDepartureTime').textContent = departureDate;
+            document.getElementById('modalArrivalTime').textContent = arrivalDate;
+            document.getElementById('modalFlightSeats').textContent = `${totalSeats} total seats`;
+            document.getElementById('modalFlightPrice').textContent = `$${parseFloat(price).toFixed(2)}`;
+            document.getElementById('modalFlightStatus').textContent = isActive ? 'Active' : 'Inactive';
+            document.getElementById('modalFlightStatus').className = isActive ? 'badge bg-success' : 'badge bg-danger';
+
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('createFlightModal'));
+            modal.show();
+        }
+
+        function submitFlightForm() {
+            // Submit the form
+            document.getElementById('createFlightForm').submit();
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const totalSeatsInput = document.querySelector('input[name="TotalSeats"]');
             const availableSeatsInput = document.querySelector('input[name="AvailableSeats"]');
@@ -193,16 +327,20 @@
                 departureInput.addEventListener('change', function() {
                     if (arrivalInput.value && new Date(arrivalInput.value) <= new Date(this.value)) {
                         arrivalInput.setCustomValidity('Arrival time must be after departure time');
+                        showTimeError('Arrival time must be after departure time');
                     } else {
                         arrivalInput.setCustomValidity('');
+                        hideTimeError();
                     }
                 });
                 
                 arrivalInput.addEventListener('change', function() {
                     if (departureInput.value && new Date(this.value) <= new Date(departureInput.value)) {
                         this.setCustomValidity('Arrival time must be after departure time');
+                        showTimeError('Arrival time must be after departure time');
                     } else {
                         this.setCustomValidity('');
+                        hideTimeError();
                     }
                 });
             }
@@ -214,11 +352,51 @@
             
             if (departureInput) {
                 departureInput.min = localISOTime;
+                
+                // Add validation for past dates
+                departureInput.addEventListener('change', function() {
+                    if (new Date(this.value) < new Date()) {
+                        this.setCustomValidity('Departure time cannot be in the past');
+                        showTimeError('Departure time cannot be in the past');
+                    } else {
+                        this.setCustomValidity('');
+                        hideTimeError();
+                    }
+                });
             }
+            
             if (arrivalInput) {
                 arrivalInput.min = localISOTime;
             }
+
+            // Auto-refresh page every 5 minutes
+            setInterval(() => {
+                console.log('Auto-refreshing create flight page...');
+                window.location.reload();
+            }, 300000); // 5 minutes
         });
+
+        function showTimeError(message) {
+            // Remove existing error message
+            hideTimeError();
+            
+            // Create error message element
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger mt-2';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${message}`;
+            errorDiv.id = 'timeError';
+            
+            // Insert after the arrival time input
+            const arrivalInput = document.querySelector('input[name="ArrivalTime"]');
+            arrivalInput.parentNode.parentNode.appendChild(errorDiv);
+        }
+
+        function hideTimeError() {
+            const existingError = document.getElementById('timeError');
+            if (existingError) {
+                existingError.remove();
+            }
+        }
     </script>
 }
 
@@ -312,6 +490,27 @@
 
     .bg-light {
         background-color: #f8f9fa !important;
+    }
+
+    /* Modal Styling */
+    .modal-header.bg-success {
+        background: linear-gradient(135deg, #27ae60, #219a52) !important;
+        border-bottom: 2px solid rgba(255,255,255,0.1);
+    }
+
+    .modal-content {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    /* Error message styling */
+    .alert-danger {
+        border: 1px solid #e74c3c;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+        font-weight: 500;
     }
 
     /* Responsive design */
