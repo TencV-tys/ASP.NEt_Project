@@ -1,6 +1,19 @@
+
 @model List<AirlineReservationSystem.Models.Booking>
 @{
     ViewData["Title"] = "Manage Bookings";
+    
+    // Auto-update booking statuses based on flight times
+    var updatedBookings = Model.Select(booking =>
+    {
+        // Check if flight has departed and should be marked as completed
+        if (booking.Status == "Confirmed" && 
+            booking.Flight?.ArrivalTime < DateTime.Now)
+        {
+            booking.Status = "Completed";
+        }
+        return booking;
+    }).ToList();
 }
 
 <div class="container">
@@ -10,7 +23,6 @@
             <span class="text-muted me-3">
                 <i class="fas fa-ticket-alt me-1"></i>@Model.Count bookings
             </span>
-          
         </div>
     </div>
     
@@ -35,11 +47,21 @@
                         <tbody>
                             @foreach (var booking in Model)
                             {
+                                var isRescheduled = booking.RescheduledDepartureTime.HasValue && booking.RescheduledArrivalTime.HasValue;
+                                var flightTime = isRescheduled ? booking.RescheduledArrivalTime : booking.Flight?.ArrivalTime;
+                                var isFlightCompleted = flightTime.HasValue && flightTime.Value < DateTime.Now;
+                                
                                 <tr>
                                     <td>
                                         <div class="d-flex flex-column">
                                             <small class="text-muted mb-1">Booking ID</small>
                                             <strong class="text-primary">@booking.BookingId.ToString().Substring(0, 8)...</strong>
+                                            @if (isRescheduled)
+                                            {
+                                                <span class="badge bg-warning text-white mt-1">
+                                                    <i class="fas fa-clock me-1"></i>Rescheduled
+                                                </span>
+                                            }
                                         </div>
                                     </td>
                                     <td>
@@ -62,6 +84,12 @@
                                             <small class="text-muted">
                                                 <i class="fas fa-building me-1"></i>@booking.Flight?.Airline
                                             </small>
+                                            @if (isFlightCompleted && booking.Status == "Confirmed")
+                                            {
+                                                <small class="text-info mt-1">
+                                                    <i class="fas fa-info-circle me-1"></i>Flight completed - status auto-updated
+                                                </small>
+                                            }
                                         </div>
                                     </td>
                                     <td>
@@ -85,32 +113,69 @@
                                             <small class="text-muted">Booked on</small>
                                             <strong class="text-dark">@booking.BookingDate.ToString("MMM dd, yyyy")</strong>
                                             <small class="text-muted">@booking.BookingDate.ToString("HH:mm")</small>
+                                            @if (isRescheduled)
+                                            {
+                                                <small class="text-warning mt-1">
+                                                    <i class="fas fa-clock me-1"></i>Rescheduled flight
+                                                </small>
+                                            }
                                         </div>
                                     </td>
                                     <td>
                                         <span class="badge @GetStatusBadgeClass(booking.Status) px-2 py-1">
                                             <i class="fas @GetStatusIcon(booking.Status) me-1"></i>
                                             @booking.Status
+                                            @if (isFlightCompleted && booking.Status == "Completed")
+                                            {
+                                                <i class="fas fa-sync-alt ms-1" title="Auto-completed"></i>
+                                            }
                                         </span>
                                     </td>
                                     <td>
                                         <div class="admin-bookings-action-buttons">
-                                            <form method="post" asp-action="UpdateBookingStatus" class="mb-2">
-                                                <input type="hidden" name="bookingId" value="@booking.BookingId" />
-                                                <select name="status" class="form-select form-select-sm admin-bookings-status-select border" 
-                                                        onchange="updateBookingStatus(this)" 
-                                                        data-booking-id="@booking.BookingId">
-                                                    <option value="Confirmed" selected="@(booking.Status == "Confirmed")">Confirmed</option>
-                                                    <option value="Cancelled" selected="@(booking.Status == "Cancelled")">Cancelled</option>
-                                                    <option value="Completed" selected="@(booking.Status == "Completed")">Completed</option>
-                                                </select>
-                                            </form>
-                                            <button class="btn btn-sm btn-outline-primary w-100" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#adminBookingsDetailsModal"
-                                                    onclick="loadBookingDetails('@booking.BookingId', '@booking.User?.FirstName @booking.User?.LastName', '@booking.User?.Email', '@booking.Flight?.FlightNumber', '@booking.Flight?.DepartureCity', '@booking.Flight?.ArrivalCity', '@booking.Flight?.DepartureTime.ToString("MMM dd, yyyy HH:mm")', '@booking.Flight?.ArrivalTime.ToString("MMM dd, yyyy HH:mm")', '@booking.NumberOfPassengers', '@booking.TotalAmount', '@booking.BookingDate.ToString("MMM dd, yyyy HH:mm")', '@booking.Status')">
-                                                <i class="fas fa-eye me-1"></i>View
-                                            </button>
+                                            @if (booking.Status == "Confirmed")
+                                            {
+                                                <form method="post" asp-action="UpdateBookingStatus" class="mb-2">
+                                                    <input type="hidden" name="bookingId" value="@booking.BookingId" />
+                                                    <select name="status" class="form-select form-select-sm admin-bookings-status-select border" 
+                                                            onchange="updateBookingStatus(this)" 
+                                                            data-booking-id="@booking.BookingId">
+                                                        <option value="Confirmed" selected="@(booking.Status == "Confirmed")">Confirmed</option>
+                                                        <option value="Cancelled" selected="@(booking.Status == "Cancelled")">Cancelled</option>
+                                                        <option value="Completed" selected="@(booking.Status == "Completed")">Completed</option>
+                                                    </select>
+                                                </form>
+                                                <button class="btn btn-sm btn-outline-primary w-100" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#adminBookingsDetailsModal"
+                                                        onclick="loadBookingDetails('@booking.BookingId', '@booking.User?.FirstName @booking.User?.LastName', '@booking.User?.Email', '@booking.Flight?.FlightNumber', '@booking.Flight?.DepartureCity', '@booking.Flight?.ArrivalCity', '@booking.Flight?.DepartureTime.ToString("MMM dd, yyyy HH:mm")', '@booking.Flight?.ArrivalTime.ToString("MMM dd, yyyy HH:mm")', '@booking.NumberOfPassengers', '@booking.TotalAmount', '@booking.BookingDate.ToString("MMM dd, yyyy HH:mm")', '@booking.Status', '@isRescheduled', '@(isRescheduled ? booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") : "")', '@(isRescheduled ? booking.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm") : "")')">
+                                                    <i class="fas fa-eye me-1"></i>View
+                                                </button>
+                                            }
+                                            else if (booking.Status == "Completed")
+                                            {
+                                                <div class="text-center">
+                                                    <small class="text-muted d-block mb-2">Flight Completed</small>
+                                                    <button class="btn btn-sm btn-outline-info w-100" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#adminBookingsDetailsModal"
+                                                            onclick="loadBookingDetails('@booking.BookingId', '@booking.User?.FirstName @booking.User?.LastName', '@booking.User?.Email', '@booking.Flight?.FlightNumber', '@booking.Flight?.DepartureCity', '@booking.Flight?.ArrivalCity', '@booking.Flight?.DepartureTime.ToString("MMM dd, yyyy HH:mm")', '@booking.Flight?.ArrivalTime.ToString("MMM dd, yyyy HH:mm")', '@booking.NumberOfPassengers', '@booking.TotalAmount', '@booking.BookingDate.ToString("MMM dd, yyyy HH:mm")', '@booking.Status', '@isRescheduled', '@(isRescheduled ? booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") : "")', '@(isRescheduled ? booking.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm") : "")')">
+                                                        <i class="fas fa-eye me-1"></i>View Details
+                                                    </button>
+                                                </div>
+                                            }
+                                            else if (booking.Status == "Cancelled")
+                                            {
+                                                <div class="text-center">
+                                                    <small class="text-muted d-block mb-2">Booking Cancelled</small>
+                                                    <button class="btn btn-sm btn-outline-secondary w-100" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#adminBookingsDetailsModal"
+                                                            onclick="loadBookingDetails('@booking.BookingId', '@booking.User?.FirstName @booking.User?.LastName', '@booking.User?.Email', '@booking.Flight?.FlightNumber', '@booking.Flight?.DepartureCity', '@booking.Flight?.ArrivalCity', '@booking.Flight?.DepartureTime.ToString("MMM dd, yyyy HH:mm")', '@booking.Flight?.ArrivalTime.ToString("MMM dd, yyyy HH:mm")', '@booking.NumberOfPassengers', '@booking.TotalAmount', '@booking.BookingDate.ToString("MMM dd, yyyy HH:mm")', '@booking.Status', '@isRescheduled', '@(isRescheduled ? booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") : "")', '@(isRescheduled ? booking.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm") : "")')">
+                                                        <i class="fas fa-eye me-1"></i>View Details
+                                                    </button>
+                                                </div>
+                                            }
                                         </div>
                                     </td>
                                 </tr>
@@ -250,23 +315,8 @@
                                 <h6 class="mb-0"><i class="fas fa-plane me-2"></i>Flight Information</h6>
                             </div>
                             <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <small class="text-muted">Flight Number</small>
-                                        <p class="fw-bold" id="adminBookingsModalFlightNumber">-</p>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <small class="text-muted">Route</small>
-                                        <p class="fw-bold" id="adminBookingsModalRoute">-</p>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <small class="text-muted">Departure</small>
-                                        <p class="fw-bold" id="adminBookingsModalDepartureTime">-</p>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <small class="text-muted">Arrival</small>
-                                        <p class="fw-bold" id="adminBookingsModalArrivalTime">-</p>
-                                    </div>
+                                <div id="adminBookingsModalFlightInfo">
+                                    <!-- Flight info will be populated by JavaScript -->
                                 </div>
                             </div>
                         </div>
@@ -328,15 +378,11 @@
             }
         }
 
-        function loadBookingDetails(bookingId, userName, userEmail, flightNumber, departureCity, arrivalCity, departureTime, arrivalTime, passengers, totalAmount, bookingDate, status) {
+        function loadBookingDetails(bookingId, userName, userEmail, flightNumber, departureCity, arrivalCity, departureTime, arrivalTime, passengers, totalAmount, bookingDate, status, isRescheduled, rescheduledDeparture, rescheduledArrival) {
             // Update modal content with booking details
             document.getElementById('adminBookingsModalBookingId').textContent = bookingId;
             document.getElementById('adminBookingsModalUserName').textContent = userName || 'Not available';
             document.getElementById('adminBookingsModalUserEmail').textContent = userEmail || 'Not available';
-            document.getElementById('adminBookingsModalFlightNumber').textContent = flightNumber || 'Not available';
-            document.getElementById('adminBookingsModalRoute').textContent = `${departureCity || 'N/A'} → ${arrivalCity || 'N/A'}`;
-            document.getElementById('adminBookingsModalDepartureTime').textContent = departureTime || 'Not available';
-            document.getElementById('adminBookingsModalArrivalTime').textContent = arrivalTime || 'Not available';
             document.getElementById('adminBookingsModalPassengers').textContent = passengers || '0';
             document.getElementById('adminBookingsModalTotalAmount').textContent = totalAmount ? `$${parseFloat(totalAmount).toFixed(2)}` : '$0.00';
             document.getElementById('adminBookingsModalBookingDate').textContent = bookingDate || 'Not available';
@@ -345,6 +391,78 @@
             const statusBadge = document.getElementById('adminBookingsModalBookingStatus');
             statusBadge.textContent = status || 'Unknown';
             statusBadge.className = 'badge ' + getStatusBadgeClass(status);
+
+            // Update flight information
+            const flightInfo = document.getElementById('adminBookingsModalFlightInfo');
+            if (isRescheduled === 'True' && rescheduledDeparture && rescheduledArrival) {
+                flightInfo.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-3">
+                            <small class="text-muted">Flight Number</small>
+                            <p class="fw-bold">${flightNumber || 'Not available'}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Route</small>
+                            <p class="fw-bold">${departureCity || 'N/A'} → ${arrivalCity || 'N/A'}</p>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="rescheduled-flight-times p-3 bg-warning bg-opacity-10 rounded border border-warning">
+                                <small class="text-warning fw-bold d-block mb-2">
+                                    <i class="fas fa-clock me-1"></i>Rescheduled Flight
+                                </small>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Departure</small>
+                                        <p class="fw-bold">${rescheduledDeparture}</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Arrival</small>
+                                        <p class="fw-bold">${rescheduledArrival}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="original-flight-times p-3 bg-light rounded border">
+                                <small class="text-muted d-block mb-2">Original Schedule</small>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Departure</small>
+                                        <p class="fw-bold">${departureTime || 'Not available'}</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Arrival</small>
+                                        <p class="fw-bold">${arrivalTime || 'Not available'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                flightInfo.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-3">
+                            <small class="text-muted">Flight Number</small>
+                            <p class="fw-bold">${flightNumber || 'Not available'}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Route</small>
+                            <p class="fw-bold">${departureCity || 'N/A'} → ${arrivalCity || 'N/A'}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Departure</small>
+                            <p class="fw-bold">${departureTime || 'Not available'}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Arrival</small>
+                            <p class="fw-bold">${arrivalTime || 'Not available'}</p>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         function getStatusBadgeClass(status) {
@@ -383,6 +501,11 @@
             printWindow.print();
         }
 
+        // Auto-refresh page every 5 minutes to update statuses
+        setInterval(() => {
+            window.location.reload();
+        }, 300000); // 5 minutes
+
         // Store original values on page load
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.admin-bookings-status-select').forEach(select => {
@@ -391,7 +514,6 @@
         });
     </script>
 }
-
 <style>
     /* Consistent Card Styling */
     .card {
@@ -591,7 +713,22 @@
         background: linear-gradient(135deg, #2980b9, #2471a3);
         border: 1px solid #2471a3;
     }
+ .badge.bg-info {
+        background: linear-gradient(135deg, #17a2b8, #138496) !important;
+        border: 1px solid #117a8b;
+    }
 
+    .text-info {
+        color: #17a2b8 !important;
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .admin-bookings-action-buttons .btn {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.5rem;
+        }
+    }
     /* Responsive Design */
     @@media (max-width: 768px) {
         .admin-bookings-table-responsive {

@@ -1,6 +1,18 @@
 @model AirlineReservationSystem.ViewModels.DashboardViewModel
 @{
     ViewData["Title"] = "Dashboard";
+    
+    // Auto-update booking statuses based on flight times
+    var updatedBookings = Model.UserBookings.Select(booking =>
+    {
+        // Check if flight has departed and should be marked as completed
+        if (booking.Status == "Confirmed" && 
+            (booking.RescheduledArrivalTime ?? booking.Flight.ArrivalTime) < DateTime.Now)
+        {
+            booking.Status = "Completed";
+        }
+        return booking;
+    }).ToList();
 }
 
 <div class="container">
@@ -50,12 +62,12 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="card-title mb-2 opacity-90">Rescheduled</h6>
-                            <h2 class="mb-1">@Model.UserBookings.Count(b => b.RescheduledDepartureTime.HasValue)</h2>
-                            <small class="opacity-75">Modified flights</small>
+                            <h6 class="card-title mb-2 opacity-90">Completed</h6>
+                            <h2 class="mb-1">@Model.UserBookings.Count(b => b.Status == "Completed")</h2>
+                            <small class="opacity-75">Finished journeys</small>
                         </div>
                         <div class="stat-icon">
-                            <i class="fas fa-clock fa-2x opacity-75"></i>
+                            <i class="fas fa-flag-checkered fa-2x opacity-75"></i>
                         </div>
                     </div>
                 </div>
@@ -88,25 +100,18 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-4 col-6">
+                        <div class="col-md-6 col-12">
                             <a asp-controller="User" asp-action="Flights" class="btn btn-primary w-100 h-100 py-3">
                                 <i class="fas fa-plane fa-2x mb-2"></i>
                                 <div>Book New Flight</div>
                                 <small class="text-light opacity-75">Find available flights</small>
                             </a>
                         </div>
-                        <div class="col-md-4 col-6">
+                        <div class="col-md-6 col-12">
                             <a asp-controller="User" asp-action="MyBookings" class="btn btn-success w-100 h-100 py-3">
                                 <i class="fas fa-list fa-2x mb-2"></i>
                                 <div>View All Bookings</div>
                                 <small class="text-light opacity-75">Manage reservations</small>
-                            </a>
-                        </div>
-                        <div class="col-md-4 col-6">
-                            <a href="#" class="btn btn-info w-100 h-100 py-3">
-                                <i class="fas fa-plane-departure fa-2x mb-2"></i>
-                                <div>Travel History</div>
-                                <small class="text-light opacity-75">Past journeys</small>
                             </a>
                         </div>
                     </div>
@@ -145,6 +150,9 @@
                                     @foreach (var booking in Model.UserBookings.Take(5))
                                     {
                                         var isRescheduled = booking.RescheduledDepartureTime.HasValue && booking.RescheduledArrivalTime.HasValue;
+                                        var flightTime = isRescheduled ? booking.RescheduledArrivalTime : booking.Flight.ArrivalTime;
+                                        var isFlightCompleted = flightTime.HasValue && flightTime.Value < DateTime.Now;
+                                        
                                         <tr>
                                             <td>
                                                 <div class="d-flex flex-column">
@@ -153,9 +161,9 @@
                                                     <small class="text-muted">@booking.BookingDate.ToString("MMM dd, yyyy")</small>
                                                     @if (isRescheduled)
                                                     {
-                                                        <small class="text-warning">
+                                                        <span class="badge bg-warning text-white mt-1">
                                                             <i class="fas fa-clock me-1"></i>Rescheduled
-                                                        </small>
+                                                        </span>
                                                     }
                                                 </div>
                                             </td>
@@ -180,33 +188,62 @@
                                                 <div class="d-flex flex-column">
                                                     @if (isRescheduled)
                                                     {
-                                                        <div class="mb-1">
-                                                            <small class="text-warning fw-bold">Rescheduled</small>
-                                                            <strong class="text-dark">@booking.RescheduledDepartureTime?.ToString("MMM dd, HH:mm")</strong>
-                                                            <small class="text-muted d-block">
-                                                                <i class="fas fa-arrow-right me-1"></i>
-                                                                @booking.RescheduledArrivalTime?.ToString("MMM dd, HH:mm")
+                                                        <!-- Rescheduled Flight Times -->
+                                                        <div class="rescheduled-flight-times mb-2 p-2 bg-warning bg-opacity-20 rounded border border-warning">
+                                                            <small class="text-dark fw-bold d-block mb-1">
+                                                                <i class="fas fa-clock me-1 text-warning"></i>New Schedule
+                                                            </small>
+                                                            <div class="d-flex align-items-center mb-1">
+                                                                <i class="fas fa-plane-departure text-warning me-2"></i>
+                                                                <strong class="text-dark">@booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy")</strong>
+                                                            </div>
+                                                            <div class="d-flex justify-content-between small">
+                                                                <span class="text-dark fw-bold">@booking.RescheduledDepartureTime?.ToString("HH:mm")</span>
+                                                                <i class="fas fa-arrow-right text-dark mx-2"></i>
+                                                                <span class="text-dark fw-bold">@booking.RescheduledArrivalTime?.ToString("HH:mm")</span>
+                                                            </div>
+                                                            <small class="text-dark d-block mt-1">
+                                                                @booking.RescheduledArrivalTime?.ToString("MMM dd")
                                                             </small>
                                                         </div>
-                                                        <div class="border-top pt-1">
-                                                            <small class="text-muted">Original</small>
-                                                            <small class="text-muted d-block">@booking.Flight.DepartureTime.ToString("MMM dd, HH:mm")</small>
+                                                        
+                                                        <!-- Original Flight Times -->
+                                                        <div class="original-flight-times p-2 bg-light rounded border">
+                                                            <small class="text-muted d-block mb-1">Original Schedule</small>
+                                                            <div class="d-flex justify-content-between small text-muted">
+                                                                <span>@booking.Flight.DepartureTime.ToString("MMM dd, HH:mm")</span>
+                                                                <i class="fas fa-arrow-right mx-2"></i>
+                                                                <span>@booking.Flight.ArrivalTime.ToString("MMM dd, HH:mm")</span>
+                                                            </div>
                                                         </div>
                                                     }
                                                     else
                                                     {
-                                                        <strong class="text-dark">@booking.Flight.DepartureTime.ToString("MMM dd, yyyy")</strong>
-                                                        <small class="text-muted">@booking.Flight.DepartureTime.ToString("HH:mm")</small>
-                                                        <small class="text-muted d-block">
-                                                            <i class="fas fa-arrow-right me-1"></i>
-                                                            @booking.Flight.ArrivalTime.ToString("MMM dd, HH:mm")
-                                                        </small>
+                                                        <!-- Regular Flight Times -->
+                                                        <div class="regular-flight-times">
+                                                            <div class="d-flex align-items-center mb-1">
+                                                                <i class="fas fa-plane-departure text-primary me-2"></i>
+                                                                <strong class="text-dark">@booking.Flight.DepartureTime.ToString("MMM dd, yyyy")</strong>
+                                                            </div>
+                                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                                <span class="fw-bold text-dark">@booking.Flight.DepartureTime.ToString("HH:mm")</span>
+                                                                <i class="fas fa-arrow-right text-muted mx-2"></i>
+                                                                <span class="fw-bold text-dark">@booking.Flight.ArrivalTime.ToString("HH:mm")</span>
+                                                            </div>
+                                                            <div class="d-flex justify-content-between small text-muted">
+                                                                <span>@booking.Flight.DepartureCity</span>
+                                                                <span>@booking.Flight.ArrivalCity</span>
+                                                            </div>
+                                                            <small class="text-muted d-block mt-1">
+                                                                Duration: @GetFlightDuration(booking.Flight.DepartureTime, booking.Flight.ArrivalTime)
+                                                            </small>
+                                                        </div>
                                                     }
                                                 </div>
                                             </td>
                                             <td>
                                                 <div class="text-center">
-                                                    <span class="passenger-count">@booking.NumberOfPassengers</span>
+                                                    <span class="passenger-count fw-bold text-dark">@booking.NumberOfPassengers</span>
                                                     <small class="d-block text-muted">passenger@(booking.NumberOfPassengers != 1 ? "s" : "")</small>
                                                 </div>
                                             </td>
@@ -227,7 +264,15 @@
                                                     {
                                                         <i class="fas fa-clock me-1"></i>
                                                     }
+                                                    else if (booking.Status == "Completed")
+                                                    {
+                                                        <i class="fas fa-flag-checkered me-1"></i>
+                                                    }
                                                     @booking.Status
+                                                    @if (isFlightCompleted && booking.Status == "Completed")
+                                                    {
+                                                        <i class="fas fa-sync-alt ms-1" title="Auto-completed"></i>
+                                                    }
                                                 </span>
                                             </td>
                                             <td>
@@ -236,22 +281,24 @@
                                                     {
                                                         <div class="btn-group-vertical btn-group-sm">
                                                             <a asp-controller="User" asp-action="EditBooking" asp-route-id="@booking.BookingId" 
-                                                               class="btn btn-outline-warning mb-1" title="Reschedule Booking">
+                                                               class="btn btn-warning text-white mb-1" title="Reschedule Booking">
                                                                 <i class="fas fa-clock"></i> Reschedule
                                                             </a>
-                                                            <form method="post" asp-controller="User" asp-action="CancelBooking" class="d-inline">
-                                                                <input type="hidden" name="id" value="@booking.BookingId" />
-                                                                <button type="submit" class="btn btn-outline-danger" 
-                                                                        onclick="return confirmCancelBooking('@booking.Flight.FlightNumber', '@(isRescheduled ? booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") : booking.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm"))')"
-                                                                        title="Cancel Booking">
-                                                                    <i class="fas fa-times"></i> Cancel
-                                                                </button>
-                                                            </form>
+                                                            <button type="button" class="btn btn-outline-danger" 
+                                                                    onclick="confirmCancelBooking('@booking.BookingId', '@booking.Flight.FlightNumber', '@(isRescheduled ? booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") : booking.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm"))')"
+                                                                    title="Cancel Booking">
+                                                                <i class="fas fa-times"></i> Cancel
+                                                            </button>
                                                         </div>
                                                     }
                                                     else
                                                     {
-                                                        <span class="text-muted small">No actions</span>
+                                                        <div class="text-center">
+                                                            <button class="btn btn-sm btn-outline-info w-100" 
+                                                                    onclick="viewBookingDetails('@booking.BookingId')">
+                                                                <i class="fas fa-eye me-1"></i> View Details
+                                                            </button>
+                                                        </div>
                                                     }
                                                 </div>
                                             </td>
@@ -310,7 +357,7 @@
                                                 @trip.Flight.DepartureCity → @trip.Flight.ArrivalCity
                                                 @if (isRescheduled)
                                                 {
-                                                    <span class="badge bg-warning float-end">
+                                                    <span class="badge bg-warning text-white float-end">
                                                         <i class="fas fa-clock me-1"></i>Rescheduled
                                                     </span>
                                                 }
@@ -319,19 +366,19 @@
                                         <div class="card-body">
                                             <div class="mb-2">
                                                 <small class="text-muted">Flight Number</small>
-                                                <p class="fw-bold mb-1">@trip.Flight.FlightNumber</p>
+                                                <p class="fw-bold mb-1 text-dark">@trip.Flight.FlightNumber</p>
                                             </div>
                                             <div class="mb-2">
                                                 <small class="text-muted">Airline</small>
-                                                <p class="mb-1">@trip.Flight.Airline</p>
+                                                <p class="mb-1 text-dark">@trip.Flight.Airline</p>
                                             </div>
                                             <div class="mb-2">
                                                 <small class="text-muted">Departure</small>
-                                                <p class="fw-bold mb-1">@departureTime.ToString("MMM dd, yyyy HH:mm")</p>
+                                                <p class="fw-bold mb-1 text-dark">@departureTime.ToString("MMM dd, yyyy HH:mm")</p>
                                             </div>
                                             <div class="mb-2">
                                                 <small class="text-muted">Arrival</small>
-                                                <p class="fw-bold mb-1">@arrivalTime.ToString("MMM dd, yyyy HH:mm")</p>
+                                                <p class="fw-bold mb-1 text-dark">@arrivalTime.ToString("MMM dd, yyyy HH:mm")</p>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <span class="badge bg-primary">@trip.NumberOfPassengers passenger(s)</span>
@@ -349,6 +396,60 @@
     }
 </div>
 
+<!-- Confirmation Modal -->
+<div class="modal fade" id="cancelBookingModal" tabindex="-1" aria-labelledby="cancelBookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="cancelBookingModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Cancellation
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel your booking for flight <strong id="modalFlightNumber"></strong> on <strong id="modalDepartureTime"></strong>?</p>
+                <div class="alert alert-danger mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>This action cannot be undone.</strong> Any payment will be refunded according to our cancellation policy.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Keep Booking
+                </button>
+                <form id="confirmCancelForm" method="post" asp-controller="User" asp-action="CancelBooking">
+                    <input type="hidden" name="id" id="cancelBookingId" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-check me-1"></i>Yes, Cancel Booking
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Details Modal -->
+<div class="modal fade" id="viewDetailsModal" tabindex="-1" aria-labelledby="viewDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="viewDetailsModalLabel">
+                    <i class="fas fa-info-circle me-2"></i>Booking Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="bookingDetailsContent">
+                <!-- Details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @functions {
     public string GetStatusBadgeClass(string status)
     {
@@ -356,125 +457,62 @@
         {
             "Confirmed" => "bg-success",
             "Cancelled" => "bg-danger",
-            "Pending" => "bg-warning",
+            "Completed" => "bg-info",
             _ => "bg-secondary"
         };
+    }
+
+    public string GetFlightDuration(DateTime departure, DateTime arrival)
+    {
+        var duration = arrival - departure;
+        return $"{(int)duration.TotalHours}h {duration.Minutes}m";
     }
 }
 
 @section Scripts {
     <script>
-        function confirmCancelBooking(flightNumber, departureTime) {
-            return confirm(`Are you sure you want to cancel your booking for flight ${flightNumber} on ${departureTime}?\n\nThis action cannot be undone.`);
+        let currentBookingId = null;
+
+        function confirmCancelBooking(bookingId, flightNumber, departureTime) {
+            currentBookingId = bookingId;
+            document.getElementById('modalFlightNumber').textContent = flightNumber;
+            document.getElementById('modalDepartureTime').textContent = departureTime;
+            document.getElementById('cancelBookingId').value = bookingId;
+            
+            const modal = new bootstrap.Modal(document.getElementById('cancelBookingModal'));
+            modal.show();
+            
+            return false; // Prevent form submission
         }
+
+        function viewBookingDetails(bookingId) {
+            // For now, show a simple message. You can implement AJAX to load real data
+            const detailsContent = `
+                <div class="text-center py-4">
+                    <i class="fas fa-ticket-alt fa-3x text-primary mb-3"></i>
+                    <h5>Booking Details</h5>
+                    <p class="text-muted">Detailed view for booking: <strong>${bookingId}</strong></p>
+                    <p class="text-muted">Full booking details would be loaded here via AJAX.</p>
+                </div>
+            `;
+            document.getElementById('bookingDetailsContent').innerHTML = detailsContent;
+            
+            const modal = new bootstrap.Modal(document.getElementById('viewDetailsModal'));
+            modal.show();
+        }
+
+        // Auto-refresh page every 5 seconds to update statuses
+        setInterval(() => {
+            console.log('Auto-refreshing dashboard...');
+            window.location.reload();
+        }, 60000); // 5 seconds
+
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
     </script>
 }
-
-<style>
-    .card {
-        border: 1px solid #e3e6f0;
-        border-radius: 12px;
-        background: #ffffff;
-    }
-
-    .card-header.bg-dark {
-        background: linear-gradient(135deg, #2c3e50, #34495e) !important;
-        border-radius: 12px 12px 0 0 !important;
-    }
-
-    .bg-primary {
-        background: linear-gradient(135deg, #3498db, #2980b9) !important;
-    }
-
-    .bg-success {
-        background: linear-gradient(135deg, #27ae60, #219a52) !important;
-    }
-
-    .bg-info {
-        background: linear-gradient(135deg, #17a2b8, #138496) !important;
-    }
-
-    .bg-danger {
-        background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
-    }
-
-    .bg-warning {
-        background: linear-gradient(135deg, #f39c12, #e67e22) !important;
-    }
-
-    .stat-icon {
-        opacity: 0.8;
-    }
-
-    .table th {
-        border-top: none;
-        font-weight: 700;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        background-color: #f8f9fa;
-        color: #495057;
-        padding: 1rem 0.75rem;
-        border-bottom: 2px solid #dee2e6;
-    }
-
-    .table td {
-        vertical-align: middle;
-        padding: 1.25rem 0.75rem;
-        border-bottom: 1px solid #e9ecef;
-        background: #ffffff;
-    }
-
-    .passenger-count {
-        font-size: 1.25rem;
-        font-weight: bold;
-        color: #2c3e50;
-    }
-
-    .route-badge .badge {
-        font-size: 0.75rem;
-        padding: 0.4rem 0.75rem;
-        background-color: #f8f9fa !important;
-        border: 1px solid #dee2e6;
-        color: #495057 !important;
-        font-weight: 500;
-    }
-
-    .action-buttons .btn-group-vertical {
-        min-width: 100px;
-    }
-
-    .btn-primary, .btn-success, .btn-info {
-        border: none;
-        transition: all 0.3s ease;
-    }
-
-    .btn-primary:hover, .btn-success:hover, .btn-info:hover {
-        transform: translateY(-2px);
-    }
-
-    /* Responsive design */
-    @@media (max-width: 768px) {
-        .table-responsive {
-            font-size: 0.85rem;
-        }
-        
-        .table th,
-        .table td {
-            padding: 0.75rem 0.5rem;
-        }
-        
-        .action-buttons .btn-group-vertical {
-            min-width: 80px;
-        }
-        
-        .btn-group-vertical .btn {
-            font-size: 0.75rem;
-            padding: 0.4rem 0.6rem;
-        }
-        
-        .stat-icon {
-            display: none;
-        }
-    }
-</style>

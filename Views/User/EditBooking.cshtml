@@ -5,107 +5,175 @@
 
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-warning text-white">
+        <div class="col-md-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-white py-3">
                     <h3 class="card-title mb-0">
-                        <i class="fas fa-clock"></i> Reschedule Flight
+                        <i class="fas fa-clock me-2"></i> Reschedule Your Flight
                     </h3>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     <!-- Current Flight Information -->
-                    <div class="alert alert-info">
-                        <h5 class="alert-heading">Current Flight Schedule</h5>
+                    <div class="current-flight-card bg-light rounded p-4 mb-4">
+                        <h5 class="mb-3 text-dark">
+                            <i class="fas fa-plane me-2"></i>Current Booking Details
+                        </h5>
                         <div class="row">
                             <div class="col-md-6">
-                                <strong>Flight:</strong> @Model.Flight.FlightNumber<br>
-                                <strong>Airline:</strong> @Model.Flight.Airline<br>
-                                <strong>Route:</strong> @Model.Flight.DepartureCity → @Model.Flight.ArrivalCity
+                                <div class="flight-info-item mb-2">
+                                    <small class="text-muted">Flight Number</small>
+                                    <div class="fw-bold">@Model.Flight.FlightNumber</div>
+                                </div>
+                                <div class="flight-info-item mb-2">
+                                    <small class="text-muted">Airline</small>
+                                    <div class="fw-bold">@Model.Flight.Airline</div>
+                                </div>
+                                <div class="flight-info-item">
+                                    <small class="text-muted">Route</small>
+                                    <div class="fw-bold text-primary">@Model.Flight.DepartureCity → @Model.Flight.ArrivalCity</div>
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <strong>Original Departure:</strong> @Model.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm")<br>
-                                <strong>Original Arrival:</strong> @Model.Flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm")<br>
-                                <strong>Price per seat:</strong> $@Model.Flight.Price.ToString("N2")
+                                <div class="flight-info-item mb-2">
+                                    <small class="text-muted">Original Departure</small>
+                                    <div class="fw-bold">@Model.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm")</div>
+                                </div>
+                                <div class="flight-info-item mb-2">
+                                    <small class="text-muted">Original Arrival</small>
+                                    <div class="fw-bold">@Model.Flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm")</div>
+                                </div>
+                                <div class="flight-info-item">
+                                    <small class="text-muted">Price per seat</small>
+                                    <div class="fw-bold text-success">$@Model.Flight.Price.ToString("N2")</div>
+                                </div>
                             </div>
                         </div>
                         @if (Model.IsRescheduled)
                         {
-                            <hr>
-                            <div class="row mt-2">
-                                <div class="col-12">
-                                    <strong class="text-success">Currently Rescheduled To:</strong><br>
-                                    <strong>Departure:</strong> @Model.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm")<br>
-                                    <strong>Arrival:</strong> @Model.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm")
+                            <div class="rescheduled-info mt-3 p-3 bg-warning rounded border border-warning">
+                                <small class="fw-bold text-white d-block mb-2">
+                                    <i class="fas fa-clock me-1"></i>Currently Rescheduled To
+                                </small>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-white">Departure</small>
+                                        <div class="fw-bold text-white">@Model.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm")</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-white">Arrival</small>
+                                        <div class="fw-bold text-white">@Model.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm")</div>
+                                    </div>
                                 </div>
                             </div>
                         }
                     </div>
 
-                    <!-- Edit Form -->
-                    <form method="post" asp-action="EditBooking">
+                    <!-- Reschedule Form -->
+                    <form method="post" asp-action="EditBooking" id="rescheduleForm">
                         <input type="hidden" name="id" value="@Model.BookingId" />
                         
-                        <!-- New Departure Time -->
-                        <div class="form-group mb-3">
-                            <label for="newDepartureTime" class="form-label fw-bold">New Departure Time</label>
-                            <input type="datetime-local" 
-                                   class="form-control" 
-                                   id="newDepartureTime" 
-                                   name="newDepartureTime" 
-                                   value="@(Model.RescheduledDepartureTime?.ToString("yyyy-MM-ddTHH:mm") ?? Model.Flight.DepartureTime.ToString("yyyy-MM-ddTHH:mm"))"
-                                   min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"
-                                   required />
-                            <small class="form-text text-muted">
-                                Select your preferred departure date and time
-                            </small>
-                        </div>
+                        <div class="form-section mb-4">
+                            <h5 class="mb-3 text-dark">
+                                <i class="fas fa-calendar-alt me-2"></i>Select New Schedule
+                            </h5>
+                            
+                            <!-- New Departure Time -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="newDepartureTime" class="form-label fw-bold">New Departure Time</label>
+                                        <input type="datetime-local" 
+                                               class="form-control form-control-lg" 
+                                               id="newDepartureTime" 
+                                               name="newDepartureTime" 
+                                               value="@(Model.RescheduledDepartureTime?.ToString("yyyy-MM-ddTHH:mm") ?? Model.Flight.DepartureTime.ToString("yyyy-MM-ddTHH:mm"))"
+                                               min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"
+                                               required />
+                                        <small class="form-text text-muted">
+                                            Choose your preferred departure date and time
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="newArrivalTime" class="form-label fw-bold">New Arrival Time</label>
+                                        <input type="datetime-local" 
+                                               class="form-control form-control-lg" 
+                                               id="newArrivalTime" 
+                                               name="newArrivalTime" 
+                                               value="@(Model.RescheduledArrivalTime?.ToString("yyyy-MM-ddTHH:mm") ?? Model.Flight.ArrivalTime.ToString("yyyy-MM-ddTHH:mm"))"
+                                               min="@DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm")"
+                                               required />
+                                        <small class="form-text text-muted">
+                                            Choose your preferred arrival date and time
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
 
-                        <!-- New Arrival Time -->
-                        <div class="form-group mb-3">
-                            <label for="newArrivalTime" class="form-label fw-bold">New Arrival Time</label>
-                            <input type="datetime-local" 
-                                   class="form-control" 
-                                   id="newArrivalTime" 
-                                   name="newArrivalTime" 
-                                   value="@(Model.RescheduledArrivalTime?.ToString("yyyy-MM-ddTHH:mm") ?? Model.Flight.ArrivalTime.ToString("yyyy-MM-ddTHH:mm"))"
-                                   min="@DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm")"
-                                   required />
-                            <small class="form-text text-muted">
-                                Select your preferred arrival date and time
-                            </small>
-                        </div>
-
-                        <!-- Number of Passengers -->
-                        <div class="form-group mb-4">
-                            <label for="numberOfPassengers" class="form-label fw-bold">Number of Passengers</label>
-                            <input type="number" 
-                                   class="form-control" 
-                                   id="numberOfPassengers" 
-                                   name="numberOfPassengers" 
-                                   value="@Model.NumberOfPassengers" 
-                                   min="1" 
-                                   max="@(Model.NumberOfPassengers + Model.Flight.AvailableSeats)"
-                                   required />
-                            <small class="form-text text-muted">
-                                You can book up to @(Model.NumberOfPassengers + Model.Flight.AvailableSeats) passengers total.
-                            </small>
+                            <!-- Number of Passengers -->
+                            <div class="form-group mb-4">
+                                <label for="numberOfPassengers" class="form-label fw-bold">Number of Passengers</label>
+                                <input type="number" 
+                                       class="form-control form-control-lg" 
+                                       id="numberOfPassengers" 
+                                       name="numberOfPassengers" 
+                                       value="@Model.NumberOfPassengers" 
+                                       min="1" 
+                                       max="@(Model.NumberOfPassengers + Model.Flight.AvailableSeats)"
+                                       required />
+                                <small class="form-text text-muted">
+                                    Maximum @(Model.NumberOfPassengers + Model.Flight.AvailableSeats) passengers available
+                                </small>
+                            </div>
                         </div>
 
                         <!-- Updated Schedule Preview -->
-                        <div class="alert alert-success">
-                            <h6>Your Rescheduled Flight</h6>
-                            <p class="mb-1"><strong>Flight:</strong> @Model.Flight.FlightNumber</p>
-                            <p class="mb-1"><strong>Route:</strong> @Model.Flight.DepartureCity → @Model.Flight.ArrivalCity</p>
-                            <p class="mb-1"><strong>Your Departure:</strong> <span id="previewDeparture">@(Model.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") ?? Model.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm"))</span></p>
-                            <p class="mb-1"><strong>Your Arrival:</strong> <span id="previewArrival">@(Model.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm") ?? Model.Flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm"))</span></p>
-                            <p class="mb-1"><strong>Passengers:</strong> <span id="previewPassengers">@Model.NumberOfPassengers</span></p>
-                            <p class="mb-0"><strong>Total Amount:</strong> $<span id="previewTotal">@Model.TotalAmount.ToString("N2")</span></p>
+                        <div class="preview-card bg-success text-white rounded p-4 mb-4 border border-success">
+                            <h6 class="mb-3">
+                                <i class="fas fa-eye me-2"></i>Your Rescheduled Flight Preview
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="preview-item mb-3">
+                                        <small class="text-white opacity-75">Flight</small>
+                                        <div class="fw-bold fs-6">@Model.Flight.FlightNumber</div>
+                                    </div>
+                                    <div class="preview-item">
+                                        <small class="text-white opacity-75">Route</small>
+                                        <div class="fw-bold fs-6">@Model.Flight.DepartureCity → @Model.Flight.ArrivalCity</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="preview-item mb-3">
+                                        <small class="text-white opacity-75">Departure</small>
+                                        <div class="fw-bold fs-6" id="previewDeparture">@(Model.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") ?? Model.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm"))</div>
+                                    </div>
+                                    <div class="preview-item">
+                                        <small class="text-white opacity-75">Arrival</small>
+                                        <div class="fw-bold fs-6" id="previewArrival">@(Model.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm") ?? Model.Flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm"))</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="preview-item mb-3">
+                                        <small class="text-white opacity-75">Passengers</small>
+                                        <div class="fw-bold fs-6" id="previewPassengers">@Model.NumberOfPassengers</div>
+                                    </div>
+                                    <div class="preview-item">
+                                        <small class="text-white opacity-75">Total Amount</small>
+                                        <div class="fw-bold fs-5" id="previewTotal">$@Model.TotalAmount.ToString("N2")</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
+                        <!-- Action Buttons -->
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a asp-action="MyBookings" class="btn btn-secondary me-md-2">Cancel</a>
-                            <button type="submit" class="btn btn-warning">
-                                <i class="fas fa-save"></i> Reschedule Flight
+                            <a asp-action="MyBookings" class="btn btn-outline-secondary btn-lg me-md-2">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Bookings
+                            </a>
+                            <button type="button" class="btn btn-warning btn-lg px-4" id="confirmRescheduleBtn" data-bs-toggle="modal" data-bs-target="#confirmationModal">
+                                <i class="fas fa-calendar-check me-2"></i>Confirm Reschedule
                             </button>
                         </div>
                     </form>
@@ -115,22 +183,87 @@
     </div>
 </div>
 
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="confirmationModalLabel">
+                    <i class="fas fa-clock me-2"></i>Confirm Reschedule
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="fas fa-plane fa-3x text-warning mb-3"></i>
+                    <h5 class="mb-3">Ready to reschedule your flight?</h5>
+                </div>
+                
+                <div class="confirmation-details bg-warning bg-opacity-10 rounded p-4 mb-4 border border-warning">
+                    <h6 class="mb-3 text-dark">Rescheduled Flight Details</h6>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">Flight</small>
+                            <div class="fw-bold">@Model.Flight.FlightNumber</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Route</small>
+                            <div class="fw-bold">@Model.Flight.DepartureCity → @Model.Flight.ArrivalCity</div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">New Departure</small>
+                            <div class="fw-bold text-dark" id="modalDeparture">@(Model.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") ?? Model.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm"))</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">New Arrival</small>
+                            <div class="fw-bold text-dark" id="modalArrival">@(Model.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm") ?? Model.Flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm"))</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Passengers</small>
+                            <div class="fw-bold text-dark" id="modalPassengers">@Model.NumberOfPassengers</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Total Amount</small>
+                            <div class="fw-bold text-success" id="modalTotalAmount">$@Model.TotalAmount.ToString("N2")</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <small>
+                        <i class="fas fa-info-circle me-2"></i>
+                        Your flight will be rescheduled immediately. You'll receive an updated e-ticket via email.
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-warning" id="finalConfirmBtn">
+                    <i class="fas fa-check me-2"></i>Confirm Reschedule
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         // Real-time preview updates
-        document.getElementById('newDepartureTime').addEventListener('change', updatePreview);
-        document.getElementById('newArrivalTime').addEventListener('change', updatePreview);
-        document.getElementById('numberOfPassengers').addEventListener('input', updatePreview);
+        const departureInput = document.getElementById('newDepartureTime');
+        const arrivalInput = document.getElementById('newArrivalTime');
+        const passengersInput = document.getElementById('numberOfPassengers');
+        const pricePerSeat = @Model.Flight.Price;
 
         function updatePreview() {
-            const departureInput = document.getElementById('newDepartureTime');
-            const arrivalInput = document.getElementById('newArrivalTime');
-            const passengersInput = document.getElementById('numberOfPassengers');
-            
             const departureDate = new Date(departureInput.value);
             const arrivalDate = new Date(arrivalInput.value);
             const passengerCount = parseInt(passengersInput.value) || 0;
-            const pricePerSeat = @Model.Flight.Price;
             
             // Format dates for display
             const options = { 
@@ -145,19 +278,62 @@
             const formattedArrival = arrivalDate.toLocaleDateString('en-US', options);
             const totalAmount = passengerCount * pricePerSeat;
             
-            // Update preview
-            document.getElementById('previewDeparture').textContent = formattedDeparture;
-            document.getElementById('previewArrival').textContent = formattedArrival;
-            document.getElementById('previewPassengers').textContent = passengerCount;
-            document.getElementById('previewTotal').textContent = totalAmount.toFixed(2);
+            // Update preview with animation
+            animateUpdate('previewDeparture', formattedDeparture);
+            animateUpdate('previewArrival', formattedArrival);
+            animateUpdate('previewPassengers', passengerCount.toString());
+            animateUpdate('previewTotal', '$' + totalAmount.toFixed(2));
+            
+            // Update modal details
+            animateUpdate('modalDeparture', formattedDeparture);
+            animateUpdate('modalArrival', formattedArrival);
+            animateUpdate('modalPassengers', passengerCount.toString());
+            animateUpdate('modalTotalAmount', '$' + totalAmount.toFixed(2));
             
             // Validate arrival is after departure
             if (arrivalDate <= departureDate) {
                 arrivalInput.setCustomValidity('Arrival time must be after departure time');
+                arrivalInput.classList.add('is-invalid');
             } else {
                 arrivalInput.setCustomValidity('');
+                arrivalInput.classList.remove('is-invalid');
             }
         }
+
+        function animateUpdate(elementId, newValue) {
+            const element = document.getElementById(elementId);
+            element.style.transform = 'scale(1.05)';
+            element.style.transition = 'transform 0.2s ease';
+            element.textContent = newValue;
+            
+            setTimeout(() => {
+                element.style.transform = 'scale(1)';
+            }, 200);
+        }
+
+        // Event listeners for real-time updates
+        departureInput.addEventListener('change', updatePreview);
+        arrivalInput.addEventListener('change', updatePreview);
+        passengersInput.addEventListener('input', updatePreview);
+
+        // Final confirmation button click
+        document.getElementById('finalConfirmBtn').addEventListener('click', function() {
+            // Show loading state
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+            this.disabled = true;
+            
+            // Submit the form after a brief delay to show loading state
+            setTimeout(() => {
+                document.getElementById('rescheduleForm').submit();
+            }, 1500);
+        });
+
+        // Reset final confirm button when modal is hidden
+        document.getElementById('confirmationModal').addEventListener('hidden.bs.modal', function() {
+            const finalConfirmBtn = document.getElementById('finalConfirmBtn');
+            finalConfirmBtn.innerHTML = '<i class="fas fa-check me-2"></i>Confirm Reschedule';
+            finalConfirmBtn.disabled = false;
+        });
 
         // Initialize preview on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -165,3 +341,132 @@
         });
     </script>
 }
+
+<style>
+    .card {
+        border: none;
+        border-radius: 12px;
+    }
+
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+    }
+
+    .current-flight-card {
+        border-left: 4px solid #17a2b8;
+    }
+
+    .flight-info-item {
+        padding: 0.25rem 0;
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+
+    .preview-card {
+        background: linear-gradient(135deg, #27ae60, #219a52) !important;
+        border-left: 4px solid #1e8449 !important;
+    }
+
+    .preview-item {
+        padding: 0.5rem 0;
+    }
+
+    .rescheduled-info {
+        background: linear-gradient(135deg, #f39c12, #e67e22) !important;
+    }
+
+    .form-control-lg {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .form-control-lg:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+    }
+
+    .btn-lg {
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+        border: none;
+        color: white;
+    }
+
+    .btn-warning:hover {
+        background: linear-gradient(135deg, #e67e22, #d35400);
+        transform: translateY(-1px);
+    }
+
+    .modal-header.bg-warning {
+        background: linear-gradient(135deg, #f39c12, #e67e22) !important;
+    }
+
+    .confirmation-details {
+        border: 1px solid #dee2e6;
+    }
+
+    /* Animation for price update */
+    .price-update {
+        animation: pulse 0.5s ease-in-out;
+    }
+
+    @@keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    /* Improved readability for preview sections */
+    .preview-card .fw-bold {
+        color: white !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .preview-card small {
+        color: rgba(255,255,255,0.9) !important;
+    }
+
+    .rescheduled-info .fw-bold {
+        color: white !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .rescheduled-info small {
+        color: rgba(255,255,255,0.9) !important;
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .card-body {
+            padding: 1.5rem !important;
+        }
+        
+        .form-section {
+            padding: 1rem;
+        }
+        
+        .btn-lg {
+            padding: 0.75rem 1rem;
+        }
+        
+        .preview-card .row {
+            text-align: center;
+        }
+        
+        .preview-item {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
