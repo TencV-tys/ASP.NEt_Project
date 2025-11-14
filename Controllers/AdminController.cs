@@ -24,6 +24,9 @@ namespace AirlineReservationSystem.Controllers
 
         public async Task<IActionResult> Dashboard()
         {
+            // Update completed bookings first
+            await UpdateCompletedBookings();
+            
             var dashboardStats = new AdminDashboardViewModel
             {
                 TotalUsers = await _userManager.Users.CountAsync(),
@@ -35,7 +38,12 @@ namespace AirlineReservationSystem.Controllers
                     .Include(b => b.Flight)
                     .OrderByDescending(b => b.BookingDate)
                     .Take(10)
-                    .ToListAsync()
+                    .ToListAsync(),
+                // Add proper counts for all bookings
+                ConfirmedBookingsCount = await _context.Bookings.CountAsync(b => b.Status == "Confirmed"),
+                CancelledBookingsCount = await _context.Bookings.CountAsync(b => b.Status == "Cancelled"),
+                CompletedBookingsCount = await _context.Bookings.CountAsync(b => b.Status == "Completed"),
+                TodaysBookingsCount = await _context.Bookings.CountAsync(b => b.BookingDate.Date == DateTime.Today)
             };
 
             return View(dashboardStats);
@@ -166,6 +174,19 @@ namespace AirlineReservationSystem.Controllers
             {
                 return NotFound();
             }
+
+            // Check if this flight has any completed bookings
+            var hasCompletedBookings = await _context.Bookings
+                .AnyAsync(b => b.FlightId == id && b.Status == "Completed");
+
+            // Pass this to the view
+            ViewBag.HasCompletedBookings = hasCompletedBookings;
+
+            if (hasCompletedBookings)
+            {
+                TempData["Warning"] = "This flight has completed bookings. Editing may affect passenger records.";
+            }
+
             return View(flight);
         }
 
@@ -177,6 +198,16 @@ namespace AirlineReservationSystem.Controllers
             if (id != flight.FlightId)
             {
                 return NotFound();
+            }
+
+            // Check if this flight has any completed bookings
+            var hasCompletedBookings = await _context.Bookings
+                .AnyAsync(b => b.FlightId == id && b.Status == "Completed");
+
+            if (hasCompletedBookings)
+            {
+                TempData["Error"] = "Cannot edit flights with completed bookings! These flights have already been completed by passengers.";
+                return RedirectToAction(nameof(Flights));
             }
 
             if (ModelState.IsValid)
@@ -218,6 +249,16 @@ namespace AirlineReservationSystem.Controllers
             var flight = await _context.Flights.FindAsync(id);
             if (flight != null)
             {
+                // Check if this flight has any bookings
+                var hasBookings = await _context.Bookings
+                    .AnyAsync(b => b.FlightId == id);
+
+                if (hasBookings)
+                {
+                    TempData["Error"] = "Cannot delete flights with existing bookings! You must cancel all bookings first.";
+                    return RedirectToAction(nameof(Flights));
+                }
+
                 _context.Flights.Remove(flight);
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "Flight deleted successfully!";
@@ -228,6 +269,9 @@ namespace AirlineReservationSystem.Controllers
         // GET: Admin/Bookings
         public async Task<IActionResult> Bookings()
         {
+            // Update completed bookings first
+            await UpdateCompletedBookings();
+            
             var bookings = await _context.Bookings
                 .Include(b => b.User)
                 .Include(b => b.Flight)
@@ -249,6 +293,13 @@ namespace AirlineReservationSystem.Controllers
             if (booking == null)
             {
                 TempData["Error"] = "Booking not found!";
+                return RedirectToAction(nameof(Bookings));
+            }
+
+            // Prevent editing completed bookings
+            if (booking.Status == "Completed")
+            {
+                TempData["Error"] = "Cannot modify completed bookings! This flight has already been completed.";
                 return RedirectToAction(nameof(Bookings));
             }
 
@@ -293,6 +344,13 @@ namespace AirlineReservationSystem.Controllers
                 return NotFound();
             }
 
+            // Prevent access to edit completed bookings
+            if (booking.Status == "Completed")
+            {
+                TempData["Error"] = "Cannot edit completed bookings!";
+                return RedirectToAction(nameof(Bookings));
+            }
+
             return View(booking);
         }
 
@@ -308,6 +366,13 @@ namespace AirlineReservationSystem.Controllers
             if (booking == null)
             {
                 TempData["Error"] = "Booking not found!";
+                return RedirectToAction(nameof(Bookings));
+            }
+
+            // Prevent editing completed bookings
+            if (booking.Status == "Completed")
+            {
+                TempData["Error"] = "Cannot modify completed bookings! This flight has already been completed.";
                 return RedirectToAction(nameof(Bookings));
             }
 
@@ -331,6 +396,61 @@ namespace AirlineReservationSystem.Controllers
 
             TempData["Success"] = $"Booking status updated to {status} successfully!";
             return RedirectToAction(nameof(Bookings));
+        }
+
+        // POST: Admin/RescheduleFlight
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RescheduleFlight(Guid bookingId, DateTime newDepartureTime, DateTime newArrivalTime)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.Flight)
+                .FirstOrDefaultAsync(b => b.BookingId == bookingId);
+
+            if (booking == null)
+            {
+                TempData["Error"] = "Booking not found!";
+                return RedirectToAction(nameof(Bookings));
+            }
+
+            // Prevent rescheduling completed bookings
+            if (booking.Status == "Completed")
+            {
+                TempData["Error"] = "Cannot reschedule completed bookings! This flight has already been completed.";
+                return RedirectToAction(nameof(Bookings));
+            }
+
+            // Update the booking with rescheduled times
+            booking.RescheduledDepartureTime = newDepartureTime;
+            booking.RescheduledArrivalTime = newArrivalTime;
+            booking.Status = "Confirmed"; // Ensure it's confirmed after rescheduling
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Flight rescheduled successfully!";
+            return RedirectToAction(nameof(Bookings));
+        }
+
+        // Helper method to update completed bookings in database
+        private async Task UpdateCompletedBookings()
+        {
+            var completedBookings = await _context.Bookings
+                .Include(b => b.Flight)
+                .Where(b => b.Status == "Confirmed" && 
+                           (b.RescheduledArrivalTime.HasValue ? 
+                            b.RescheduledArrivalTime.Value < DateTime.Now : 
+                            b.Flight.ArrivalTime < DateTime.Now))
+                .ToListAsync();
+
+            foreach (var booking in completedBookings)
+            {
+                booking.Status = "Completed";
+            }
+
+            if (completedBookings.Any())
+            {
+                await _context.SaveChangesAsync();
+            }
         }
 
         private bool FlightExists(Guid id)

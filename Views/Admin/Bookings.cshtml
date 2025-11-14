@@ -13,6 +13,12 @@
         }
         return booking;
     }).ToList();
+
+    // Get counts for each status
+    var totalCount = Model.Count;
+    var confirmedCount = Model.Count(b => b.Status == "Confirmed");
+    var completedCount = Model.Count(b => b.Status == "Completed");
+    var cancelledCount = Model.Count(b => b.Status == "Cancelled");
 }
 
 <div class="container">
@@ -20,8 +26,37 @@
         <h2>Manage Bookings</h2>
         <div>
             <span class="text-muted me-3">
-                <i class="fas fa-ticket-alt me-1"></i>@Model.Count bookings
+                <i class="fas fa-ticket-alt me-1"></i><span id="bookingCount">@Model.Count</span> bookings
             </span>
+        </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Filter by Status</h6>
+                    <div class="btn-group w-100" role="group" aria-label="Booking status filter">
+                        <button type="button" class="btn btn-outline-primary active" data-status="all">
+                            <i class="fas fa-list me-1"></i>All Bookings
+                            <span class="badge bg-primary ms-1">@totalCount</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-success" data-status="Confirmed">
+                            <i class="fas fa-check-circle me-1"></i>Confirmed
+                            <span class="badge bg-success ms-1">@confirmedCount</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-info" data-status="Completed">
+                            <i class="fas fa-flag-checkered me-1"></i>Completed
+                            <span class="badge bg-info ms-1">@completedCount</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" data-status="Cancelled">
+                            <i class="fas fa-times-circle me-1"></i>Cancelled
+                            <span class="badge bg-warning ms-1">@cancelledCount</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -43,14 +78,14 @@
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="bookingsTableBody">
                             @foreach (var booking in Model)
                             {
                                 var isRescheduled = booking.RescheduledDepartureTime.HasValue && booking.RescheduledArrivalTime.HasValue;
                                 var flightTime = isRescheduled ? booking.RescheduledArrivalTime : booking.Flight?.ArrivalTime;
                                 var isFlightCompleted = flightTime.HasValue && flightTime.Value < DateTime.Now;
                                 
-                                <tr>
+                                <tr class="booking-row" data-status="@booking.Status.ToLower()">
                                     <td>
                                         <div class="d-flex flex-column">
                                             <small class="text-muted mb-1">Booking ID</small>
@@ -214,34 +249,46 @@
     {
         <div class="row mt-4">
             <div class="col-md-3 col-6 mb-3">
-                <div class="card bg-primary text-white admin-bookings-stat-card">
+                <div class="card bg-primary text-white admin-bookings-stat-card clickable-stat-card" data-status="all">
                     <div class="card-body text-center py-3">
-                        <h4 class="mb-0">@Model.Count</h4>
+                        <h4 class="mb-0">@totalCount</h4>
                         <small>Total Bookings</small>
+                        <div class="stat-card-hover">
+                            <i class="fas fa-mouse-pointer"></i> Click to view all
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-3 col-6 mb-3">
-                <div class="card bg-success text-white admin-bookings-stat-card">
+                <div class="card bg-success text-white admin-bookings-stat-card clickable-stat-card" data-status="confirmed">
                     <div class="card-body text-center py-3">
-                        <h4 class="mb-0">@Model.Count(b => b.Status == "Confirmed")</h4>
+                        <h4 class="mb-0">@confirmedCount</h4>
                         <small>Confirmed</small>
+                        <div class="stat-card-hover">
+                            <i class="fas fa-mouse-pointer"></i> Click to filter
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-3 col-6 mb-3">
-                <div class="card bg-info text-white admin-bookings-stat-card">
+                <div class="card bg-info text-white admin-bookings-stat-card clickable-stat-card" data-status="completed">
                     <div class="card-body text-center py-3">
-                        <h4 class="mb-0">@Model.Count(b => b.Status == "Completed")</h4>
+                        <h4 class="mb-0">@completedCount</h4>
                         <small>Completed</small>
+                        <div class="stat-card-hover">
+                            <i class="fas fa-mouse-pointer"></i> Click to filter
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-3 col-6 mb-3">
-                <div class="card bg-warning text-white admin-bookings-stat-card">
+                <div class="card bg-warning text-white admin-bookings-stat-card clickable-stat-card" data-status="cancelled">
                     <div class="card-body text-center py-3">
-                        <h4 class="mb-0">@Model.Count(b => b.Status == "Cancelled")</h4>
+                        <h4 class="mb-0">@cancelledCount</h4>
                         <small>Cancelled</small>
+                        <div class="stat-card-hover">
+                            <i class="fas fa-mouse-pointer"></i> Click to filter
+                        </div>
                     </div>
                 </div>
             </div>
@@ -379,6 +426,145 @@
 
 @section Scripts {
     <script>
+        // Filter functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Filter button functionality
+            const filterButtons = document.querySelectorAll('[data-status]');
+            const bookingRows = document.querySelectorAll('.booking-row');
+            const bookingCount = document.getElementById('bookingCount');
+            const statCards = document.querySelectorAll('.clickable-stat-card');
+
+            // Initialize counts
+            const statusCounts = {
+                'all': @totalCount,
+                'confirmed': @confirmedCount,
+                'completed': @completedCount,
+                'cancelled': @cancelledCount
+            };
+
+            // Filter button click handler
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const status = this.getAttribute('data-status');
+                    
+                    // Update active button
+                    filterButtons.forEach(btn => {
+                        btn.classList.remove('active', 'btn-primary', 'btn-success', 'btn-info', 'btn-warning');
+                        btn.classList.add('btn-outline-primary', 'btn-outline-success', 'btn-outline-info', 'btn-outline-warning');
+                    });
+                    
+                    this.classList.remove('btn-outline-primary', 'btn-outline-success', 'btn-outline-info', 'btn-outline-warning');
+                    this.classList.add('active');
+                    
+                    // Set appropriate solid button class based on status
+                    switch(status) {
+                        case 'all':
+                            this.classList.add('btn-primary');
+                            break;
+                        case 'Confirmed':
+                            this.classList.add('btn-success');
+                            break;
+                        case 'Completed':
+                            this.classList.add('btn-info');
+                            break;
+                        case 'Cancelled':
+                            this.classList.add('btn-warning');
+                            break;
+                    }
+                    
+                    filterBookings(status);
+                });
+            });
+
+            // Stat card click handler
+            statCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const status = this.getAttribute('data-status');
+                    
+                    // Update filter buttons
+                    filterButtons.forEach(btn => {
+                        btn.classList.remove('active', 'btn-primary', 'btn-success', 'btn-info', 'btn-warning');
+                        btn.classList.add('btn-outline-primary', 'btn-outline-success', 'btn-outline-info', 'btn-outline-warning');
+                        
+                        if (btn.getAttribute('data-status') === (status === 'all' ? 'all' : status.charAt(0).toUpperCase() + status.slice(1))) {
+                            btn.classList.remove('btn-outline-primary', 'btn-outline-success', 'btn-outline-info', 'btn-outline-warning');
+                            btn.classList.add('active');
+                            
+                            // Set appropriate solid button class
+                            switch(status) {
+                                case 'all':
+                                    btn.classList.add('btn-primary');
+                                    break;
+                                case 'confirmed':
+                                    btn.classList.add('btn-success');
+                                    break;
+                                case 'completed':
+                                    btn.classList.add('btn-info');
+                                    break;
+                                case 'cancelled':
+                                    btn.classList.add('btn-warning');
+                                    break;
+                            }
+                        }
+                    });
+                    
+                    filterBookings(status === 'all' ? 'all' : status.charAt(0).toUpperCase() + status.slice(1));
+                });
+            });
+
+            function filterBookings(status) {
+                let visibleCount = 0;
+                
+                bookingRows.forEach(row => {
+                    if (status === 'all' || row.getAttribute('data-status') === status.toLowerCase()) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                // Update booking count
+                bookingCount.textContent = visibleCount;
+                
+                // Show/hide empty state
+                const emptyState = document.querySelector('.admin-bookings-empty-state');
+                const tableBody = document.getElementById('bookingsTableBody');
+                
+                if (visibleCount === 0) {
+                    if (!emptyState) {
+                        const noResultsHtml = `
+                            <div class="text-center py-5">
+                                <div class="admin-bookings-empty-state">
+                                    <i class="fas fa-search fa-4x text-muted mb-4"></i>
+                                    <h3 class="text-muted">No Matching Bookings</h3>
+                                    <p class="text-muted mb-4">No bookings found with the selected status filter.</p>
+                                    <button class="btn btn-primary" onclick="resetFilters()">
+                                        <i class="fas fa-refresh me-2"></i>Show All Bookings
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        tableBody.innerHTML = noResultsHtml;
+                    }
+                } else if (emptyState && tableBody.querySelector('.admin-bookings-empty-state')) {
+                    // Reload the original table content if we had no results
+                    location.reload();
+                }
+            }
+
+            // Initialize with all bookings visible
+            filterBookings('all');
+        });
+
+        // Reset filters function
+        function resetFilters() {
+            const allButton = document.querySelector('[data-status="all"]');
+            if (allButton) {
+                allButton.click();
+            }
+        }
+
         function loadBookingDetails(bookingId, userName, userEmail, flightNumber, departureCity, arrivalCity, departureTime, arrivalTime, passengers, totalAmount, bookingDate, status, isRescheduled, rescheduledDeparture, rescheduledArrival) {
             // Update modal content with booking details
             document.getElementById('adminBookingsModalBookingId').textContent = bookingId;
@@ -508,7 +694,62 @@
         }, 300000); // 5 minutes
     </script>
 }
+
 <style>
+    /* Filter Button Styles */
+    .btn-group .btn {
+        border-radius: 8px !important;
+        margin: 0 2px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-group .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .btn-group .btn.active {
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    /* Clickable Stat Cards */
+    .clickable-stat-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .clickable-stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .clickable-stat-card:active {
+        transform: translateY(-2px);
+    }
+
+    .stat-card-hover {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 12px;
+    }
+
+    .clickable-stat-card:hover .stat-card-hover {
+        opacity: 1;
+    }
+
     /* Consistent Card Styling */
     .card {
         border: none;
@@ -727,16 +968,25 @@
 
     /* Responsive Design */
     @@media (max-width: 768px) {
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .btn-group .btn {
+            margin: 2px 0;
+            width: 100%; 
+        }
+        
         .admin-bookings-table-responsive {
             font-size: 0.875rem;
             background: #ffffff;
-        }
+        } 
         
         .admin-bookings-table th,
         .admin-bookings-table td {
             padding: 0.75rem;
             background: #ffffff;
-        }
+        } 
         
         .admin-bookings-action-buttons {
             min-width: 100px;
@@ -780,7 +1030,7 @@
         .admin-bookings-table td:nth-child(3) {
             display: none;
         }
-        
+         
         .admin-bookings-action-buttons .btn {
             font-size: 0.7rem;
             padding: 0.3rem 0.5rem;
@@ -805,4 +1055,4 @@
         background: #ffffff;
         box-shadow: none;
     }
-</style>  
+</style>

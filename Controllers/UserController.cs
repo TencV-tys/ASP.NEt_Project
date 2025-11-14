@@ -14,7 +14,7 @@ namespace AirlineReservationSystem.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
 
         public UserController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
-        {
+        { 
             _context = context;
             _userManager = userManager;
         }

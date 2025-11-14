@@ -1,3 +1,4 @@
+
 @model AirlineReservationSystem.ViewModels.AdminDashboardViewModel
 @{
     ViewData["Title"] = "Admin Dashboard";
@@ -87,7 +88,7 @@
                             <h6 class="card-title mb-2 opacity-90">Total Revenue</h6>
                             <h2 class="mb-1">$@Model.TotalRevenue.ToString("N2")</h2>
                             <small class="opacity-75">Confirmed bookings</small>
-                        </div>
+                        </div> 
                         <div class="stat-icon">
                             <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
                         </div>
@@ -109,24 +110,24 @@
         <div class="col-lg-4 col-md-6 mb-4">
             <div class="card h-100 shadow-sm">
                 <div class="card-header bg-dark text-white">
-                    <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Quick Stats</h6>
+                    <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Booking Status</h6>
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                         <span class="text-dark fw-medium">Confirmed Bookings</span>
-                        <span class="badge bg-success">@Model.RecentBookings.Count(b => b.Status == "Confirmed")</span>
+                        <span class="badge bg-success">@Model.ConfirmedBookingsCount</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                         <span class="text-dark fw-medium">Cancelled Bookings</span>
-                        <span class="badge bg-danger">@Model.RecentBookings.Count(b => b.Status == "Cancelled")</span>
+                        <span class="badge bg-danger">@Model.CancelledBookingsCount</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                         <span class="text-dark fw-medium">Completed Bookings</span>
-                        <span class="badge bg-info">@Model.RecentBookings.Count(b => b.Status == "Completed")</span>
+                        <span class="badge bg-info">@Model.CompletedBookingsCount</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="text-dark fw-medium">Today's Bookings</span>
-                        <span class="badge bg-primary">@Model.RecentBookings.Count(b => b.BookingDate.Date == DateTime.Today)</span>
+                        <span class="badge bg-primary">@Model.TodaysBookingsCount</span>
                     </div>
                 </div>
             </div>
@@ -142,7 +143,7 @@
                     </a>
                 </div>
                 <div class="card-body p-0">
-                    @if (Model.RecentBookings.Any())
+                    @if (Model.RecentBookings?.Any() == true)
                     {
                         <div class="table-responsive">
                             <table class="table table-hover mb-0">
@@ -267,7 +268,7 @@
             _ => "bg-secondary"
         };
     }
-
+ 
     public string GetStatusIcon(string status)
     {
         return status switch
@@ -496,4 +497,4 @@
             max-width: 100%;
         }
     }
-</style>
+</style> 
