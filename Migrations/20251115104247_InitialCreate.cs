@@ -234,6 +234,8 @@ namespace AirlineReservationSystem.Migrations
                 columns: table => new
                 {
                     BookingId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    BookingReference = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     UserId = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     FlightId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
@@ -242,6 +244,8 @@ namespace AirlineReservationSystem.Migrations
                     BookingDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     Status = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    CarryOnBags = table.Column<int>(type: "int", nullable: false),
+                    CheckedBags = table.Column<int>(type: "int", nullable: false),
                     RescheduledDepartureTime = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     RescheduledArrivalTime = table.Column<DateTime>(type: "datetime(6)", nullable: true)
                 },

@@ -10,7 +10,7 @@ namespace AirlineReservationSystem.Models
         public Guid FlightId { get; set; } = Guid.NewGuid();
 
         [StringLength(50)]
-        public string FlightNumber { get; set; } = string.Empty; // Will be auto-generated
+        public string FlightNumber { get; set; } = GenerateFlightNumber(); // Auto-generated with VAS-
 
         [Required]
         [StringLength(100)]
@@ -49,5 +49,13 @@ namespace AirlineReservationSystem.Models
 
         // Navigation properties
         public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
+        // Static method to generate flight number
+        private static string GenerateFlightNumber()
+        {
+            var random = new Random();
+            var number = random.Next(100000, 999999); // 6-digit number
+            return $"VAS-{number}";
+        }
     }
 }

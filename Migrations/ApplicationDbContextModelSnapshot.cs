@@ -111,6 +111,16 @@ namespace AirlineReservationSystem.Migrations
                     b.Property<DateTime>("BookingDate")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("BookingReference")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("CarryOnBags")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CheckedBags")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("FlightId")
                         .HasColumnType("char(36)");
 

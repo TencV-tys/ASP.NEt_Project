@@ -10,6 +10,9 @@ namespace AirlineReservationSystem.Models
         public Guid BookingId { get; set; } = Guid.NewGuid();
 
         [Required]
+        public string BookingReference { get; set; } = GenerateBookingReference(); // VAS- format
+
+        [Required]
         public string UserId { get; set; } = string.Empty;
 
         [Required]
@@ -29,15 +32,41 @@ namespace AirlineReservationSystem.Models
         [StringLength(20)]
         public string Status { get; set; } = "Confirmed"; // Confirmed, Cancelled, Completed
 
+        // Baggage Information
+        [Required]
+        [Range(0, 4)]
+        public int CarryOnBags { get; set; } = 1; // Default 1 carry-on per passenger
+
+        [Required]
+        [Range(0, 4)]
+        public int CheckedBags { get; set; } = 0; // Default 0 checked bags
+
+        [NotMapped]
+        public decimal BaggageFee => (CarryOnBags * CarryOnBagFee) + (CheckedBags * CheckedBagFee);
+
+        [NotMapped]
+        public decimal CarryOnBagFee => 0m; // First carry-on is usually free
+
+        [NotMapped]
+        public decimal CheckedBagFee => 30m; // $30 per checked bag
+
         // New fields for rescheduling
         public DateTime? RescheduledDepartureTime { get; set; }
         public DateTime? RescheduledArrivalTime { get; set; }
 
-           [NotMapped]
+        [NotMapped]
         public bool IsRescheduled => RescheduledDepartureTime.HasValue && RescheduledArrivalTime.HasValue;
 
         // Navigation properties
         public virtual ApplicationUser User { get; set; } = null!;
         public virtual Flight Flight { get; set; } = null!;
+
+        // Static method to generate booking reference
+        private static string GenerateBookingReference()
+        {
+            var random = new Random();
+            var number = random.Next(100000, 999999); // 6-digit number
+            return $"VAS-{number}";
+        }
     }
 }

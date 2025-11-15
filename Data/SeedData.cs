@@ -75,13 +75,14 @@ namespace AirlineReservationSystem.Data
                 }
             }
 
-            // Seed sample flights with auto-generated flight numbers
+            // Seed sample flights with VAS- flight numbers
             if (!context.Flights.Any())
             {
-                 context.Flights.AddRange(
+                var random = new Random();
+                context.Flights.AddRange(
                     new Flight
                     {
-                        FlightNumber = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper(),
+                        FlightNumber = $"VAS-{random.Next(100000, 999999)}",
                         Airline = "American Airlines",
                         DepartureCity = "New York",
                         ArrivalCity = "Los Angeles",
@@ -93,7 +94,7 @@ namespace AirlineReservationSystem.Data
                     },
                     new Flight
                     {
-                        FlightNumber = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper(),
+                        FlightNumber = $"VAS-{random.Next(100000, 999999)}",
                         Airline = "United Airlines",
                         DepartureCity = "Chicago",
                         ArrivalCity = "Miami",
@@ -105,7 +106,7 @@ namespace AirlineReservationSystem.Data
                     },
                     new Flight
                     {
-                        FlightNumber = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper(),
+                        FlightNumber = $"VAS-{random.Next(100000, 999999)}",
                         Airline = "Delta Airlines",
                         DepartureCity = "Atlanta",
                         ArrivalCity = "Seattle",
