@@ -16,4 +16,4 @@ namespace AirlineReservationSystem.ViewModels
         public int CompletedBookingsCount { get; set; }
         public int TodaysBookingsCount { get; set; }
     }
-}
+} 

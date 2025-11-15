@@ -75,7 +75,7 @@ namespace AirlineReservationSystem.Controllers
         // POST: User/BookFlight - Only regular users can book flights
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BookFlight(Guid flightId, int numberOfPassengers)
+        public async Task<IActionResult> BookFlight(Guid flightId, int numberOfPassengers, int carryOnBags, int checkedBags)
         {
             try
             {
@@ -111,16 +111,40 @@ namespace AirlineReservationSystem.Controllers
                     return RedirectToAction(nameof(Flights));
                 }
 
+                // Validate baggage
+                if (carryOnBags < 0 || carryOnBags > 4)
+                {
+                    TempData["Error"] = "Carry-on bags must be between 0 and 4.";
+                    return RedirectToAction(nameof(BookFlight), new { id = flightId });
+                }
+
+                if (checkedBags < 0 || checkedBags > 4)
+                {
+                    TempData["Error"] = "Checked bags must be between 0 and 4.";
+                    return RedirectToAction(nameof(BookFlight), new { id = flightId });
+                }
+
+                // Calculate total amount with baggage fees
+                var baseAmount = flight.Price * numberOfPassengers;
+                var baggageFee = checkedBags * 30m; // $30 per checked bag
+                var totalAmount = baseAmount + baggageFee;
+
+                // Generate VAS- booking reference
+                var random = new Random();
+                var bookingReference = $"VAS-{random.Next(100000, 999999)}";
+
                 var booking = new Booking
                 {
                     BookingId = Guid.NewGuid(),
+                    BookingReference = bookingReference,
                     UserId = userId,
                     FlightId = flightId,
                     NumberOfPassengers = numberOfPassengers,
-                    TotalAmount = flight.Price * numberOfPassengers,
+                    CarryOnBags = carryOnBags,
+                    CheckedBags = checkedBags,
+                    TotalAmount = totalAmount,
                     Status = "Confirmed",
                     BookingDate = DateTime.UtcNow,
-                    // Initialize the new reschedule fields
                     RescheduledDepartureTime = null,
                     RescheduledArrivalTime = null
                 };
@@ -131,7 +155,7 @@ namespace AirlineReservationSystem.Controllers
                 _context.Bookings.Add(booking);
                 await _context.SaveChangesAsync();
 
-                TempData["Success"] = "Flight booked successfully!";
+                TempData["Success"] = $"Flight booked successfully! Booking Reference: {bookingReference}";
                 return RedirectToAction(nameof(MyBookings));
             }
             catch (Exception ex)
@@ -213,7 +237,7 @@ namespace AirlineReservationSystem.Controllers
         // POST: User/EditBooking/5 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditBooking(Guid id, int numberOfPassengers, DateTime newDepartureTime, DateTime newArrivalTime)
+        public async Task<IActionResult> EditBooking(Guid id, int numberOfPassengers, int carryOnBags, int checkedBags, DateTime newDepartureTime, DateTime newArrivalTime)
         {
             try
             {
@@ -253,6 +277,19 @@ namespace AirlineReservationSystem.Controllers
                     return View(booking);
                 }
 
+                // Validate baggage
+                if (carryOnBags < 0 || carryOnBags > 4)
+                {
+                    TempData["Error"] = "Carry-on bags must be between 0 and 4.";
+                    return View(booking);
+                }
+
+                if (checkedBags < 0 || checkedBags > 4)
+                {
+                    TempData["Error"] = "Checked bags must be between 0 and 4.";
+                    return View(booking);
+                }
+
                 // Check seat availability for passenger count change
                 int seatDifference = numberOfPassengers - booking.NumberOfPassengers;
                 if (seatDifference > 0 && booking.Flight.AvailableSeats < seatDifference)
@@ -261,26 +298,32 @@ namespace AirlineReservationSystem.Controllers
                     return View(booking);
                 }
 
-                // Update booking with rescheduled times
+                // Update booking with rescheduled times and baggage
                 booking.RescheduledDepartureTime = newDepartureTime;
                 booking.RescheduledArrivalTime = newArrivalTime;
+                booking.CarryOnBags = carryOnBags;
+                booking.CheckedBags = checkedBags;
                 
                 // Update passenger count and adjust available seats
                 if (seatDifference != 0)
                 {
                     booking.Flight.AvailableSeats -= seatDifference;
                     booking.NumberOfPassengers = numberOfPassengers;
-                    booking.TotalAmount = booking.Flight.Price * numberOfPassengers;
                 }
+
+                // Recalculate total amount with new passenger count and baggage fees
+                var baseAmount = booking.Flight.Price * booking.NumberOfPassengers;
+                var baggageFee = checkedBags * 30m; // $30 per checked bag
+                booking.TotalAmount = baseAmount + baggageFee;
 
                 await _context.SaveChangesAsync();
 
-                TempData["Success"] = "Booking rescheduled successfully!";
+                TempData["Success"] = "Booking updated successfully!";
                 return RedirectToAction(nameof(MyBookings));
             }
             catch (Exception ex)
             {
-                TempData["Error"] = $"An error occurred while rescheduling the booking: {ex.Message}";
+                TempData["Error"] = $"An error occurred while updating the booking: {ex.Message}";
                 return RedirectToAction(nameof(MyBookings));
             }
         }

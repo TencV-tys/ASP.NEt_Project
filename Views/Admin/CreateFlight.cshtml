@@ -1,6 +1,25 @@
 @model AirlineReservationSystem.Models.Flight
 @{
     ViewData["Title"] = "Create Flight";
+    
+    // Visayas airports and major locations
+    var visayasLocations = new List<string>
+    {
+        "Cebu (CEB) - Mactan-Cebu International Airport",
+        "Bohol (TAG) - Tagbilaran Airport",
+        "Dumaguete (DGT) - Sibulan Airport", 
+        "Bacolod (BCD) - Bacolod-Silay Airport",
+        "Iloilo (ILO) - Iloilo International Airport",
+        "Tacloban (TAC) - Daniel Z. Romualdez Airport",
+        "Kalibo (KLO) - Kalibo International Airport",
+        "Roxas (RXS) - Roxas Airport",
+        "Catarman (CRM) - Catarman National Airport",
+        "Maasin (MSA) - Maasin Airport",
+        "Siquijor (SIQ) - Siquijor Airport",
+        "Guiuan (GUI) - Guiuan Airport",
+        "Bantayan (BSA) - Bantayan Airport",
+        "Camiguin (CGM) - Camiguin Airport"
+    };
 }
 
 <div class="container">
@@ -29,7 +48,14 @@
                                 <span class="input-group-text bg-light">
                                     <i class="fas fa-building text-primary"></i>
                                 </span>
-                                <input asp-for="Airline" class="form-control" placeholder="Enter airline name" />
+                                <select asp-for="Airline" class="form-select" id="airlineSelect">
+                                    <option value="">Select Airline</option>
+                                    <option value="VAS Airlines">VAS Airlines</option>
+                                    <option value="Philippine Airlines">Philippine Airlines</option>
+                                    <option value="Cebu Pacific">Cebu Pacific</option>
+                                    <option value="AirAsia Philippines">AirAsia Philippines</option>
+                                    <option value="PAL Express">PAL Express</option>
+                                </select>
                             </div>
                             <span asp-validation-for="Airline" class="text-danger small"></span>
                         </div>
@@ -43,7 +69,13 @@
                                         <span class="input-group-text bg-light">
                                             <i class="fas fa-plane-departure text-primary"></i>
                                         </span>
-                                        <input asp-for="DepartureCity" class="form-control" placeholder="Departure city" />
+                                        <select asp-for="DepartureCity" class="form-select" id="departureCity">
+                                            <option value="">Select Departure City</option>
+                                            @foreach (var location in visayasLocations)
+                                            {
+                                                <option value="@location">@location</option>
+                                            }
+                                        </select>
                                     </div>
                                     <span asp-validation-for="DepartureCity" class="text-danger small"></span>
                                 </div>
@@ -55,7 +87,13 @@
                                         <span class="input-group-text bg-light">
                                             <i class="fas fa-plane-arrival text-primary"></i>
                                         </span>
-                                        <input asp-for="ArrivalCity" class="form-control" placeholder="Arrival city" />
+                                        <select asp-for="ArrivalCity" class="form-select" id="arrivalCity">
+                                            <option value="">Select Arrival City</option>
+                                            @foreach (var location in visayasLocations)
+                                            {
+                                                <option value="@location">@location</option>
+                                            }
+                                        </select>
                                     </div>
                                     <span asp-validation-for="ArrivalCity" class="text-danger small"></span>
                                 </div>
@@ -71,7 +109,7 @@
                                         <span class="input-group-text bg-light">
                                             <i class="fas fa-calendar-alt text-primary"></i>
                                         </span>
-                                        <input asp-for="DepartureTime" type="datetime-local" class="form-control" />
+                                        <input asp-for="DepartureTime" type="datetime-local" class="form-control" id="departureTime" />
                                     </div>
                                     <span asp-validation-for="DepartureTime" class="text-danger small"></span>
                                     <small class="text-muted mt-1">
@@ -87,7 +125,7 @@
                                         <span class="input-group-text bg-light">
                                             <i class="fas fa-calendar-check text-primary"></i>
                                         </span>
-                                        <input asp-for="ArrivalTime" type="datetime-local" class="form-control" />
+                                        <input asp-for="ArrivalTime" type="datetime-local" class="form-control" id="arrivalTime" />
                                     </div>
                                     <span asp-validation-for="ArrivalTime" class="text-danger small"></span>
                                     <small class="text-muted mt-1">
@@ -258,11 +296,11 @@
             }
 
             // Get form values for modal display
-            const airline = document.querySelector('input[name="Airline"]').value;
-            const departureCity = document.querySelector('input[name="DepartureCity"]').value;
-            const arrivalCity = document.querySelector('input[name="ArrivalCity"]').value;
-            const departureTime = document.querySelector('input[name="DepartureTime"]').value;
-            const arrivalTime = document.querySelector('input[name="ArrivalTime"]').value;
+            const airline = document.getElementById('airlineSelect').value;
+            const departureCity = document.getElementById('departureCity').value;
+            const arrivalCity = document.getElementById('arrivalCity').value;
+            const departureTime = document.getElementById('departureTime').value;
+            const arrivalTime = document.getElementById('arrivalTime').value;
             const totalSeats = document.querySelector('input[name="TotalSeats"]').value;
             const price = document.querySelector('input[name="Price"]').value;
             const isActive = document.querySelector('input[name="IsActive"]').checked;
@@ -288,7 +326,7 @@
 
             // Update modal content
             document.getElementById('modalAirline').textContent = airline;
-            document.getElementById('modalFlightRoute').textContent = `${departureCity} → ${arrivalCity}`;
+            document.getElementById('modalFlightRoute').textContent = `${departureCity.split(' - ')[0]} → ${arrivalCity.split(' - ')[0]}`;
             document.getElementById('modalDepartureTime').textContent = departureDate;
             document.getElementById('modalArrivalTime').textContent = arrivalDate;
             document.getElementById('modalFlightSeats').textContent = `${totalSeats} total seats`;
@@ -309,6 +347,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             const totalSeatsInput = document.querySelector('input[name="TotalSeats"]');
             const availableSeatsInput = document.querySelector('input[name="AvailableSeats"]');
+            const departureSelect = document.getElementById('departureCity');
+            const arrivalSelect = document.getElementById('arrivalCity');
             
             // Set available seats equal to total seats when total seats changes
             if (totalSeatsInput) {
@@ -319,9 +359,30 @@
                 });
             }
 
+            // Prevent same city selection
+            if (departureSelect && arrivalSelect) {
+                departureSelect.addEventListener('change', function() {
+                    if (this.value === arrivalSelect.value) {
+                        arrivalSelect.value = '';
+                        showCityError('Departure and arrival cities cannot be the same');
+                    } else {
+                        hideCityError();
+                    }
+                });
+                
+                arrivalSelect.addEventListener('change', function() {
+                    if (this.value === departureSelect.value) {
+                        this.value = '';
+                        showCityError('Departure and arrival cities cannot be the same');
+                    } else {
+                        hideCityError();
+                    }
+                });
+            }
+
             // Validate arrival time is after departure time
-            const departureInput = document.querySelector('input[name="DepartureTime"]');
-            const arrivalInput = document.querySelector('input[name="ArrivalTime"]');
+            const departureInput = document.getElementById('departureTime');
+            const arrivalInput = document.getElementById('arrivalTime');
             
             if (departureInput && arrivalInput) {
                 departureInput.addEventListener('change', function() {
@@ -387,12 +448,34 @@
             errorDiv.id = 'timeError';
             
             // Insert after the arrival time input
-            const arrivalInput = document.querySelector('input[name="ArrivalTime"]');
+            const arrivalInput = document.getElementById('arrivalTime');
             arrivalInput.parentNode.parentNode.appendChild(errorDiv);
         }
 
         function hideTimeError() {
             const existingError = document.getElementById('timeError');
+            if (existingError) {
+                existingError.remove();
+            }
+        }
+
+        function showCityError(message) {
+            // Remove existing error message
+            hideCityError();
+            
+            // Create error message element
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-warning mt-2';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${message}`;
+            errorDiv.id = 'cityError';
+            
+            // Insert after the arrival city select
+            const arrivalSelect = document.getElementById('arrivalCity');
+            arrivalSelect.parentNode.parentNode.appendChild(errorDiv);
+        }
+
+        function hideCityError() {
+            const existingError = document.getElementById('cityError');
             if (existingError) {
                 existingError.remove();
             }
@@ -418,7 +501,7 @@
         margin-bottom: 0.5rem;
     }
 
-    .form-control {
+    .form-control, .form-select {
         border: 1px solid #d1d3e2;
         border-radius: 8px;
         padding: 0.75rem 1rem;
@@ -426,7 +509,7 @@
         background: #ffffff;
     }
 
-    .form-control:focus {
+    .form-control:focus, .form-select:focus {
         border-color: #3498db;
         box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
         background: #ffffff;
@@ -438,7 +521,7 @@
         color: #6c757d;
     }
 
-    .input-group-text {
+    .input-group-text { 
         background-color: #f8f9fa;
         border: 1px solid #d1d3e2;
         color: #495057;
@@ -513,6 +596,14 @@
         font-weight: 500;
     }
 
+    .alert-warning {
+        border: 1px solid #f39c12;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+        color: white;
+        font-weight: 500;
+    }
+
     /* Responsive design */
     @@media (max-width: 768px) {
         .container {
@@ -556,5 +647,13 @@
 
     .form-group:focus-within {
         transform: translateY(-2px);
+    }
+
+    /* Custom select styling */
+    .form-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
     }
 </style>

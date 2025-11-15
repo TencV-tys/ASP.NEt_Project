@@ -5,9 +5,7 @@
     // Auto-update booking statuses based on flight times
     var updatedBookings = Model.Select(booking =>
     {
-        // Check if flight has departed and should be marked as completed
-        if (booking.Status == "Confirmed" && 
-            booking.Flight?.ArrivalTime < DateTime.Now)
+        if (booking.Status == "Confirmed" && booking.Flight?.ArrivalTime < DateTime.Now)
         {
             booking.Status = "Completed";
         }
@@ -19,56 +17,148 @@
     var confirmedCount = Model.Count(b => b.Status == "Confirmed");
     var completedCount = Model.Count(b => b.Status == "Completed");
     var cancelledCount = Model.Count(b => b.Status == "Cancelled");
+
+    // Revenue calculations
+    var totalRevenue = Model.Where(b => b.Status == "Confirmed" || b.Status == "Completed").Sum(b => b.TotalAmount);
+    var todayRevenue = Model.Where(b => b.BookingDate.Date == DateTime.Today && (b.Status == "Confirmed" || b.Status == "Completed")).Sum(b => b.TotalAmount);
+    var thisMonthRevenue = Model.Where(b => b.BookingDate.Month == DateTime.Now.Month && b.BookingDate.Year == DateTime.Now.Year && (b.Status == "Confirmed" || b.Status == "Completed")).Sum(b => b.TotalAmount);
+
+    // Date ranges for filtering
+    var minDate = Model.Any() ? Model.Min(b => b.BookingDate).ToString("yyyy-MM-dd") : DateTime.Today.ToString("yyyy-MM-dd");
+    var maxDate = Model.Any() ? Model.Max(b => b.BookingDate).ToString("yyyy-MM-dd") : DateTime.Today.ToString("yyyy-MM-dd");
 }
 
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Manage Bookings</h2>
-        <div>
-            <span class="text-muted me-3">
-                <i class="fas fa-ticket-alt me-1"></i><span id="bookingCount">@Model.Count</span> bookings
+<div class="container-fluid admin-bookings-container">
+    <!-- Header Section -->
+    <div class="row align-items-center mb-4">
+        <div class="col">
+            <h2 class="mb-0">Manage Bookings</h2>
+        </div>
+        <div class="col-auto">
+            <span class="text-muted">
+                <i class="fas fa-ticket-alt me-1"></i>
+                <span id="bookingCount">@Model.Count</span> bookings
             </span>
         </div>
     </div>
 
-    <!-- Filter Buttons -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
+    <!-- Revenue Summary -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-4 col-md-6">
+            <div class="card admin-revenue-card admin-revenue-total">
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Filter by Status</h6>
-                    <div class="btn-group w-100" role="group" aria-label="Booking status filter">
-                        <button type="button" class="btn btn-outline-primary active" data-status="all">
-                            <i class="fas fa-list me-1"></i>All Bookings
-                            <span class="badge bg-primary ms-1">@totalCount</span>
-                        </button>
-                        <button type="button" class="btn btn-outline-success" data-status="Confirmed">
-                            <i class="fas fa-check-circle me-1"></i>Confirmed
-                            <span class="badge bg-success ms-1">@confirmedCount</span>
-                        </button>
-                        <button type="button" class="btn btn-outline-info" data-status="Completed">
-                            <i class="fas fa-flag-checkered me-1"></i>Completed
-                            <span class="badge bg-info ms-1">@completedCount</span>
-                        </button>
-                        <button type="button" class="btn btn-outline-warning" data-status="Cancelled">
-                            <i class="fas fa-times-circle me-1"></i>Cancelled
-                            <span class="badge bg-warning ms-1">@cancelledCount</span>
-                        </button>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1">$@totalRevenue.ToString("N2")</h4>
+                            <small class="text-muted">Total Revenue</small>
+                        </div>
+                        <i class="fas fa-money-bill-wave fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card admin-revenue-card admin-revenue-today">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1">$@todayRevenue.ToString("N2")</h4>
+                            <small class="text-muted">Today's Revenue</small>
+                        </div>
+                        <i class="fas fa-calendar-day fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card admin-revenue-card admin-revenue-month">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1">$@thisMonthRevenue.ToString("N2")</h4>
+                            <small class="text-muted">This Month</small>
+                        </div>
+                        <i class="fas fa-calendar-alt fa-2x opacity-50"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="card">
+
+    <!-- Filter Section -->
+    <div class="card admin-filter-card mb-4">
+        <div class="card-body">
+            <h6 class="card-title mb-3">
+                <i class="fas fa-filter me-2"></i>Filter Bookings
+            </h6>
+            
+            <div class="row g-3">
+                <!-- Status Filter -->
+                <div class="col-lg-4 col-md-6">
+                    <label class="form-label fw-semibold mb-2">Status Filter</label>
+                    <div class="btn-group w-100 admin-status-filter" role="group">
+                        <button type="button" class="btn btn-primary active admin-filter-btn" data-status="all">
+                            <i class="fas fa-list me-1"></i>All
+                            <span class="badge bg-light text-dark ms-1">@totalCount</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-success admin-filter-btn" data-status="Confirmed">
+                            <i class="fas fa-check-circle me-1"></i>Confirmed
+                            <span class="badge bg-success ms-1">@confirmedCount</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-info admin-filter-btn" data-status="Completed">
+                            <i class="fas fa-flag-checkered me-1"></i>Completed
+                            <span class="badge bg-info ms-1">@completedCount</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-warning admin-filter-btn" data-status="Cancelled">
+                            <i class="fas fa-times-circle me-1"></i>Cancelled
+                            <span class="badge bg-warning ms-1">@cancelledCount</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Date Range Filter -->
+                <div class="col-lg-4 col-md-6">
+                    <label class="form-label fw-semibold mb-2">Date Range</label>
+                    <div class="input-group admin-date-filter">
+                        <span class="input-group-text">
+                            <i class="fas fa-calendar"></i>
+                        </span>
+                        <input type="date" class="form-control" id="dateFrom" value="@minDate">
+                        <span class="input-group-text">to</span>
+                        <input type="date" class="form-control" id="dateTo" value="@maxDate">
+                    </div>
+                </div>
+
+                <!-- Quick Date Filters -->
+                <div class="col-lg-4 col-md-6">
+                    <label class="form-label fw-semibold mb-2">Quick Filters</label>
+                    <div class="btn-group w-100 admin-quick-filters" role="group">
+                        <button type="button" class="btn btn-outline-secondary" data-days="1">Today</button>
+                        <button type="button" class="btn btn-outline-secondary" data-days="7">Last 7 Days</button>
+                        <button type="button" class="btn btn-outline-secondary" data-days="30">Last 30 Days</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="resetDateFilter()">All Time</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Filters Display -->
+            <div id="activeFilters" class="mt-3 admin-active-filters" style="display: none;">
+                <small class="text-muted">Active Filters:</small>
+                <div id="filterTags" class="d-flex flex-wrap gap-2 mt-1"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="card admin-bookings-table-card">
         <div class="card-body p-0">
             @if (Model.Any())
             {
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0 admin-bookings-table">
+                    <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Booking</th>
+                                <th>Booking Reference</th>
                                 <th>User</th>
                                 <th>Flight Details</th>
                                 <th>Travel Date</th>
@@ -85,15 +175,14 @@
                                 var flightTime = isRescheduled ? booking.RescheduledArrivalTime : booking.Flight?.ArrivalTime;
                                 var isFlightCompleted = flightTime.HasValue && flightTime.Value < DateTime.Now;
                                 
-                                <tr class="booking-row" data-status="@booking.Status.ToLower()">
+                                <tr class="admin-booking-row" data-status="@booking.Status.ToLower()" data-date="@booking.BookingDate.ToString("yyyy-MM-dd")" data-amount="@booking.TotalAmount">
                                     <td>
                                         <div class="d-flex flex-column">
-                                            <small class="text-muted mb-1">Booking ID</small>
-                                            <strong class="text-primary">@booking.BookingId.ToString().Substring(0, 8)...</strong>
-                                            <small class="text-muted">Booked: @booking.BookingDate.ToString("MMM dd, yyyy")</small>
+                                            <strong class="text-primary">@booking.BookingReference</strong>
+                                            <small class="text-muted">@booking.BookingDate.ToString("MMM dd, yyyy HH:mm")</small>
                                             @if (isRescheduled)
                                             {
-                                                <span class="badge bg-warning text-white mt-1">
+                                                <span class="badge bg-warning text-dark mt-1">
                                                     <i class="fas fa-clock me-1"></i>Rescheduled
                                                 </span>
                                             }
@@ -101,7 +190,7 @@
                                     </td>
                                     <td>
                                         <div class="d-flex flex-column">
-                                            <strong class="text-dark">@booking.User?.Email</strong>
+                                            <strong>@booking.User?.Email</strong>
                                             <small class="text-muted">@booking.User?.FirstName @booking.User?.LastName</small>
                                         </div>
                                     </td>
@@ -109,119 +198,81 @@
                                         <div class="d-flex flex-column">
                                             <div class="d-flex align-items-center mb-1">
                                                 <i class="fas fa-plane text-muted me-2"></i>
-                                                <strong class="text-dark">@booking.Flight?.FlightNumber</strong>
+                                                <strong>@booking.Flight?.FlightNumber</strong>
                                             </div>
-                                            <div class="admin-bookings-route-badge mb-2">
-                                                <span class="badge bg-light text-dark border">
-                                                    @booking.Flight?.DepartureCity → @booking.Flight?.ArrivalCity
-                                                </span>
-                                            </div>
-                                            <small class="text-muted">
+                                            <span class="badge bg-light text-dark border">
+                                                @GetAirportCode(booking.Flight?.DepartureCity) → @GetAirportCode(booking.Flight?.ArrivalCity)
+                                            </span>
+                                            <small class="text-muted mt-1">
                                                 <i class="fas fa-building me-1"></i>@booking.Flight?.Airline
                                             </small>
-                                            @if (isFlightCompleted && booking.Status == "Confirmed")
-                                            {
-                                                <small class="text-info mt-1">
-                                                    <i class="fas fa-info-circle me-1"></i>Flight completed - status auto-updated
-                                                </small>
-                                            }
                                         </div>
                                     </td>
                                     <td>
                                         <div class="d-flex flex-column">
                                             @if (isRescheduled)
                                             {
-                                                <!-- Rescheduled Flight Times -->
-                                                <div class="rescheduled-flight-times mb-2 p-2 bg-warning bg-opacity-20 rounded border border-warning">
-                                                    <small class="text-dark fw-bold d-block mb-1">
-                                                        <i class="fas fa-clock me-1 text-warning"></i>New Schedule
+                                                <div class="bg-warning bg-opacity-10 p-2 rounded border border-warning mb-2">
+                                                    <small class="text-warning fw-bold d-block mb-1">
+                                                        <i class="fas fa-clock me-1"></i>New Schedule
                                                     </small>
-                                                    <div class="d-flex align-items-center mb-1">
-                                                        <i class="fas fa-plane-departure text-warning me-2"></i>
-                                                        <strong class="text-dark">@booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy")</strong>
-                                                    </div>
                                                     <div class="d-flex justify-content-between small">
-                                                        <span class="text-dark fw-bold">@booking.RescheduledDepartureTime?.ToString("HH:mm")</span>
-                                                        <i class="fas fa-arrow-right text-dark mx-2"></i>
-                                                        <span class="text-dark fw-bold">@booking.RescheduledArrivalTime?.ToString("HH:mm")</span>
-                                                    </div>
-                                                    <small class="text-dark d-block mt-1">
-                                                        @booking.RescheduledArrivalTime?.ToString("MMM dd")
-                                                    </small>
-                                                </div>
-                                                
-                                                <!-- Original Flight Times -->
-                                                <div class="original-flight-times p-2 bg-light rounded border">
-                                                    <small class="text-muted d-block mb-1">Original Schedule</small>
-                                                    <div class="d-flex justify-content-between small text-muted">
-                                                        <span>@booking.Flight?.DepartureTime.ToString("MMM dd, HH:mm")</span>
-                                                        <i class="fas fa-arrow-right mx-2"></i>
-                                                        <span>@booking.Flight?.ArrivalTime.ToString("MMM dd, HH:mm")</span>
+                                                        <span class="fw-bold">@booking.RescheduledDepartureTime?.ToString("MMM dd, HH:mm")</span>
+                                                        <i class="fas fa-arrow-right text-warning mx-1"></i>
+                                                        <span class="fw-bold">@booking.RescheduledArrivalTime?.ToString("MMM dd, HH:mm")</span>
                                                     </div>
                                                 </div>
                                             }
                                             else
                                             {
-                                                <!-- Regular Flight Times -->
-                                                <div class="regular-flight-times">
-                                                    <div class="d-flex align-items-center mb-1">
-                                                        <i class="fas fa-plane-departure text-primary me-2"></i>
-                                                        <strong class="text-dark">@booking.Flight?.DepartureTime.ToString("MMM dd, yyyy")</strong>
-                                                    </div>
-                                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                                        <span class="fw-bold text-dark">@booking.Flight?.DepartureTime.ToString("HH:mm")</span>
-                                                        <i class="fas fa-arrow-right text-muted mx-2"></i>
-                                                        <span class="fw-bold text-dark">@booking.Flight?.ArrivalTime.ToString("HH:mm")</span>
-                                                    </div>
-                                                    <div class="d-flex justify-content-between small text-muted">
-                                                        <span>@booking.Flight?.DepartureCity</span>
-                                                        <span>@booking.Flight?.ArrivalCity</span>
-                                                    </div>
-                                                    <small class="text-muted d-block mt-1">
-                                                        Duration: @GetFlightDuration(booking.Flight?.DepartureTime, booking.Flight?.ArrivalTime)
-                                                    </small>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="fw-bold">@booking.Flight?.DepartureTime.ToString("MMM dd, HH:mm")</span>
+                                                    <i class="fas fa-arrow-right text-muted mx-1"></i>
+                                                    <span class="fw-bold">@booking.Flight?.ArrivalTime.ToString("MMM dd, HH:mm")</span>
                                                 </div>
                                             }
                                         </div>
                                     </td>
                                     <td>
                                         <div class="text-center">
-                                            <div class="admin-bookings-passenger-info">
-                                                <span class="admin-bookings-passenger-count">@booking.NumberOfPassengers</span>
-                                                <small class="d-block text-muted">
-                                                    passenger@(booking.NumberOfPassengers != 1 ? "s" : "")
-                                                </small>
-                                            </div>
+                                            <div class="fw-bold fs-5">@booking.NumberOfPassengers</div>
+                                            <small class="text-muted">passengers</small>
+                                            @if (booking.CheckedBags > 0 || booking.CarryOnBags > 0)
+                                            {
+                                                <div class="mt-1">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-suitcase me-1"></i>
+                                                        @booking.CarryOnBags C / @booking.CheckedBags Ch
+                                                    </small>
+                                                </div>
+                                            }
                                         </div>
                                     </td>
                                     <td>
                                         <div class="text-end">
                                             <strong class="text-success">$@booking.TotalAmount.ToString("N2")</strong>
-                                            @if (booking.NumberOfPassengers > 1)
-                                            {
-                                                <small class="d-block text-muted">
-                                                    $@((booking.TotalAmount / booking.NumberOfPassengers).ToString("N2")) each
-                                                </small>
-                                            }
+                                            <small class="d-block text-muted">
+                                                $@((booking.TotalAmount / booking.NumberOfPassengers).ToString("N2")) each
+                                            </small>
                                         </div>
                                     </td>
                                     <td>
                                         <span class="badge @GetStatusBadgeClass(booking.Status) px-2 py-1">
                                             <i class="fas @GetStatusIcon(booking.Status) me-1"></i>
                                             @booking.Status
-                                            @if (isFlightCompleted && booking.Status == "Completed")
-                                            {
-                                                <i class="fas fa-sync-alt ms-1" title="Auto-completed"></i>
-                                            }
                                         </span>
                                     </td>
                                     <td>
-                                        <div class="admin-bookings-action-buttons">
-                                            <button class="btn btn-sm btn-outline-primary w-100" 
+                                        <div class="d-flex flex-column gap-1">
+                                            <button class="btn btn-sm btn-outline-primary admin-action-btn" 
+                                                    onclick="viewBookingReceipt('@booking.BookingId')">
+                                                <i class="fas fa-receipt me-1"></i>Receipt
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-info admin-action-btn" 
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#adminBookingsDetailsModal"
-                                                    onclick="loadBookingDetails('@booking.BookingId', '@booking.User?.FirstName @booking.User?.LastName', '@booking.User?.Email', '@booking.Flight?.FlightNumber', '@booking.Flight?.DepartureCity', '@booking.Flight?.ArrivalCity', '@booking.Flight?.DepartureTime.ToString("MMM dd, yyyy HH:mm")', '@booking.Flight?.ArrivalTime.ToString("MMM dd, yyyy HH:mm")', '@booking.NumberOfPassengers', '@booking.TotalAmount', '@booking.BookingDate.ToString("MMM dd, yyyy HH:mm")', '@booking.Status', '@isRescheduled', '@(isRescheduled ? booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") : "")', '@(isRescheduled ? booking.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm") : "")')">
-                                                <i class="fas fa-eye me-1"></i>View Details
+                                                    onclick="loadBookingDetails('@booking.BookingId')">
+                                                <i class="fas fa-eye me-1"></i>Details
                                             </button>
                                         </div>
                                     </td>
@@ -234,61 +285,75 @@
             else
             {
                 <div class="text-center py-5">
-                    <div class="admin-bookings-empty-state">
-                        <i class="fas fa-ticket-alt fa-4x text-muted mb-4"></i>
-                        <h3 class="text-muted">No Bookings Found</h3>
-                        <p class="text-muted mb-4">There are no bookings in the system yet.</p>
-                    </div>
+                    <i class="fas fa-ticket-alt fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Bookings Found</h4>
+                    <p class="text-muted">There are no bookings in the system yet.</p>
                 </div>
             }
         </div>
     </div>
 
-    <!-- Booking Statistics -->
+    <!-- Statistics Cards -->
     @if (Model.Any())
     {
-        <div class="row mt-4">
-            <div class="col-md-3 col-6 mb-3">
-                <div class="card bg-primary text-white admin-bookings-stat-card clickable-stat-card" data-status="all">
-                    <div class="card-body text-center py-3">
-                        <h4 class="mb-0">@totalCount</h4>
+        <div class="row g-3 mt-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-primary text-white admin-stat-card" data-status="all">
+                    <div class="card-body text-center">
+                        <h3 class="mb-1" id="statTotalBookings">@totalCount</h3>
                         <small>Total Bookings</small>
-                        <div class="stat-card-hover">
-                            <i class="fas fa-mouse-pointer"></i> Click to view all
-                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-6 mb-3">
-                <div class="card bg-success text-white admin-bookings-stat-card clickable-stat-card" data-status="confirmed">
-                    <div class="card-body text-center py-3">
-                        <h4 class="mb-0">@confirmedCount</h4>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-success text-white admin-stat-card" data-status="confirmed">
+                    <div class="card-body text-center">
+                        <h3 class="mb-1" id="statConfirmedBookings">@confirmedCount</h3>
                         <small>Confirmed</small>
-                        <div class="stat-card-hover">
-                            <i class="fas fa-mouse-pointer"></i> Click to filter
-                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-6 mb-3">
-                <div class="card bg-info text-white admin-bookings-stat-card clickable-stat-card" data-status="completed">
-                    <div class="card-body text-center py-3">
-                        <h4 class="mb-0">@completedCount</h4>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-info text-white admin-stat-card" data-status="completed">
+                    <div class="card-body text-center">
+                        <h3 class="mb-1" id="statCompletedBookings">@completedCount</h3>
                         <small>Completed</small>
-                        <div class="stat-card-hover">
-                            <i class="fas fa-mouse-pointer"></i> Click to filter
-                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-6 mb-3">
-                <div class="card bg-warning text-white admin-bookings-stat-card clickable-stat-card" data-status="cancelled">
-                    <div class="card-body text-center py-3">
-                        <h4 class="mb-0">@cancelledCount</h4>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-warning text-white admin-stat-card" data-status="cancelled">
+                    <div class="card-body text-center">
+                        <h3 class="mb-1" id="statCancelledBookings">@cancelledCount</h3>
                         <small>Cancelled</small>
-                        <div class="stat-card-hover">
-                            <i class="fas fa-mouse-pointer"></i> Click to filter
-                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Summary -->
+        <div class="row g-3 mt-3">
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h4 class="mb-1" id="filteredRevenue">$@totalRevenue.ToString("N2")</h4>
+                        <small>Filtered Revenue</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-dark text-white">
+                    <div class="card-body text-center">
+                        <h4 class="mb-1" id="filteredBookingsCount">@totalCount</h4>
+                        <small>Filtered Bookings</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-purple text-white">
+                    <div class="card-body text-center">
+                        <h4 class="mb-1" id="averageBookingValue">$@((totalCount > 0 ? totalRevenue / totalCount : 0).ToString("N2"))</h4>
+                        <small>Avg. Booking Value</small>
                     </div>
                 </div>
             </div>
@@ -297,86 +362,18 @@
 </div>
 
 <!-- Booking Details Modal -->
-<div class="modal fade" id="adminBookingsDetailsModal" tabindex="-1" aria-labelledby="adminBookingsDetailsModalLabel" aria-hidden="true">
+<div class="modal fade" id="adminBookingsDetailsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content admin-bookings-modal-content">
-            <div class="modal-header bg-primary text-white admin-bookings-modal-header">
-                <h5 class="modal-title" id="adminBookingsDetailsModalLabel">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
                     <i class="fas fa-ticket-alt me-2"></i>Booking Details
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body admin-bookings-modal-body">
-                <div class="row">
-                    <!-- Booking Information -->
-                    <div class="col-md-6">
-                        <div class="card mb-4 admin-bookings-modal-card">
-                            <div class="card-header admin-bookings-modal-card-header">
-                                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Booking Information</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-2">
-                                    <div class="col-6">
-                                        <small class="text-muted">Booking ID</small>
-                                        <p class="fw-bold" id="adminBookingsModalBookingId">-</p>
-                                    </div>
-                                    <div class="col-6">
-                                        <small class="text-muted">Status</small>
-                                        <p><span class="badge bg-success" id="adminBookingsModalBookingStatus">-</span></p>
-                                    </div>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="col-6">
-                                        <small class="text-muted">Passengers</small>
-                                        <p class="fw-bold" id="adminBookingsModalPassengers">-</p>
-                                    </div>
-                                    <div class="col-6">
-                                        <small class="text-muted">Total Amount</small>
-                                        <p class="fw-bold text-success" id="adminBookingsModalTotalAmount">-</p>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-12">
-                                        <small class="text-muted">Booking Date</small>
-                                        <p class="fw-bold" id="adminBookingsModalBookingDate">-</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- User Information -->
-                    <div class="col-md-6">
-                        <div class="card mb-4 admin-bookings-modal-card">
-                            <div class="card-header admin-bookings-modal-card-header">
-                                <h6 class="mb-0"><i class="fas fa-user me-2"></i>User Information</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-2">
-                                    <small class="text-muted">Full Name</small>
-                                    <p class="fw-bold" id="adminBookingsModalUserName">-</p>
-                                </div>
-                                <div class="mb-2">
-                                    <small class="text-muted">Email</small>
-                                    <p class="fw-bold" id="adminBookingsModalUserEmail">-</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Flight Information -->
-                    <div class="col-12">
-                        <div class="card admin-bookings-modal-card">
-                            <div class="card-header admin-bookings-modal-card-header">
-                                <h6 class="mb-0"><i class="fas fa-plane me-2"></i>Flight Information</h6>
-                            </div>
-                            <div class="card-body">
-                                <div id="adminBookingsModalFlightInfo">
-                                    <!-- Flight info will be populated by JavaScript -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="modal-body">
+                <div id="adminBookingsModalContent">
+                    <!-- Content loaded by JavaScript -->
                 </div>
             </div>
             <div class="modal-footer">
@@ -384,7 +381,7 @@
                     <i class="fas fa-times me-2"></i>Close
                 </button>
                 <button type="button" class="btn btn-primary" onclick="printBookingDetails()">
-                    <i class="fas fa-print me-2"></i>Print
+                    <i class="fas fa-print me-2"></i>Print Receipt
                 </button>
             </div>
         </div>
@@ -414,356 +411,252 @@
         };
     }
 
-    public string GetFlightDuration(DateTime? departure, DateTime? arrival)
+    public string GetAirportCode(string city)
     {
-        if (!departure.HasValue || !arrival.HasValue)
-            return "N/A";
-
-        var duration = arrival.Value - departure.Value;
-        return $"{(int)duration.TotalHours}h {duration.Minutes}m";
+        if (string.IsNullOrEmpty(city)) return "N/A";
+        if (city.Contains('(') && city.Contains(')'))
+        {
+            try
+            {
+                return city.Split('(')[1].Split(')')[0];
+            }
+            catch
+            {
+                return city.Length > 3 ? city.Substring(0, 3).ToUpper() : city.ToUpper();
+            }
+        }
+        return city.Length > 3 ? city.Substring(0, 3).ToUpper() : city.ToUpper();
     }
 }
 
 @section Scripts {
     <script>
-        // Filter functionality
         document.addEventListener('DOMContentLoaded', function() {
-            // Filter button functionality
-            const filterButtons = document.querySelectorAll('[data-status]');
-            const bookingRows = document.querySelectorAll('.booking-row');
-            const bookingCount = document.getElementById('bookingCount');
-            const statCards = document.querySelectorAll('.clickable-stat-card');
-
-            // Initialize counts
-            const statusCounts = {
-                'all': @totalCount,
-                'confirmed': @confirmedCount,
-                'completed': @completedCount,
-                'cancelled': @cancelledCount
-            };
-
-            // Filter button click handler
-            filterButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const status = this.getAttribute('data-status');
-                    
-                    // Update active button
-                    filterButtons.forEach(btn => {
-                        btn.classList.remove('active', 'btn-primary', 'btn-success', 'btn-info', 'btn-warning');
-                        btn.classList.add('btn-outline-primary', 'btn-outline-success', 'btn-outline-info', 'btn-outline-warning');
-                    });
-                    
-                    this.classList.remove('btn-outline-primary', 'btn-outline-success', 'btn-outline-info', 'btn-outline-warning');
-                    this.classList.add('active');
-                    
-                    // Set appropriate solid button class based on status
-                    switch(status) {
-                        case 'all':
-                            this.classList.add('btn-primary');
-                            break;
-                        case 'Confirmed':
-                            this.classList.add('btn-success');
-                            break;
-                        case 'Completed':
-                            this.classList.add('btn-info');
-                            break;
-                        case 'Cancelled':
-                            this.classList.add('btn-warning');
-                            break;
-                    }
-                    
-                    filterBookings(status);
-                });
-            });
-
-            // Stat card click handler
-            statCards.forEach(card => {
-                card.addEventListener('click', function() {
-                    const status = this.getAttribute('data-status');
-                    
-                    // Update filter buttons
-                    filterButtons.forEach(btn => {
-                        btn.classList.remove('active', 'btn-primary', 'btn-success', 'btn-info', 'btn-warning');
-                        btn.classList.add('btn-outline-primary', 'btn-outline-success', 'btn-outline-info', 'btn-outline-warning');
-                        
-                        if (btn.getAttribute('data-status') === (status === 'all' ? 'all' : status.charAt(0).toUpperCase() + status.slice(1))) {
-                            btn.classList.remove('btn-outline-primary', 'btn-outline-success', 'btn-outline-info', 'btn-outline-warning');
-                            btn.classList.add('active');
-                            
-                            // Set appropriate solid button class
-                            switch(status) {
-                                case 'all':
-                                    btn.classList.add('btn-primary');
-                                    break;
-                                case 'confirmed':
-                                    btn.classList.add('btn-success');
-                                    break;
-                                case 'completed':
-                                    btn.classList.add('btn-info');
-                                    break;
-                                case 'cancelled':
-                                    btn.classList.add('btn-warning');
-                                    break;
-                            }
-                        }
-                    });
-                    
-                    filterBookings(status === 'all' ? 'all' : status.charAt(0).toUpperCase() + status.slice(1));
-                });
-            });
-
-            function filterBookings(status) {
-                let visibleCount = 0;
-                
-                bookingRows.forEach(row => {
-                    if (status === 'all' || row.getAttribute('data-status') === status.toLowerCase()) {
-                        row.style.display = '';
-                        visibleCount++;
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-                
-                // Update booking count
-                bookingCount.textContent = visibleCount;
-                
-                // Show/hide empty state
-                const emptyState = document.querySelector('.admin-bookings-empty-state');
-                const tableBody = document.getElementById('bookingsTableBody');
-                
-                if (visibleCount === 0) {
-                    if (!emptyState) {
-                        const noResultsHtml = `
-                            <div class="text-center py-5">
-                                <div class="admin-bookings-empty-state">
-                                    <i class="fas fa-search fa-4x text-muted mb-4"></i>
-                                    <h3 class="text-muted">No Matching Bookings</h3>
-                                    <p class="text-muted mb-4">No bookings found with the selected status filter.</p>
-                                    <button class="btn btn-primary" onclick="resetFilters()">
-                                        <i class="fas fa-refresh me-2"></i>Show All Bookings
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                        tableBody.innerHTML = noResultsHtml;
-                    }
-                } else if (emptyState && tableBody.querySelector('.admin-bookings-empty-state')) {
-                    // Reload the original table content if we had no results
-                    location.reload();
-                }
-            }
-
-            // Initialize with all bookings visible
-            filterBookings('all');
+            initializeFilters();
+            setupDateFilters();
+            applyFilters();
         });
 
-        // Reset filters function
-        function resetFilters() {
-            const allButton = document.querySelector('[data-status="all"]');
-            if (allButton) {
-                allButton.click();
-            }
+        function initializeFilters() {
+            // Status filter
+            document.querySelectorAll('.admin-filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.admin-filter-btn').forEach(b => {
+                        b.classList.remove('active', 'btn-primary');
+                        b.classList.add('btn-outline-primary', 'btn-outline-success', 'btn-outline-info', 'btn-outline-warning');
+                    });
+                    this.classList.remove('btn-outline-primary', 'btn-outline-success', 'btn-outline-info', 'btn-outline-warning');
+                    this.classList.add('active', 'btn-primary');
+                    applyFilters();
+                });
+            });
+
+            // Date range filter
+            document.getElementById('dateFrom').addEventListener('change', applyFilters);
+            document.getElementById('dateTo').addEventListener('change', applyFilters);
+
+            // Quick date filters
+            document.querySelectorAll('[data-days]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const days = parseInt(this.getAttribute('data-days'));
+                    const dateTo = new Date();
+                    const dateFrom = new Date();
+                    dateFrom.setDate(dateFrom.getDate() - days);
+                    document.getElementById('dateFrom').value = dateFrom.toISOString().split('T')[0];
+                    document.getElementById('dateTo').value = dateTo.toISOString().split('T')[0];
+                    applyFilters();
+                });
+            });
+
+            // Stat card clicks
+            document.querySelectorAll('.admin-stat-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const status = this.getAttribute('data-status');
+                    const button = document.querySelector(`[data-status="${status}"]`);
+                    if (button) button.click();
+                });
+            });
         }
 
-        function loadBookingDetails(bookingId, userName, userEmail, flightNumber, departureCity, arrivalCity, departureTime, arrivalTime, passengers, totalAmount, bookingDate, status, isRescheduled, rescheduledDeparture, rescheduledArrival) {
-            // Update modal content with booking details
-            document.getElementById('adminBookingsModalBookingId').textContent = bookingId;
-            document.getElementById('adminBookingsModalUserName').textContent = userName || 'Not available';
-            document.getElementById('adminBookingsModalUserEmail').textContent = userEmail || 'Not available';
-            document.getElementById('adminBookingsModalPassengers').textContent = passengers || '0';
-            document.getElementById('adminBookingsModalTotalAmount').textContent = totalAmount ? `$${parseFloat(totalAmount).toFixed(2)}` : '$0.00';
-            document.getElementById('adminBookingsModalBookingDate').textContent = bookingDate || 'Not available';
-            
-            // Update status badge
-            const statusBadge = document.getElementById('adminBookingsModalBookingStatus');
-            statusBadge.textContent = status || 'Unknown';
-            statusBadge.className = 'badge ' + getStatusBadgeClass(status);
+        function setupDateFilters() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateFrom').max = today;
+            document.getElementById('dateTo').max = today;
+        }
 
-            // Update flight information
-            const flightInfo = document.getElementById('adminBookingsModalFlightInfo');
-            if (isRescheduled === 'True' && rescheduledDeparture && rescheduledArrival) {
-                flightInfo.innerHTML = `
-                    <div class="row">
-                        <div class="col-md-3">
-                            <small class="text-muted">Flight Number</small>
-                            <p class="fw-bold">${flightNumber || 'Not available'}</p>
-                        </div>
-                        <div class="col-md-3">
-                            <small class="text-muted">Route</small>
-                            <p class="fw-bold">${departureCity || 'N/A'} → ${arrivalCity || 'N/A'}</p>
-                        </div>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <div class="rescheduled-flight-times p-3 bg-warning bg-opacity-10 rounded border border-warning">
-                                <small class="text-warning fw-bold d-block mb-2">
-                                    <i class="fas fa-clock me-1"></i>Rescheduled Flight
-                                </small>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <small class="text-muted">Departure</small>
-                                        <p class="fw-bold">${rescheduledDeparture}</p>
-                                    </div>
-                                    <div class="col-6">
-                                        <small class="text-muted">Arrival</small>
-                                        <p class="fw-bold">${rescheduledArrival}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="original-flight-times p-3 bg-light rounded border">
-                                <small class="text-muted d-block mb-2">Original Schedule</small>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <small class="text-muted">Departure</small>
-                                        <p class="fw-bold">${departureTime || 'Not available'}</p>
-                                    </div>
-                                    <div class="col-6">
-                                        <small class="text-muted">Arrival</small>
-                                        <p class="fw-bold">${arrivalTime || 'Not available'}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+        function resetDateFilter() {
+            document.getElementById('dateFrom').value = '@minDate';
+            document.getElementById('dateTo').value = '@maxDate';
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const status = document.querySelector('.admin-filter-btn.active')?.getAttribute('data-status') || 'all';
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const rows = document.querySelectorAll('.admin-booking-row');
+
+            let visibleCount = 0;
+            let totalRevenue = 0;
+
+            rows.forEach(row => {
+                const rowStatus = row.getAttribute('data-status');
+                const rowDate = row.getAttribute('data-date');
+                const rowAmount = parseFloat(row.getAttribute('data-amount'));
+
+                const statusMatch = status === 'all' || rowStatus === status.toLowerCase();
+                const dateMatch = (!dateFrom || rowDate >= dateFrom) && (!dateTo || rowDate <= dateTo);
+
+                if (statusMatch && dateMatch) {
+                    row.style.display = '';
+                    visibleCount++;
+                    totalRevenue += rowAmount;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Update counters
+            document.getElementById('bookingCount').textContent = visibleCount;
+            document.getElementById('filteredBookingsCount').textContent = visibleCount;
+            document.getElementById('filteredRevenue').textContent = '$' + totalRevenue.toFixed(2);
+            document.getElementById('averageBookingValue').textContent = '$' + (visibleCount > 0 ? (totalRevenue / visibleCount).toFixed(2) : '0.00');
+
+            // Update active filters display
+            updateActiveFiltersDisplay(status, dateFrom, dateTo);
+        }
+
+        function updateActiveFiltersDisplay(status, dateFrom, dateTo) {
+            const activeFilters = document.getElementById('activeFilters');
+            const filterTags = document.getElementById('filterTags');
+            filterTags.innerHTML = '';
+
+            const filters = [];
+            if (status !== 'all') filters.push(`Status: ${status}`);
+            if (dateFrom && dateTo) filters.push(`Date: ${new Date(dateFrom).toLocaleDateString()} to ${new Date(dateTo).toLocaleDateString()}`);
+
+            if (filters.length > 0) {
+                filters.forEach(filter => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-primary';
+                    badge.textContent = filter;
+                    filterTags.appendChild(badge);
+                });
+                activeFilters.style.display = 'block';
             } else {
-                flightInfo.innerHTML = `
-                    <div class="row">
-                        <div class="col-md-3">
-                            <small class="text-muted">Flight Number</small>
-                            <p class="fw-bold">${flightNumber || 'Not available'}</p>
-                        </div>
-                        <div class="col-md-3">
-                            <small class="text-muted">Route</small>
-                            <p class="fw-bold">${departureCity || 'N/A'} → ${arrivalCity || 'N/A'}</p>
-                        </div>
-                        <div class="col-md-3">
-                            <small class="text-muted">Departure</small>
-                            <p class="fw-bold">${departureTime || 'Not available'}</p>
-                        </div>
-                        <div class="col-md-3">
-                            <small class="text-muted">Arrival</small>
-                            <p class="fw-bold">${arrivalTime || 'Not available'}</p>
-                        </div>
-                    </div>
-                `;
+                activeFilters.style.display = 'none';
             }
         }
 
-        function getStatusBadgeClass(status) {
-            switch(status) {
-                case 'Confirmed': return 'bg-success';
-                case 'Cancelled': return 'bg-danger';
-                case 'Completed': return 'bg-info';
-                default: return 'bg-secondary';
-            }
+        function viewBookingReceipt(bookingId) {
+            window.open('@Url.Action("BookingReceipt", "Admin")/' + bookingId, '_blank');
+        }
+
+        function loadBookingDetails(bookingId) {
+            // Simplified for demo - in real app, fetch from server
+            const content = `
+                <div class="text-center p-4">
+                    <h4>Booking Details</h4>
+                    <p>Loading details for booking: ${bookingId}</p>
+                    <p class="text-muted">In a real application, this would fetch data from the server.</p>
+                </div>
+            `;
+            document.getElementById('adminBookingsModalContent').innerHTML = content;
         }
 
         function printBookingDetails() {
-            const modalContent = document.querySelector('#adminBookingsDetailsModal .admin-bookings-modal-content').cloneNode(true);
-            const printWindow = window.open('', '_blank');
-            
-            printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>Booking Details</title>
-                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-                        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-                        <style>
-                            body { padding: 20px; }
-                            .card { border: 1px solid #dee2e6; margin-bottom: 20px; }
-                            .badge { font-size: 0.8em; }
-                        </style>
-                    </head>
-                    <body>
-                        <h2 class="mb-4"><i class="fas fa-ticket-alt me-2"></i>Booking Details</h2>
-                        ${modalContent.innerHTML}
-                    </body>
-                </html>
-            `);
-            
-            printWindow.document.close();
-            printWindow.print();
+            window.print();
         }
-
-        // Auto-refresh page every 5 minutes to update statuses
-        setInterval(() => {
-            window.location.reload();
-        }, 300000); // 5 minutes
     </script>
 }
 
 <style>
-    /* Filter Button Styles */
-    .btn-group .btn {
-        border-radius: 8px !important;
-        margin: 0 2px;
-        transition: all 0.3s ease;
+    /* Base Styles */
+    .admin-bookings-container {
+        max-width: 100%;
+        padding: 1rem;
     }
 
-    .btn-group .btn:hover {
+    /* Revenue Cards */
+    .admin-revenue-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        min-height: 100px;
+        display: flex;
+        align-items: center;
+    }
+
+    .admin-revenue-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
 
-    .btn-group .btn.active {
-        font-weight: 600;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    .admin-revenue-total {
+        background: linear-gradient(135deg, #27ae60, #219a52) !important;
     }
 
-    /* Clickable Stat Cards */
-    .clickable-stat-card {
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
+    .admin-revenue-today {
+        background: linear-gradient(135deg, #17a2b8, #138496) !important;
+    }
+
+    .admin-revenue-month {
+        background: linear-gradient(135deg, #f39c12, #e67e22) !important;
+    }
+
+    /* Filter Section */
+    .admin-filter-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .admin-status-filter {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .admin-filter-btn {
+        flex: 1;
+        min-width: 120px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        border-radius: 8px !important;
+    }
+
+    .admin-date-filter .input-group-text {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+    }
+
+    .admin-quick-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .admin-quick-filters .btn {
+        flex: 1;
+        min-width: 80px;
+        padding: 0.5rem 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    /* Table Styles */
+    .admin-bookings-table-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         overflow: hidden;
     }
 
-    .clickable-stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    .admin-bookings-table-card .table {
+        margin: 0;
     }
 
-    .clickable-stat-card:active {
-        transform: translateY(-2px);
-    }
-
-    .stat-card-hover {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.8);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        border-radius: 12px;
-    }
-
-    .clickable-stat-card:hover .stat-card-hover {
-        opacity: 1;
-    }
-
-    /* Consistent Card Styling */
-    .card {
-        border: none;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        border-radius: 12px;
-        background: #ffffff;
-    }
-
-    .card-body {
-        background: #ffffff;
-    }
-
-    /* Table Styling */
-    .admin-bookings-table th {
+    .admin-bookings-table-card .table th {
         border-top: none;
         font-weight: 600;
         font-size: 0.875rem;
@@ -775,284 +668,147 @@
         padding: 1rem 0.75rem;
     }
 
-    .admin-bookings-table td {
+    .admin-bookings-table-card .table td {
         vertical-align: middle;
         padding: 1rem 0.75rem;
         border-bottom: 1px solid #e9ecef;
-        background: #ffffff;
-        color: #2c3e50 !important;
     }
 
-    .admin-bookings-table tbody tr {
+    .admin-booking-row {
         transition: all 0.3s ease;
     }
 
-    .admin-bookings-table tbody tr:hover {
+    .admin-booking-row:hover {
         background-color: #f8f9fa;
         transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
-    /* Travel Date Styling */
-    .rescheduled-flight-times {
-        border-left: 4px solid #e67e22 !important;
-        background: linear-gradient(135deg, rgba(230, 126, 34, 0.15), rgba(230, 126, 34, 0.08)) !important;
-        border: 1px solid #e67e22 !important;
-    }
-
-    .original-flight-times {
-        border-left: 2px solid #e9ecef;
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-    }
-
-    .regular-flight-times {
-        padding: 0.5rem 0;
-    }
-
-    /* Passenger Count Styling */
-    .admin-bookings-passenger-count {
-        font-size: 1.25rem;
-        font-weight: bold;
-        color: #2c3e50;
-    }
-
-    /* Route Badge Styling */
-    .admin-bookings-route-badge .badge {
-        font-size: 0.75rem;
-        padding: 0.4rem 0.8rem;
-        background-color: #e3f2fd !important;
-        color: #1565c0 !important;
-        border: 1px solid #bbdefb;
-        font-weight: 500;
-    }
-
-    /* Action Buttons Styling */
-    .admin-bookings-action-buttons {
-        min-width: 120px;
-    }
-
-    .admin-bookings-action-buttons .btn {
-        display: block;
-        width: 100%;
-        border: 1px solid;
-    }
-
-    /* Empty State Styling */
-    .admin-bookings-empty-state {
-        padding: 3rem 1rem;
-        background: #ffffff;
-    }
-
-    /* Statistics Cards - Enhanced Readability */
-    .admin-bookings-stat-card {
-        border: none;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        border-radius: 12px;
-        transition: transform 0.2s ease;
-    }
-
-    .admin-bookings-stat-card:hover {
-        transform: translateY(-2px);
-    }
-
-    .admin-bookings-stat-card.bg-primary {
-        background: linear-gradient(135deg, #3498db, #2980b9) !important;
-        border: 1px solid #2980b9;
-    }
-
-    .admin-bookings-stat-card.bg-success {
-        background: linear-gradient(135deg, #27ae60, #219a52) !important;
-        border: 1px solid #219a52;
-    }
-
-    .admin-bookings-stat-card.bg-info {
-        background: linear-gradient(135deg, #17a2b8, #138496) !important;
-        border: 1px solid #138496;
-    }
-
-    .admin-bookings-stat-card.bg-warning {
-        background: linear-gradient(135deg, #f39c12, #e67e22) !important;
-        border: 1px solid #e67e22;
-    }
-
-    .admin-bookings-stat-card .card-body {
-        background: transparent !important;
-    }
-
-    .admin-bookings-stat-card .card-body h4 {
-        font-weight: 700;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-
-    .admin-bookings-stat-card .card-body small {
-        opacity: 0.95;
-        font-weight: 500;
-    }
-
-    /* Status Badges */
-    .badge.bg-success {
-        background: linear-gradient(135deg, #27ae60, #219a52) !important;
-        border: 1px solid #1e8449;
-    }
-
-    .badge.bg-danger {
-        background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
-        border: 1px solid #b03a2e;
-    }
-
-    .badge.bg-info {
-        background: linear-gradient(135deg, #17a2b8, #138496) !important;
-        border: 1px solid #117a8b;
-    }
-
-    .badge.bg-warning {
-        background: linear-gradient(135deg, #f39c12, #e67e22) !important;
-        border: 1px solid #d68910;
-        color: #fff !important;
-    }
-
-    /* Modal Styling */
-    .admin-bookings-modal-header {
-        border-bottom: 2px solid rgba(255,255,255,0.1);
-    }
-
-    .admin-bookings-modal-content {
-        border: none;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-
-    .admin-bookings-modal-card {
-        border: 1px solid #e3e6f0;
-        border-radius: 8px;
-    }
-
-    .admin-bookings-modal-card-header {
-        background-color: #f8f9fa !important;
-        border-bottom: 1px solid #e3e6f0;
-        font-weight: 600;
-    }
-
-    .admin-bookings-modal-body .card-body {
-        padding: 1.25rem;
-    }
-
-    .admin-bookings-modal-body p {
-        margin-bottom: 0.5rem;
-    }
-
-    .admin-bookings-modal-body .text-muted {
+    /* Action Buttons */
+    .admin-action-btn {
         font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
     }
 
-    /* Button Styling */
-    .btn-primary {
-        background: linear-gradient(135deg, #3498db, #2980b9);
-        border: 1px solid #2980b9;
+    .admin-action-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    .btn-primary:hover {
-        background: linear-gradient(135deg, #2980b9, #2471a3);
-        border: 1px solid #2471a3;
+    /* Stat Cards */
+    .admin-stat-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
     }
 
-    .badge.bg-info {
-        background: linear-gradient(135deg, #17a2b8, #138496) !important;
-        border: 1px solid #117a8b;
+    .admin-stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
 
-    .text-info {
-        color: #17a2b8 !important;
+    /* Active Filters */
+    .admin-active-filters {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+    }
+
+    /* Purple Card */
+    .bg-purple {
+        background: linear-gradient(135deg, #6f42c1, #5a2d9c) !important;
     }
 
     /* Responsive Design */
     @@media (max-width: 768px) {
-        .btn-group {
-            flex-direction: column;
+        .admin-bookings-container {
+            padding: 0.5rem;
         }
-        
-        .btn-group .btn {
-            margin: 2px 0;
-            width: 100%; 
-        }
-        
-        .admin-bookings-table-responsive {
-            font-size: 0.875rem;
-            background: #ffffff;
-        } 
-        
-        .admin-bookings-table th,
-        .admin-bookings-table td {
-            padding: 0.75rem;
-            background: #ffffff;
-        } 
-        
-        .admin-bookings-action-buttons {
+
+        .admin-filter-btn {
             min-width: 100px;
+            font-size: 0.8rem;
+            padding: 0.4rem 0.5rem;
         }
-        
-        .admin-bookings-action-buttons .btn {
-            font-size: 0.75rem;
-            padding: 0.4rem 0.6rem;
+
+        .admin-quick-filters .btn {
+            min-width: 70px;
+            font-size: 0.8rem;
+            padding: 0.4rem 0.25rem;
         }
-        
-        .admin-bookings-passenger-count {
-            font-size: 1.1rem;
+
+        .admin-bookings-table-card .table th,
+        .admin-bookings-table-card .table td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .admin-action-btn {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.5rem;
+        }
+
+        /* Hide less important columns on mobile */
+        .admin-bookings-table-card .table th:nth-child(2),
+        .admin-bookings-table-card .table td:nth-child(2),
+        .admin-bookings-table-card .table th:nth-child(3),
+        .admin-bookings-table-card .table td:nth-child(3) {
+            display: none;
         }
     }
 
     @@media (max-width: 576px) {
-        .d-flex.justify-content-between {
+        .admin-status-filter,
+        .admin-quick-filters {
             flex-direction: column;
-            gap: 1rem;
-            text-align: center;
-        }
-        
-        .admin-bookings-table th:nth-child(2),
-        .admin-bookings-table td:nth-child(2) {
-            display: none;
-        }
-        
-        .admin-bookings-action-buttons .btn {
-            display: inline-block;
-            width: auto;
-            margin-right: 0.25rem;
         }
 
-        .admin-bookings-stat-card {
-            margin-bottom: 1rem;
+        .admin-filter-btn,
+        .admin-quick-filters .btn {
+            min-width: 100%;
+        }
+
+        .admin-date-filter {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .admin-date-filter .input-group-text {
+            justify-content: center;
+        }
+
+        /* Hide more columns on very small screens */
+        .admin-bookings-table-card .table th:nth-child(4),
+        .admin-bookings-table-card .table td:nth-child(4) {
+            display: none;
+        }
+
+        .admin-action-buttons {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .admin-action-btn {
+            width: 100%;
         }
     }
 
     @@media (max-width: 400px) {
-        .admin-bookings-table th:nth-child(3),
-        .admin-bookings-table td:nth-child(3) {
+        .admin-bookings-table-card .table th:nth-child(5),
+        .admin-bookings-table-card .table td:nth-child(5) {
             display: none;
         }
-         
-        .admin-bookings-action-buttons .btn {
-            font-size: 0.7rem;
-            padding: 0.3rem 0.5rem;
+
+        h2 {
+            font-size: 1.5rem;
         }
-        
-        .admin-bookings-route-badge .badge {
-            font-size: 0.7rem;
-            padding: 0.3rem 0.6rem;
+
+        .admin-revenue-card h4 {
+            font-size: 1.25rem;
         }
-    }
-
-    /* Additional enhancements for better readability */
-    .text-muted {
-        color: #6c757d !important;
-    }
-
-    .text-dark {
-        color: #2c3e50 !important;
-    }
-
-    .table > :not(caption) > * > * {
-        background: #ffffff;
-        box-shadow: none;
     }
 </style>

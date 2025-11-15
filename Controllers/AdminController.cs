@@ -149,8 +149,9 @@ namespace AirlineReservationSystem.Controllers
             if (ModelState.IsValid)
             {
                 flight.FlightId = Guid.NewGuid();
-                // Auto-generate flight number using GUID (short version)
-                flight.FlightNumber = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+                // Auto-generate VAS- flight number
+                var random = new Random();
+                flight.FlightNumber = $"VAS-{random.Next(100000, 999999)}";
                 flight.AvailableSeats = flight.TotalSeats;
                 
                 _context.Add(flight);
@@ -214,11 +215,11 @@ namespace AirlineReservationSystem.Controllers
             {
                 try
                 {
-                    // Get existing flight to preserve the auto-generated flight number
+                    // Get existing flight to preserve the VAS- flight number
                     var existingFlight = await _context.Flights.AsNoTracking().FirstOrDefaultAsync(f => f.FlightId == id);
                     if (existingFlight != null)
                     {
-                        flight.FlightNumber = existingFlight.FlightNumber; // Keep original flight number
+                        flight.FlightNumber = existingFlight.FlightNumber; // Keep original VAS- flight number
                     }
                     
                     _context.Update(flight);
@@ -457,5 +458,92 @@ namespace AirlineReservationSystem.Controllers
         {
             return _context.Flights.Any(e => e.FlightId == id);
         }
+        // GET: Admin/BookingReceipt/5
+public async Task<IActionResult> BookingReceipt(Guid? id)
+{
+    if (id == null)
+    {
+        return NotFound();
+    }
+
+    var booking = await _context.Bookings
+        .Include(b => b.User)
+        .Include(b => b.Flight)
+        .FirstOrDefaultAsync(b => b.BookingId == id);
+
+    if (booking == null)
+    {
+        return NotFound();
+    }
+
+    var receipt = new BookingReceiptViewModel
+    {
+        BookingReference = booking.BookingReference,
+        FlightNumber = booking.Flight.FlightNumber,
+        Airline = booking.Flight.Airline,
+        DepartureCity = booking.Flight.DepartureCity,
+        ArrivalCity = booking.Flight.ArrivalCity,
+        DepartureTime = booking.Flight.DepartureTime,
+        ArrivalTime = booking.Flight.ArrivalTime,
+        RescheduledDepartureTime = booking.RescheduledDepartureTime,
+        RescheduledArrivalTime = booking.RescheduledArrivalTime,
+        PassengerName = $"{booking.User.FirstName} {booking.User.LastName}",
+        PassengerEmail = booking.User.Email ?? string.Empty,
+        NumberOfPassengers = booking.NumberOfPassengers,
+        CarryOnBags = booking.CarryOnBags,
+        CheckedBags = booking.CheckedBags,
+        BaseFare = booking.Flight.Price * booking.NumberOfPassengers,
+        BaggageFee = booking.CheckedBags * 30m, // $30 per checked bag
+        TotalAmount = booking.TotalAmount,
+        BookingDate = booking.BookingDate,
+        Status = booking.Status
+    };
+
+    return View(receipt);
+}
+
+// GET: Admin/PrintBookingReceipt/5
+public async Task<IActionResult> PrintBookingReceipt(Guid? id)
+{
+    if (id == null)
+    {
+        return NotFound();
+    }
+
+    var booking = await _context.Bookings
+        .Include(b => b.User)
+        .Include(b => b.Flight)
+        .FirstOrDefaultAsync(b => b.BookingId == id);
+
+    if (booking == null)
+    {
+        return NotFound();
+    }
+
+    var receipt = new BookingReceiptViewModel
+    {
+        BookingReference = booking.BookingReference,
+        FlightNumber = booking.Flight.FlightNumber,
+        Airline = booking.Flight.Airline,
+        DepartureCity = booking.Flight.DepartureCity,
+        ArrivalCity = booking.Flight.ArrivalCity,
+        DepartureTime = booking.Flight.DepartureTime,
+        ArrivalTime = booking.Flight.ArrivalTime,
+        RescheduledDepartureTime = booking.RescheduledDepartureTime,
+        RescheduledArrivalTime = booking.RescheduledArrivalTime,
+        PassengerName = $"{booking.User.FirstName} {booking.User.LastName}",
+        PassengerEmail = booking.User.Email ?? string.Empty,
+        NumberOfPassengers = booking.NumberOfPassengers,
+        CarryOnBags = booking.CarryOnBags,
+        CheckedBags = booking.CheckedBags,
+        BaseFare = booking.Flight.Price * booking.NumberOfPassengers,
+        BaggageFee = booking.CheckedBags * 30m,
+        TotalAmount = booking.TotalAmount,
+        BookingDate = booking.BookingDate,
+        Status = booking.Status
+    }; 
+
+    return View(receipt);
+} 
     }
 }

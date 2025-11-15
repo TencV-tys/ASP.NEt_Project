@@ -1,6 +1,25 @@
 @model AirlineReservationSystem.Models.Flight
 @{
     ViewData["Title"] = "Edit Flight";
+    
+    // Visayas airports and major locations
+    var visayasLocations = new List<string>
+    {
+        "Cebu (CEB) - Mactan-Cebu International Airport",
+        "Bohol (TAG) - Tagbilaran Airport",
+        "Dumaguete (DGT) - Sibulan Airport", 
+        "Bacolod (BCD) - Bacolod-Silay Airport",
+        "Iloilo (ILO) - Iloilo International Airport",
+        "Tacloban (TAC) - Daniel Z. Romualdez Airport",
+        "Kalibo (KLO) - Kalibo International Airport",
+        "Roxas (RXS) - Roxas Airport",
+        "Catarman (CRM) - Catarman National Airport",
+        "Maasin (MSA) - Maasin Airport",
+        "Siquijor (SIQ) - Siquijor Airport",
+        "Guiuan (GUI) - Guiuan Airport",
+        "Bantayan (BSA) - Bantayan Airport",
+        "Camiguin (CGM) - Camiguin Airport"
+    };
 }
 
 <div class="container">
@@ -31,18 +50,29 @@
                                 <span class="input-group-text bg-light">
                                     <i class="fas fa-plane text-primary"></i>
                                 </span>
-                                <input type="text" class="form-control fw-bold text-dark" value="@Model.FlightNumber" readonly />
+                                <input type="text" class="form-control fw-bold text-primary" value="@Model.FlightNumber" readonly />
+                                <span class="input-group-text bg-success text-white">
+                                    <i class="fas fa-lock"></i>
+                                </span>
                             </div>
+                            <small class="text-muted">Flight number cannot be changed after creation</small>
                         </div>
                         
                         <!-- Airline -->
                         <div class="form-group mb-4">
-                            <label asp-for="Airline" class="form-label fw-bold"></label>
+                            <label asp-for="Airline" class="form-label fw-bold">Airline Name</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light">
                                     <i class="fas fa-building text-primary"></i>
                                 </span>
-                                <input asp-for="Airline" class="form-control" placeholder="Enter airline name" />
+                                <select asp-for="Airline" class="form-select" id="airlineSelect">
+                                    <option value="">Select Airline</option>
+                                    <option value="VAS Airlines">VAS Airlines</option>
+                                    <option value="Philippine Airlines">Philippine Airlines</option>
+                                    <option value="Cebu Pacific">Cebu Pacific</option>
+                                    <option value="AirAsia Philippines">AirAsia Philippines</option>
+                                    <option value="PAL Express">PAL Express</option>
+                                </select>
                             </div>
                             <span asp-validation-for="Airline" class="text-danger small"></span>
                         </div>
@@ -51,24 +81,36 @@
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label asp-for="DepartureCity" class="form-label fw-bold"></label>
+                                    <label asp-for="DepartureCity" class="form-label fw-bold">Departure City</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light">
                                             <i class="fas fa-plane-departure text-primary"></i>
                                         </span>
-                                        <input asp-for="DepartureCity" class="form-control" placeholder="Departure city" />
+                                        <select asp-for="DepartureCity" class="form-select" id="departureCity">
+                                            <option value="">Select Departure City</option>
+                                            @foreach (var location in visayasLocations)
+                                            {
+                                                <option value="@location">@location</option>
+                                            }
+                                        </select>
                                     </div>
                                     <span asp-validation-for="DepartureCity" class="text-danger small"></span>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label asp-for="ArrivalCity" class="form-label fw-bold"></label>
+                                    <label asp-for="ArrivalCity" class="form-label fw-bold">Arrival City</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light">
                                             <i class="fas fa-plane-arrival text-primary"></i>
                                         </span>
-                                        <input asp-for="ArrivalCity" class="form-control" placeholder="Arrival city" />
+                                        <select asp-for="ArrivalCity" class="form-select" id="arrivalCity">
+                                            <option value="">Select Arrival City</option>
+                                            @foreach (var location in visayasLocations)
+                                            {
+                                                <option value="@location">@location</option>
+                                            }
+                                        </select>
                                     </div>
                                     <span asp-validation-for="ArrivalCity" class="text-danger small"></span>
                                 </div>
@@ -79,26 +121,34 @@
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label asp-for="DepartureTime" class="form-label fw-bold"></label>
+                                    <label asp-for="DepartureTime" class="form-label fw-bold">Departure Time</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light">
                                             <i class="fas fa-calendar-alt text-primary"></i>
                                         </span>
-                                        <input asp-for="DepartureTime" type="datetime-local" class="form-control" />
+                                        <input asp-for="DepartureTime" type="datetime-local" class="form-control" id="departureTime" />
                                     </div>
                                     <span asp-validation-for="DepartureTime" class="text-danger small"></span>
+                                    <small class="text-muted mt-1">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Current: @Model.DepartureTime.ToString("MMM dd, yyyy HH:mm")
+                                    </small>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label asp-for="ArrivalTime" class="form-label fw-bold"></label>
+                                    <label asp-for="ArrivalTime" class="form-label fw-bold">Arrival Time</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light">
                                             <i class="fas fa-calendar-check text-primary"></i>
                                         </span>
-                                        <input asp-for="ArrivalTime" type="datetime-local" class="form-control" />
+                                        <input asp-for="ArrivalTime" type="datetime-local" class="form-control" id="arrivalTime" />
                                     </div>
                                     <span asp-validation-for="ArrivalTime" class="text-danger small"></span>
+                                    <small class="text-muted mt-1">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Current: @Model.ArrivalTime.ToString("MMM dd, yyyy HH:mm")
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -112,7 +162,7 @@
                                         <span class="input-group-text bg-light">
                                             <i class="fas fa-chair text-primary"></i>
                                         </span>
-                                        <input asp-for="TotalSeats" class="form-control" min="1" />
+                                        <input asp-for="TotalSeats" class="form-control" min="1" max="1000" />
                                     </div>
                                     <span asp-validation-for="TotalSeats" class="text-danger small"></span>
                                 </div>
@@ -124,9 +174,13 @@
                                         <span class="input-group-text bg-light">
                                             <i class="fas fa-ticket-alt text-primary"></i>
                                         </span>
-                                        <input asp-for="AvailableSeats" class="form-control" min="0" />
+                                        <input asp-for="AvailableSeats" class="form-control" min="0" max="@Model.TotalSeats" />
                                     </div>
                                     <span asp-validation-for="AvailableSeats" class="text-danger small"></span>
+                                    <small class="text-muted mt-1">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Cannot exceed total seats (@Model.TotalSeats)
+                                    </small>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -143,17 +197,36 @@
                         
                         <!-- Status Toggle -->
                         <div class="form-group mb-4">
-                            <div class="card bg-light">
+                            <div class="card @(Model.IsActive ? "border-success" : "border-danger")">
                                 <div class="card-body py-3">
                                     <div class="form-check form-switch mb-0">
                                         <input asp-for="IsActive" class="form-check-input" style="transform: scale(1.2);" />
                                         <label class="form-check-label fw-bold fs-6" asp-for="IsActive">
-                                            Flight is Active
+                                            @(Model.IsActive ? "✓ Flight is Active" : "✗ Flight is Inactive")
                                         </label>
                                     </div>
+                                    <small class="text-muted mt-1 d-block">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        @(Model.IsActive ? 
+                                            "This flight is currently available for bookings." : 
+                                            "This flight is hidden from users and cannot be booked.")
+                                    </small>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Warning for Completed Bookings -->
+                        @if (ViewBag.HasCompletedBookings == true)
+                        {
+                            <div class="alert alert-warning mb-4">
+                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Important Notice</h6>
+                                <p class="mb-2">This flight has completed bookings. Editing flight details may affect passenger records and historical data.</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Consider creating a new flight instead of modifying this one.
+                                </small>
+                            </div>
+                        }
                         
                         <!-- Action Buttons -->
                         <div class="form-group mt-4 pt-3 border-top">
@@ -179,4 +252,320 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current values for dropdowns
+            const airlineSelect = document.getElementById('airlineSelect');
+            const departureSelect = document.getElementById('departureCity');
+            const arrivalSelect = document.getElementById('arrivalCity');
+            
+            if (airlineSelect) {
+                Array.from(airlineSelect.options).forEach(option => {
+                    if (option.value === '@Model.Airline') {
+                        option.selected = true;
+                    }
+                });
+            }
+            
+            if (departureSelect) {
+                Array.from(departureSelect.options).forEach(option => {
+                    if (option.value === '@Model.DepartureCity') {
+                        option.selected = true;
+                    }
+                });
+            }
+            
+            if (arrivalSelect) {
+                Array.from(arrivalSelect.options).forEach(option => {
+                    if (option.value === '@Model.ArrivalCity') {
+                        option.selected = true;
+                    }
+                });
+            }
+
+            // Prevent same city selection
+            if (departureSelect && arrivalSelect) {
+                departureSelect.addEventListener('change', function() {
+                    if (this.value === arrivalSelect.value) {
+                        arrivalSelect.value = '';
+                        showCityError('Departure and arrival cities cannot be the same');
+                    } else {
+                        hideCityError();
+                    }
+                });
+                
+                arrivalSelect.addEventListener('change', function() {
+                    if (this.value === departureSelect.value) {
+                        this.value = '';
+                        showCityError('Departure and arrival cities cannot be the same');
+                    } else {
+                        hideCityError();
+                    }
+                });
+            }
+
+            // Validate arrival time is after departure time
+            const departureInput = document.getElementById('departureTime');
+            const arrivalInput = document.getElementById('arrivalTime');
+            
+            if (departureInput && arrivalInput) {
+                departureInput.addEventListener('change', function() {
+                    if (arrivalInput.value && new Date(arrivalInput.value) <= new Date(this.value)) {
+                        arrivalInput.setCustomValidity('Arrival time must be after departure time');
+                        showTimeError('Arrival time must be after departure time');
+                    } else {
+                        arrivalInput.setCustomValidity('');
+                        hideTimeError();
+                    }
+                });
+                
+                arrivalInput.addEventListener('change', function() {
+                    if (departureInput.value && new Date(this.value) <= new Date(departureInput.value)) {
+                        this.setCustomValidity('Arrival time must be after departure time');
+                        showTimeError('Arrival time must be after departure time');
+                    } else {
+                        this.setCustomValidity('');
+                        hideTimeError();
+                    }
+                });
+            }
+
+            // Validate available seats don't exceed total seats
+            const totalSeatsInput = document.querySelector('input[name="TotalSeats"]');
+            const availableSeatsInput = document.querySelector('input[name="AvailableSeats"]');
+            
+            if (totalSeatsInput && availableSeatsInput) {
+                totalSeatsInput.addEventListener('change', function() {
+                    const maxSeats = parseInt(this.value);
+                    availableSeatsInput.max = maxSeats;
+                    if (parseInt(availableSeatsInput.value) > maxSeats) {
+                        availableSeatsInput.value = maxSeats;
+                        showSeatsError('Available seats cannot exceed total seats');
+                    } else {
+                        hideSeatsError();
+                    }
+                });
+                
+                availableSeatsInput.addEventListener('change', function() {
+                    const maxSeats = parseInt(totalSeatsInput.value);
+                    if (parseInt(this.value) > maxSeats) {
+                        this.value = maxSeats;
+                        showSeatsError('Available seats cannot exceed total seats');
+                    } else {
+                        hideSeatsError();
+                    }
+                });
+            }
+
+            // Format datetime inputs
+            function formatDateTimeLocal(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
+
+            if (departureInput) {
+                const departureDate = new Date('@Model.DepartureTime.ToString("yyyy-MM-ddTHH:mm")');
+                departureInput.value = formatDateTimeLocal(departureDate);
+            }
+            
+            if (arrivalInput) {
+                const arrivalDate = new Date('@Model.ArrivalTime.ToString("yyyy-MM-ddTHH:mm")');
+                arrivalInput.value = formatDateTimeLocal(arrivalDate);
+            }
+        });
+
+        function showTimeError(message) {
+            hideTimeError();
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger mt-2';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${message}`;
+            errorDiv.id = 'timeError';
+            const arrivalInput = document.getElementById('arrivalTime');
+            arrivalInput.parentNode.parentNode.appendChild(errorDiv);
+        }
+
+        function hideTimeError() {
+            const existingError = document.getElementById('timeError');
+            if (existingError) existingError.remove();
+        }
+
+        function showCityError(message) {
+            hideCityError();
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-warning mt-2';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${message}`;
+            errorDiv.id = 'cityError';
+            const arrivalSelect = document.getElementById('arrivalCity');
+            arrivalSelect.parentNode.parentNode.appendChild(errorDiv);
+        }
+
+        function hideCityError() {
+            const existingError = document.getElementById('cityError');
+            if (existingError) existingError.remove();
+        }
+
+        function showSeatsError(message) {
+            hideSeatsError();
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-warning mt-2';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${message}`;
+            errorDiv.id = 'seatsError';
+            const availableSeatsInput = document.querySelector('input[name="AvailableSeats"]');
+            availableSeatsInput.parentNode.parentNode.appendChild(errorDiv);
+        }
+
+        function hideSeatsError() {
+            const existingError = document.getElementById('seatsError');
+            if (existingError) existingError.remove();
+        }
+    </script>
 }
+
+<style>
+    .card {
+        border: 1px solid #e3e6f0;
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+        border-bottom: 1px solid #e3e6f0;
+        background: linear-gradient(135deg, #3498db, #2980b9) !important;
+    }
+
+    .form-label {
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        border: 1px solid #d1d3e2;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+        background: #ffffff;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        background: #ffffff;
+    }
+
+    .form-control:read-only {
+        background-color: #f8f9fa;
+        border-color: #e9ecef;
+        color: #6c757d;
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+        border: 1px solid #d1d3e2;
+        color: #495057;
+        min-width: 45px;
+        justify-content: center;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #27ae60, #219a52);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-success:hover {
+        background: linear-gradient(135deg, #219a52, #1e8449);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+    }
+
+    .btn-outline-secondary {
+        border: 2px solid #6c757d;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        transform: translateY(-1px);
+    }
+
+    .form-check-input:checked {
+        background-color: #27ae60;
+        border-color: #27ae60;
+    }
+
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.2rem rgba(39, 174, 96, 0.25);
+    }
+
+    .text-danger {
+        font-weight: 500;
+    }
+
+    .bg-light {
+        background-color: #f8f9fa !important;
+    }
+
+    .alert-warning {
+        border-left: 4px solid #f39c12;
+    }
+
+    .alert-danger {
+        border-left: 4px solid #e74c3c;
+    }
+
+    /* Responsive design */
+    @@media (max-width: 768px) {
+        .container {
+            padding: 0 15px;
+        }
+        
+        .card-body {
+            padding: 1.5rem !important;
+        }
+        
+        .input-group-text {
+            min-width: 40px;
+        }
+        
+        .btn {
+            padding: 0.6rem 1.5rem;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+        
+        .card-body {
+            padding: 1rem !important;
+        }
+        
+        .row .col-md-6,
+        .row .col-md-4 {
+            margin-bottom: 1rem;
+        }
+    }
+
+    /* Custom select styling */
+    .form-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+    }
+</style>

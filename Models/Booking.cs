@@ -69,4 +69,4 @@ namespace AirlineReservationSystem.Models
             return $"VAS-{number}";
         }
     }
-}
+} 

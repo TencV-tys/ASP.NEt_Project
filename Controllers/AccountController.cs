@@ -98,7 +98,7 @@ namespace AirlineReservationSystem.Controllers
                 }
                 AddErrors(result);
             }
-            return View(model);
+            return View(model); 
         }
 
         [HttpPost]

@@ -1,6 +1,48 @@
- @model List<AirlineReservationSystem.Models.Flight>
+@model List<AirlineReservationSystem.Models.Flight>
 @{
     ViewData["Title"] = "Manage Flights";
+    
+    // Helper functions to safely extract airport codes and names
+    string GetAirportCode(string city)
+    {
+        if (string.IsNullOrEmpty(city)) return "N/A";
+        
+        // If format is "City (CODE) - Airport Name"
+        if (city.Contains('(') && city.Contains(')'))
+        {
+            try
+            {
+                return city.Split('(')[1].Split(')')[0];
+            }
+            catch
+            {
+                return city.Length > 3 ? city.Substring(0, 3).ToUpper() : city.ToUpper();
+            }
+        }
+        
+        // If no specific format, return first 3 letters
+        return city.Length > 3 ? city.Substring(0, 3).ToUpper() : city.ToUpper();
+    }
+    
+    string GetAirportName(string city)
+    {
+        if (string.IsNullOrEmpty(city)) return "Unknown Airport";
+        
+        // If format has dash separator
+        if (city.Contains('-'))
+        {
+            try
+            {
+                return city.Split('-')[1].Trim();
+            }
+            catch
+            {
+                return city;
+            }
+        }
+        
+        return city;
+    }
 }
 
 <div class="container">
@@ -35,12 +77,18 @@
                         <tbody>
                             @foreach (var flight in Model)
                             {
+                                // Safe way to extract airport codes and names
+                                string departureCode = GetAirportCode(flight.DepartureCity);
+                                string arrivalCode = GetAirportCode(flight.ArrivalCity);
+                                string departureAirport = GetAirportName(flight.DepartureCity);
+                                string arrivalAirport = GetAirportName(flight.ArrivalCity);
+                                
                                 <tr>
                                     <td>
                                         <div class="d-flex flex-column">
                                             <div class="d-flex align-items-center mb-1">
                                                 <i class="fas fa-plane text-muted me-2"></i>
-                                                <strong class="text-dark">@flight.FlightNumber</strong>
+                                                <strong class="text-primary">@flight.FlightNumber</strong>
                                             </div>
                                             <small class="text-muted">@flight.Airline</small>
                                             <small class="text-muted">Created: @flight.CreatedAt.ToString("MMM dd, yyyy")</small>
@@ -49,19 +97,18 @@
                                     <td>
                                         <div class="d-flex flex-column">
                                             <div class="route-badge mb-2">
-                                                <span class="badge bg-light text-dark">
-                                                    @flight.DepartureCity → @flight.ArrivalCity
+                                                <span class="badge bg-light text-dark border">
+                                                    @departureCode → @arrivalCode
                                                 </span>
+                                            </div>
+                                            <div class="airport-names small text-muted mb-1">
+                                                <div><i class="fas fa-plane-departure me-1"></i>@departureAirport</div>
+                                                <div><i class="fas fa-plane-arrival me-1"></i>@arrivalAirport</div>
                                             </div>
                                             <div class="schedule-times">
                                                 <small class="text-muted">
-                                                    <i class="fas fa-plane-departure me-1"></i>
-                                                    @flight.DepartureTime.ToString("MMM dd, HH:mm")
-                                                </small>
-                                                <br>
-                                                <small class="text-muted">
-                                                    <i class="fas fa-plane-arrival me-1"></i>
-                                                    @flight.ArrivalTime.ToString("MMM dd, HH:mm")
+                                                    <i class="fas fa-calendar me-1"></i>
+                                                    @flight.DepartureTime.ToString("MMM dd, yyyy HH:mm")
                                                 </small>
                                             </div>
                                         </div>
@@ -80,6 +127,10 @@
                                             {
                                                 <span class="badge bg-warning mt-1">Few left</span>
                                             }
+                                            else if (flight.AvailableSeats == flight.TotalSeats)
+                                            {
+                                                <span class="badge bg-success mt-1">All available</span>
+                                            }
                                         </div>
                                     </td>
                                     <td>
@@ -93,6 +144,22 @@
                                             <i class="fas @(flight.IsActive ? "fa-check" : "fa-times") me-1"></i>
                                             @(flight.IsActive ? "Active" : "Inactive")
                                         </span>
+                                        @if (flight.DepartureTime < DateTime.Now)
+                                        {
+                                            <div class="mt-1">
+                                                <span class="badge bg-info">
+                                                    <i class="fas fa-clock me-1"></i>Departed
+                                                </span>
+                                            </div>
+                                        }
+                                        else if (flight.DepartureTime < DateTime.Now.AddHours(24))
+                                        {
+                                            <div class="mt-1">
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-hourglass-half me-1"></i>Soon
+                                                </span>
+                                            </div>
+                                        }
                                     </td>
                                     <td>
                                         <div class="action-buttons">
@@ -133,35 +200,71 @@
     @if (Model.Any())
     {
         <div class="row mt-4">
-            <div class="col-md-3 col-6">
-                <div class="card bg-primary text-white">
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card bg-primary text-white hover-scale">
                     <div class="card-body text-center py-3">
                         <h4 class="mb-0">@Model.Count</h4>
                         <small>Total Flights</small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="card bg-success text-white">
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card bg-success text-white hover-scale">
                     <div class="card-body text-center py-3">
                         <h4 class="mb-0">@Model.Count(f => f.IsActive)</h4>
                         <small>Active Flights</small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="card bg-info text-white">
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card bg-info text-white hover-scale">
                     <div class="card-body text-center py-3">
                         <h4 class="mb-0">@Model.Sum(f => f.AvailableSeats)</h4>
                         <small>Available Seats</small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="card bg-warning text-white">
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card bg-warning text-white hover-scale">
                     <div class="card-body text-center py-3">
                         <h4 class="mb-0">@Model.Count(f => f.AvailableSeats == 0)</h4>
                         <small>Full Flights</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Statistics -->
+        <div class="row mt-2">
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card bg-secondary text-white hover-scale">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-0">@Model.Count(f => f.DepartureTime < DateTime.Now)</h4>
+                        <small>Departed</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card bg-danger text-white hover-scale">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-0">@Model.Count(f => !f.IsActive)</h4>
+                        <small>Inactive</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card bg-dark text-white hover-scale">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-0">@Model.Count(f => f.DepartureTime < DateTime.Now.AddHours(24) && f.DepartureTime > DateTime.Now)</h4>
+                        <small>Departing Soon</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card bg-purple text-white hover-scale">
+                    <div class="card-body text-center py-3">
+                        <h4 class="mb-0">@Model.Count(f => f.AvailableSeats == f.TotalSeats)</h4>
+                        <small>Empty Flights</small>
                     </div>
                 </div>
             </div>
@@ -227,9 +330,25 @@
 @section Scripts {
     <script>
         function confirmDeleteFlight(flightId, flightNumber, departureCity, arrivalCity, departureTime) {
+            // Safe way to extract airport codes
+            function getAirportCode(city) {
+                if (!city) return 'N/A';
+                if (city.includes('(') && city.includes(')')) {
+                    try {
+                        return city.split('(')[1].split(')')[0];
+                    } catch {
+                        return city.length > 3 ? city.substring(0, 3).toUpperCase() : city.toUpperCase();
+                    }
+                }
+                return city.length > 3 ? city.substring(0, 3).toUpperCase() : city.toUpperCase();
+            }
+            
+            const depCode = getAirportCode(departureCity);
+            const arrCode = getAirportCode(arrivalCity);
+            
             // Set modal content
             document.getElementById('modalFlightNumber').textContent = `Flight ${flightNumber}`;
-            document.getElementById('modalFlightRoute').textContent = `${departureCity} → ${arrivalCity}`;
+            document.getElementById('modalFlightRoute').textContent = `${depCode} → ${arrCode}`;
             document.getElementById('modalFlightSchedule').textContent = `Departure: ${departureTime}`;
             document.getElementById('deleteFlightId').value = flightId;
             
@@ -255,6 +374,7 @@
         });
     </script>
 }
+
 <style>
     .card {
         border: none;
@@ -292,11 +412,17 @@
     }
 
     .route-badge .badge {
-        font-size: 0.75rem;
-        padding: 0.4rem 0.8rem;
-        background-color: #e3f2fd !important;
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb) !important;
         color: #1565c0 !important;
-        border: 1px solid #bbdefb;
+        border: 1px solid #90caf9;
+        font-weight: 600;
+    }
+
+    .airport-names {
+        font-size: 0.8rem;
+        line-height: 1.3;
     }
 
     .action-buttons {
@@ -348,6 +474,26 @@
         border: 1px solid #e67e22;
     }
 
+    .card.bg-secondary {
+        background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+        border: 1px solid #5a6268;
+    }
+
+    .card.bg-danger {
+        background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+        border: 1px solid #c0392b;
+    }
+
+    .card.bg-dark {
+        background: linear-gradient(135deg, #343a40, #23272b) !important;
+        border: 1px solid #23272b;
+    }
+
+    .card.bg-purple {
+        background: linear-gradient(135deg, #6f42c1, #5a2d9c) !important;
+        border: 1px solid #5a2d9c;
+    }
+
     .card .card-body {
         background: transparent !important;
     }
@@ -360,6 +506,14 @@
     .card .card-body small {
         opacity: 0.95;
         font-weight: 500;
+    }
+
+    .hover-scale {
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .hover-scale:hover {
+        transform: scale(1.05);
     }
 
     /* Status badges */
@@ -377,6 +531,11 @@
         background: linear-gradient(135deg, #f39c12, #e67e22) !important;
         border: 1px solid #d68910;
         color: #fff !important;
+    }
+
+    .badge.bg-info {
+        background: linear-gradient(135deg, #17a2b8, #138496) !important;
+        border: 1px solid #117a8b;
     }
 
     /* Modal Styling */
@@ -422,6 +581,11 @@
         .seats-available {
             font-size: 1.1rem;
         }
+        
+        .route-badge .badge {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.8rem;
+        }
     }
 
     @@media (max-width: 576px) {
@@ -446,6 +610,10 @@
 
         .card {
             margin-bottom: 1rem;
+        }
+        
+        .airport-names {
+            display: none;
         }
     }
 
@@ -475,6 +643,11 @@
         color: #2c3e50 !important;
     }
 
+    .text-primary {
+        color: #3498db !important;
+        font-weight: 600;
+    }
+
     .btn-primary {
         background: linear-gradient(135deg, #3498db, #2980b9);
         border: 1px solid #2980b9;
@@ -495,4 +668,4 @@
         border-color: #c0392b;
         color: white;
     }
-</style>
+</style> 
