@@ -13,7 +13,7 @@ namespace AirlineReservationSystem.ViewModels
         public DateTime ArrivalTime { get; set; }
         public DateTime? RescheduledDepartureTime { get; set; }
         public DateTime? RescheduledArrivalTime { get; set; }
-        public string PassengerName { get; set; } = string.Empty;
+        public string PassengerName { get; set; } = string.Empty; 
         public int NumberOfPassengers { get; set; }
         public int CarryOnBags { get; set; }
         public int CheckedBags { get; set; }

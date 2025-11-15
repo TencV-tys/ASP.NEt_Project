@@ -11,10 +11,10 @@
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a asp-controller="User" asp-action="Flights"><i class="fas fa-arrow-left me-1"></i>Back to Flights</a></li>
             <li class="breadcrumb-item active">Book Flight</li>
-        </ol>
+        </ol> 
     </nav>
     
-    @if (User.IsInRole("Admin"))
+    @if (User.IsInRole("Admin")) 
     {
         <div class="alert alert-warning text-center py-4">
             <div class="mb-3">

@@ -1,4 +1,4 @@
-@model AirlineReservationSystem.ViewModels.DashboardViewModel
+ @model AirlineReservationSystem.ViewModels.DashboardViewModel
 @{
     ViewData["Title"] = "Dashboard";
     
@@ -277,30 +277,36 @@
                                             </td>
                                             <td>
                                                 <div class="action-buttons">
-                                                    @if (booking.Status == "Confirmed")
-                                                    {
-                                                        <div class="btn-group-vertical btn-group-sm">
+                                                    <!-- View Receipt Button - Available for ALL Statuses -->
+                                                    <div class="btn-group-vertical btn-group-sm">
+                                                        <!-- View Receipt Button - Always Visible -->
+                                                        <a href="#" class="btn btn-outline-info mb-1" 
+                                                           data-bs-toggle="modal" data-bs-target="#receiptModal"
+                                                           onclick="setReceiptDetails('@booking.BookingId', '@booking.BookingReference', '@booking.Flight.FlightNumber', '@booking.Flight.DepartureCity', '@booking.Flight.ArrivalCity', '@(isRescheduled && booking.RescheduledDepartureTime.HasValue ? booking.RescheduledDepartureTime.Value.ToString("MMM dd, yyyy HH:mm") : booking.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm"))', '@(isRescheduled && booking.RescheduledArrivalTime.HasValue ? booking.RescheduledArrivalTime.Value.ToString("MMM dd, yyyy HH:mm") : booking.Flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm"))', '@booking.PassengerName', '@booking.NumberOfPassengers', '@booking.CarryOnBags', '@booking.CheckedBags', '@booking.TotalAmount.ToString("N2")', '@booking.BookingDate.ToString("MMM dd, yyyy")', '@booking.Status')">
+                                                            <i class="fas fa-receipt me-1"></i> View Receipt
+                                                        </a>
+
+                                                        @if (booking.Status == "Confirmed")
+                                                        {
+                                                            <!-- Reschedule and Cancel only for Confirmed bookings -->
                                                             <a asp-controller="User" asp-action="EditBooking" asp-route-id="@booking.BookingId" 
-                                                               class="btn btn-warning text-white mb-1" title="Reschedule Booking">
-                                                                <i class="fas fa-clock"></i> Reschedule
+                                                               class="btn btn-warning text-dark mb-1" title="Reschedule Booking">
+                                                                <i class="fas fa-clock me-1"></i> Reschedule
                                                             </a>
                                                             <button type="button" class="btn btn-outline-danger" 
                                                                     onclick="confirmCancelBooking('@booking.BookingId', '@booking.Flight.FlightNumber', '@(isRescheduled ? booking.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") : booking.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm"))')"
                                                                     title="Cancel Booking">
-                                                                <i class="fas fa-times"></i> Cancel
+                                                                <i class="fas fa-times me-1"></i> Cancel
                                                             </button>
-                                                        </div>
-                                                    }
-                                                    else
-                                                    {
-                                                        <div class="text-center">
-                                                            <a href="#" class="btn btn-sm btn-outline-secondary w-100" 
-                                                               data-bs-toggle="modal" data-bs-target="#bookingDetailsModal"
-                                                               onclick="setBookingDetails('@booking.BookingId', '@booking.Flight.FlightNumber', '@booking.Flight.DepartureCity', '@booking.Flight.ArrivalCity', '@booking.BookingDate.ToString("MMM dd, yyyy")', '@booking.Status', '@booking.NumberOfPassengers', '@booking.TotalAmount.ToString("N2")', '@(isRescheduled ? "Yes" : "No")')">
-                                                                <i class="fas fa-eye me-1"></i> View Details
+                                                        }
+                                                        else
+                                                        {
+                                                            <!-- Print Receipt for Completed/Cancelled bookings -->
+                                                            <a asp-controller="User" asp-action="BookingReceipt" asp-route-bookingId="@booking.BookingId" class="btn btn-outline-secondary" target="_blank">
+                                                                <i class="fas fa-print me-1"></i> Print Receipt
                                                             </a>
-                                                        </div>
-                                                    }
+                                                        }
+                                                    </div>
                                                 </div>
                                             </td>
                                         </tr>
@@ -387,10 +393,14 @@
                                             </div>
                                         </div>
                                         <div class="card-footer bg-transparent">
-                                            <a href="#" class="btn btn-sm btn-outline-info w-100" 
-                                               data-bs-toggle="modal" data-bs-target="#bookingDetailsModal"
-                                               onclick="setBookingDetails('@trip.BookingId', '@trip.Flight.FlightNumber', '@trip.Flight.DepartureCity', '@trip.Flight.ArrivalCity', '@trip.BookingDate.ToString("MMM dd, yyyy")', '@trip.Status', '@trip.NumberOfPassengers', '@trip.TotalAmount.ToString("N2")', '@(isRescheduled ? "Yes" : "No")')">
-                                                <i class="fas fa-eye me-1"></i> View Details
+                                            <!-- Add Receipt Button to Upcoming Trips -->
+                                            <a href="#" class="btn btn-sm btn-outline-info w-100 mb-2" 
+                                               data-bs-toggle="modal" data-bs-target="#receiptModal"
+                                               onclick="setReceiptDetails('@trip.BookingId', '@trip.BookingReference', '@trip.Flight.FlightNumber', '@trip.Flight.DepartureCity', '@trip.Flight.ArrivalCity', '@(isRescheduled ? trip.RescheduledDepartureTime?.ToString("MMM dd, yyyy HH:mm") : trip.Flight.DepartureTime.ToString("MMM dd, yyyy HH:mm"))', '@(isRescheduled ? trip.RescheduledArrivalTime?.ToString("MMM dd, yyyy HH:mm") : trip.Flight.ArrivalTime.ToString("MMM dd, yyyy HH:mm"))', '@trip.PassengerName', '@trip.NumberOfPassengers', '@trip.CarryOnBags', '@trip.CheckedBags', '@trip.TotalAmount.ToString("N2")', '@trip.BookingDate.ToString("MMM dd, yyyy")', '@trip.Status')">
+                                                <i class="fas fa-receipt me-1"></i> View Receipt
+                                            </a>
+                                            <a asp-controller="User" asp-action="EditBooking" asp-route-id="@trip.BookingId" class="btn btn-sm btn-warning w-100">
+                                                <i class="fas fa-clock me-1"></i> Reschedule
                                             </a>
                                         </div>
                                     </div>
@@ -402,6 +412,72 @@
             </div>
         </div>
     }
+</div>
+
+<!-- Receipt Modal -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="receiptModalLabel">
+                    <i class="fas fa-receipt me-2"></i>Booking Receipt
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="receipt-content">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h4 class="text-success">Booking Confirmed</h4>
+                        <p class="text-muted">Booking Reference: <strong id="receiptBookingReference"></strong></p>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>Flight Details</h6>
+                            <p class="mb-1"><strong>Flight:</strong> <span id="receiptFlightNumber"></span></p>
+                            <p class="mb-1"><strong>Route:</strong> <span id="receiptRoute"></span></p>
+                            <p class="mb-1"><strong>Departure:</strong> <span id="receiptDeparture"></span></p>
+                            <p class="mb-1"><strong>Arrival:</strong> <span id="receiptArrival"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Passenger Details</h6>
+                            <p class="mb-1"><strong>Name:</strong> <span id="receiptPassengerName"></span></p>
+                            <p class="mb-1"><strong>Passengers:</strong> <span id="receiptPassengers"></span></p>
+                            <p class="mb-1"><strong>Bags:</strong> <span id="receiptBags"></span></p>
+                            <p class="mb-1"><strong>Status:</strong> <span id="receiptStatus"></span></p>
+                        </div>
+                    </div>
+
+                    <div class="payment-section bg-light rounded p-3">
+                        <h6>Payment Summary</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <p class="mb-1">Total Amount:</p>
+                            </div>
+                            <div class="col-6 text-end">
+                                <p class="mb-1 fw-bold text-success fs-5">$<span id="receiptTotalAmount"></span></p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <p class="mb-0 text-muted">Booked on: <span id="receiptBookingDate"></span></p>
+                            </div>
+                            <div class="col-6 text-end">
+                                <p class="mb-0 text-muted">Booking ID: <span id="receiptBookingId"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="#" class="btn btn-primary" id="printReceiptBtn">
+                    <i class="fas fa-print me-2"></i>Print Receipt
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Confirmation Modal -->
@@ -436,89 +512,6 @@
     </div>
 </div>
 
-<!-- Simple View Details Modal -->
-<div class="modal fade" id="bookingDetailsModal" tabindex="-1" aria-labelledby="bookingDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="bookingDetailsModalLabel">
-                    <i class="fas fa-info-circle me-2"></i>Booking Details
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-6">
-                        <strong>Booking ID:</strong>
-                    </div>
-                    <div class="col-6" id="detailBookingId">
-                        <!-- Filled by JavaScript -->
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-6">
-                        <strong>Flight:</strong>
-                    </div>
-                    <div class="col-6" id="detailFlight">
-                        <!-- Filled by JavaScript -->
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-6">
-                        <strong>Route:</strong>
-                    </div>
-                    <div class="col-6" id="detailRoute">
-                        <!-- Filled by JavaScript -->
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-6">
-                        <strong>Booking Date:</strong>
-                    </div>
-                    <div class="col-6" id="detailBookingDate">
-                        <!-- Filled by JavaScript -->
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-6">
-                        <strong>Status:</strong>
-                    </div>
-                    <div class="col-6" id="detailStatus">
-                        <!-- Filled by JavaScript -->
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-6">
-                        <strong>Passengers:</strong>
-                    </div>
-                    <div class="col-6" id="detailPassengers">
-                        <!-- Filled by JavaScript -->
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-6">
-                        <strong>Total Amount:</strong>
-                    </div>
-                    <div class="col-6" id="detailAmount">
-                        <!-- Filled by JavaScript -->
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-6">
-                        <strong>Rescheduled:</strong>
-                    </div>
-                    <div class="col-6" id="detailRescheduled">
-                        <!-- Filled by JavaScript -->
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 @functions {
     public string GetStatusBadgeClass(string status)
     {
@@ -540,16 +533,23 @@
 
 @section Scripts {
     <script>
-        // Simple function to set booking details in modal
-        function setBookingDetails(bookingId, flightNumber, departureCity, arrivalCity, bookingDate, status, passengers, amount, rescheduled) {
-            document.getElementById('detailBookingId').textContent = bookingId.substring(0, 8) + '...';
-            document.getElementById('detailFlight').textContent = flightNumber;
-            document.getElementById('detailRoute').textContent = departureCity + ' → ' + arrivalCity;
-            document.getElementById('detailBookingDate').textContent = bookingDate;
-            document.getElementById('detailStatus').textContent = status;
-            document.getElementById('detailPassengers').textContent = passengers;
-            document.getElementById('detailAmount').textContent = '$' + amount;
-            document.getElementById('detailRescheduled').textContent = rescheduled;
+        // Set receipt details for modal
+        function setReceiptDetails(bookingId, bookingReference, flightNumber, departureCity, arrivalCity, departureTime, arrivalTime, passengerName, passengers, carryOnBags, checkedBags, totalAmount, bookingDate, status) {
+            document.getElementById('receiptBookingId').textContent = bookingId.substring(0, 8) + '...';
+            document.getElementById('receiptBookingReference').textContent = bookingReference;
+            document.getElementById('receiptFlightNumber').textContent = flightNumber;
+            document.getElementById('receiptRoute').textContent = departureCity + ' → ' + arrivalCity;
+            document.getElementById('receiptDeparture').textContent = departureTime;
+            document.getElementById('receiptArrival').textContent = arrivalTime;
+            document.getElementById('receiptPassengerName').textContent = passengerName;
+            document.getElementById('receiptPassengers').textContent = passengers + ' passenger' + (passengers > 1 ? 's' : '');
+            document.getElementById('receiptBags').textContent = carryOnBags + ' carry-on, ' + checkedBags + ' checked';
+            document.getElementById('receiptTotalAmount').textContent = totalAmount;
+            document.getElementById('receiptBookingDate').textContent = bookingDate;
+            document.getElementById('receiptStatus').textContent = status;
+
+            // Set print button link
+            document.getElementById('printReceiptBtn').href = '@Url.Action("BookingReceipt", "User")?bookingId=' + bookingId;
         }
 
         function confirmCancelBooking(bookingId, flightNumber, departureTime) {
@@ -587,6 +587,14 @@
         }
         a.text-decoration-none {
             text-decoration: none !important;
+        }
+        
+        .receipt-content {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .payment-section {
+            border-left: 4px solid #28a745;
         }
     </style>
 }
