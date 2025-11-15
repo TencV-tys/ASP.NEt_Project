@@ -20,6 +20,9 @@
         "Bantayan (BSA) - Bantayan Airport",
         "Camiguin (CGM) - Camiguin Airport"
     };
+
+    // Set the maximum allowed seats when editing
+    var maxAllowedSeats = 200;
 }
 
 <div class="container">
@@ -162,24 +165,34 @@
                                         <span class="input-group-text bg-light">
                                             <i class="fas fa-chair text-primary"></i>
                                         </span>
-                                        <input asp-for="TotalSeats" class="form-control" min="1" max="1000" />
+                                        <input asp-for="TotalSeats" class="form-control" min="1" max="@maxAllowedSeats" />
+                                        <span class="input-group-text bg-info text-white">
+                                            Max: @maxAllowedSeats
+                                        </span>
                                     </div>
                                     <span asp-validation-for="TotalSeats" class="text-danger small"></span>
+                                    <small class="text-muted mt-1">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Maximum allowed: @maxAllowedSeats seats
+                                    </small>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label asp-for="AvailableSeats" class="form-label fw-bold">Available Seats</label>
-                                    <div class="input-group">
+                                     <div class="input-group">
                                         <span class="input-group-text bg-light">
                                             <i class="fas fa-ticket-alt text-primary"></i>
                                         </span>
-                                        <input asp-for="AvailableSeats" class="form-control" min="0" max="@Model.TotalSeats" />
+                                        <input asp-for="AvailableSeats" class="form-control" min="0" max="@maxAllowedSeats" />
+                                        <span class="input-group-text bg-warning text-dark">
+                                            Max: @maxAllowedSeats
+                                        </span>
                                     </div>
                                     <span asp-validation-for="AvailableSeats" class="text-danger small"></span>
                                     <small class="text-muted mt-1">
                                         <i class="fas fa-info-circle me-1"></i>
-                                        Cannot exceed total seats (@Model.TotalSeats)
+                                        Cannot exceed total seats and maximum of @maxAllowedSeats
                                     </small>
                                 </div>
                             </div>
@@ -330,31 +343,64 @@
                 });
             }
 
-            // Validate available seats don't exceed total seats
+            // Validate available seats don't exceed total seats and maximum limit
             const totalSeatsInput = document.querySelector('input[name="TotalSeats"]');
             const availableSeatsInput = document.querySelector('input[name="AvailableSeats"]');
-            
+            const maxAllowedSeats = @maxAllowedSeats;
+
             if (totalSeatsInput && availableSeatsInput) {
                 totalSeatsInput.addEventListener('change', function() {
-                    const maxSeats = parseInt(this.value);
+                    const enteredSeats = parseInt(this.value);
+                    const maxSeats = Math.min(enteredSeats, maxAllowedSeats);
+                    
+                    // Ensure it doesn't exceed maximum allowed
+                    if (enteredSeats > maxAllowedSeats) {
+                        this.value = maxAllowedSeats;
+                        showSeatsError(`Total seats cannot exceed maximum limit of ${maxAllowedSeats}`);
+                    } else {
+                        hideSeatsError();
+                    }
+                    
+                    // Update available seats max
                     availableSeatsInput.max = maxSeats;
                     if (parseInt(availableSeatsInput.value) > maxSeats) {
                         availableSeatsInput.value = maxSeats;
+                        showSeatsError('Available seats cannot exceed total seats');
+                    }
+                });
+                
+                availableSeatsInput.addEventListener('change', function() {
+                    const enteredSeats = parseInt(this.value);
+                    const totalSeats = parseInt(totalSeatsInput.value);
+                    const maxSeats = Math.min(totalSeats, maxAllowedSeats);
+                    
+                    // Check against maximum allowed
+                    if (enteredSeats > maxAllowedSeats) {
+                        this.value = maxAllowedSeats;
+                        showSeatsError(`Available seats cannot exceed maximum limit of ${maxAllowedSeats}`);
+                    }
+                    // Check against total seats
+                    else if (enteredSeats > totalSeats) {
+                        this.value = totalSeats;
                         showSeatsError('Available seats cannot exceed total seats');
                     } else {
                         hideSeatsError();
                     }
                 });
                 
-                availableSeatsInput.addEventListener('change', function() {
-                    const maxSeats = parseInt(totalSeatsInput.value);
-                    if (parseInt(this.value) > maxSeats) {
-                        this.value = maxSeats;
-                        showSeatsError('Available seats cannot exceed total seats');
-                    } else {
-                        hideSeatsError();
-                    }
-                });
+                // Initial validation on page load
+                const currentAvailableSeats = parseInt(availableSeatsInput.value);
+                const currentTotalSeats = parseInt(totalSeatsInput.value);
+                
+                if (currentAvailableSeats > maxAllowedSeats) {
+                    availableSeatsInput.value = maxAllowedSeats;
+                    showSeatsError(`Available seats adjusted to maximum limit of ${maxAllowedSeats}`);
+                }
+                
+                if (currentTotalSeats > maxAllowedSeats) {
+                    totalSeatsInput.value = maxAllowedSeats;
+                    showSeatsError(`Total seats adjusted to maximum limit of ${maxAllowedSeats}`);
+                }
             }
 
             // Format datetime inputs

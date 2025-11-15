@@ -43,6 +43,20 @@
         
         return city;
     }
+
+    // Helper function to check if flight can be edited
+    bool CanEditFlight(Flight flight)
+    {
+        // Cannot edit if flight has already departed
+        if (flight.DepartureTime <= DateTime.Now)
+            return false;
+            
+        // Cannot edit if flight is scheduled for today
+        if (flight.DepartureTime.Date == DateTime.Today)
+            return false;
+            
+        return true;
+    }
 }
 
 <div class="container">
@@ -82,6 +96,11 @@
                                 string arrivalCode = GetAirportCode(flight.ArrivalCity);
                                 string departureAirport = GetAirportName(flight.DepartureCity);
                                 string arrivalAirport = GetAirportName(flight.ArrivalCity);
+                                
+                                // Check if flight can be edited
+                                bool canEdit = CanEditFlight(flight);
+                                bool hasDeparted = flight.DepartureTime <= DateTime.Now;
+                                bool isToday = flight.DepartureTime.Date == DateTime.Today;
                                 
                                 <tr>
                                     <td>
@@ -144,11 +163,19 @@
                                             <i class="fas @(flight.IsActive ? "fa-check" : "fa-times") me-1"></i>
                                             @(flight.IsActive ? "Active" : "Inactive")
                                         </span>
-                                        @if (flight.DepartureTime < DateTime.Now)
+                                        @if (hasDeparted)
                                         {
                                             <div class="mt-1">
                                                 <span class="badge bg-info">
                                                     <i class="fas fa-clock me-1"></i>Departed
+                                                </span>
+                                            </div>
+                                        }
+                                        else if (isToday)
+                                        {
+                                            <div class="mt-1">
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-hourglass-half me-1"></i>Today
                                                 </span>
                                             </div>
                                         }
@@ -163,13 +190,25 @@
                                     </td>
                                     <td>
                                         <div class="action-buttons">
-                                            <a asp-action="EditFlight" asp-route-id="@flight.FlightId" 
-                                               class="btn btn-sm btn-outline-primary mb-1" title="Edit Flight">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </a>
+                                            @if (canEdit)
+                                            {
+                                                <a asp-action="EditFlight" asp-route-id="@flight.FlightId" 
+                                                   class="btn btn-sm btn-outline-primary mb-1" title="Edit Flight">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-sm btn-outline-secondary mb-1" disabled 
+                                                        title="@(hasDeparted ? "Cannot edit departed flights" : "Cannot edit flights scheduled for today")">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                            }
+                                            
                                             <button type="button" class="btn btn-sm btn-outline-danger" 
                                                     onclick="confirmDeleteFlight('@flight.FlightId', '@flight.FlightNumber', '@flight.DepartureCity', '@flight.ArrivalCity', '@flight.DepartureTime.ToString("MMM dd, yyyy HH:mm")')"
-                                                    title="Delete Flight">
+                                                    title="Delete Flight"
+                                                    @(hasDeparted || isToday ? "disabled" : "")>
                                                 <i class="fas fa-trash"></i> Delete
                                             </button>
                                         </div>
@@ -255,8 +294,8 @@
             <div class="col-md-3 col-6 mb-3">
                 <div class="card bg-dark text-white hover-scale">
                     <div class="card-body text-center py-3">
-                        <h4 class="mb-0">@Model.Count(f => f.DepartureTime < DateTime.Now.AddHours(24) && f.DepartureTime > DateTime.Now)</h4>
-                        <small>Departing Soon</small>
+                        <h4 class="mb-0">@Model.Count(f => f.DepartureTime.Date == DateTime.Today)</h4>
+                        <small>Today's Flights</small>
                     </div>
                 </div>
             </div>
@@ -434,6 +473,11 @@
         width: 100%;
         margin-bottom: 0.25rem;
         border: 1px solid;
+    }
+
+    .action-buttons .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
     .empty-state {
@@ -668,4 +712,10 @@
         border-color: #c0392b;
         color: white;
     }
-</style> 
+
+    .btn-outline-danger:disabled:hover {
+        background: transparent;
+        border-color: #6c757d;
+        color: #6c757d;
+    }
+</style>

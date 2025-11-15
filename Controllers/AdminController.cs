@@ -32,7 +32,7 @@ namespace AirlineReservationSystem.Controllers
                 TotalUsers = await _userManager.Users.CountAsync(),
                 TotalFlights = await _context.Flights.CountAsync(),
                 TotalBookings = await _context.Bookings.CountAsync(),
-                TotalRevenue = await _context.Bookings.Where(b => b.Status == "Confirmed").SumAsync(b => b.TotalAmount),
+                TotalRevenue = await _context.Bookings.Where(b => b.Status == "Confirmed" || b.Status == "Completed").SumAsync(b => b.TotalAmount),
                 RecentBookings = await _context.Bookings
                     .Include(b => b.User)
                     .Include(b => b.Flight)
@@ -148,6 +148,13 @@ namespace AirlineReservationSystem.Controllers
         {
             if (ModelState.IsValid)
             {
+                // Validate departure time is in the future
+                if (flight.DepartureTime <= DateTime.Now)
+                {
+                    ModelState.AddModelError("DepartureTime", "Departure time must be in the future.");
+                    return View(flight);
+                }
+
                 flight.FlightId = Guid.NewGuid();
                 // Auto-generate VAS- flight number
                 var random = new Random();
@@ -180,12 +187,27 @@ namespace AirlineReservationSystem.Controllers
             var hasCompletedBookings = await _context.Bookings
                 .AnyAsync(b => b.FlightId == id && b.Status == "Completed");
 
+            // Check if flight has already departed or is today
+            var hasDeparted = flight.DepartureTime <= DateTime.Now;
+            var isToday = flight.DepartureTime.Date == DateTime.Today;
+
             // Pass this to the view
             ViewBag.HasCompletedBookings = hasCompletedBookings;
+            ViewBag.HasDeparted = hasDeparted;
+            ViewBag.IsToday = isToday;
 
             if (hasCompletedBookings)
             {
                 TempData["Warning"] = "This flight has completed bookings. Editing may affect passenger records.";
+            }
+
+            if (hasDeparted)
+            {
+                TempData["Error"] = "This flight has already departed and cannot be edited.";
+            }
+            else if (isToday)
+            {
+                TempData["Warning"] = "This flight is scheduled for today. Editing is restricted.";
             }
 
             return View(flight);
@@ -199,6 +221,27 @@ namespace AirlineReservationSystem.Controllers
             if (id != flight.FlightId)
             {
                 return NotFound();
+            }
+
+            // Get the original flight to check departure time
+            var originalFlight = await _context.Flights.AsNoTracking().FirstOrDefaultAsync(f => f.FlightId == id);
+            if (originalFlight == null)
+            {
+                return NotFound();
+            }
+
+            // Check if flight has already departed
+            if (originalFlight.DepartureTime <= DateTime.Now)
+            {
+                TempData["Error"] = "Cannot edit flights that have already departed!";
+                return RedirectToAction(nameof(Flights));
+            }
+
+            // Check if flight is scheduled for today
+            if (originalFlight.DepartureTime.Date == DateTime.Today)
+            {
+                TempData["Error"] = "Cannot edit flights scheduled for today!";
+                return RedirectToAction(nameof(Flights));
             }
 
             // Check if this flight has any completed bookings
@@ -215,12 +258,8 @@ namespace AirlineReservationSystem.Controllers
             {
                 try
                 {
-                    // Get existing flight to preserve the VAS- flight number
-                    var existingFlight = await _context.Flights.AsNoTracking().FirstOrDefaultAsync(f => f.FlightId == id);
-                    if (existingFlight != null)
-                    {
-                        flight.FlightNumber = existingFlight.FlightNumber; // Keep original VAS- flight number
-                    }
+                    // Preserve the VAS- flight number
+                    flight.FlightNumber = originalFlight.FlightNumber;
                     
                     _context.Update(flight);
                     await _context.SaveChangesAsync();
@@ -250,6 +289,20 @@ namespace AirlineReservationSystem.Controllers
             var flight = await _context.Flights.FindAsync(id);
             if (flight != null)
             {
+                // Check if flight has already departed
+                if (flight.DepartureTime <= DateTime.Now)
+                {
+                    TempData["Error"] = "Cannot delete flights that have already departed!";
+                    return RedirectToAction(nameof(Flights));
+                }
+
+                // Check if flight is scheduled for today
+                if (flight.DepartureTime.Date == DateTime.Today)
+                {
+                    TempData["Error"] = "Cannot delete flights scheduled for today!";
+                    return RedirectToAction(nameof(Flights));
+                }
+
                 // Check if this flight has any bookings
                 var hasBookings = await _context.Bookings
                     .AnyAsync(b => b.FlightId == id);
@@ -280,6 +333,54 @@ namespace AirlineReservationSystem.Controllers
                 .ToListAsync();
 
             return View(bookings);
+        }
+
+        // GET: Admin/GetBookingDetails/5 - API endpoint for modal
+        [HttpGet]
+        public async Task<IActionResult> GetBookingDetails(Guid id)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.User)
+                .Include(b => b.Flight)
+                .FirstOrDefaultAsync(b => b.BookingId == id);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            var result = new 
+            {
+                booking.BookingId,
+                booking.BookingReference,
+                booking.PassengerName,
+                booking.NumberOfPassengers,
+                booking.CarryOnBags,
+                booking.CheckedBags,
+                booking.TotalAmount,
+                booking.BookingDate,
+                booking.Status,
+                booking.RescheduledDepartureTime,
+                booking.RescheduledArrivalTime,
+                User = new 
+                {
+                    booking.User.Email,
+                    booking.User.FirstName,
+                    booking.User.LastName
+                },
+                Flight = new 
+                {
+                    booking.Flight.FlightNumber,
+                    booking.Flight.Airline,
+                    booking.Flight.DepartureCity,
+                    booking.Flight.ArrivalCity,
+                    booking.Flight.DepartureTime,
+                    booking.Flight.ArrivalTime,
+                    booking.Flight.Price
+                }
+            };
+
+            return Ok(result);
         }
 
         // POST: Admin/UpdateBookingStatus
@@ -545,4 +646,4 @@ namespace AirlineReservationSystem.Controllers
             return View(receipt);
         } 
     }
-} 
+}
