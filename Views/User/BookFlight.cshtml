@@ -114,18 +114,31 @@
                         <form method="post" asp-action="BookFlight" id="bookingForm">
                             <input type="hidden" name="flightId" value="@Model.FlightId" />
                             
+                            <!-- Passenger Name Input -->
+                            <div class="form-section mb-4">
+                                <label class="form-label fw-bold mb-3">Passenger Name</label>
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <input type="text" class="form-control form-control-lg" name="passengerName" 
+                                               placeholder="Enter full name" required
+                                               >
+                                        <div class="form-text">Enter the name of the primary passenger for this booking</div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Passenger Count Selection -->
                             <div class="form-section mb-4">
                                 <label class="form-label fw-bold mb-3">How many passengers?</label>
                                 <div class="passenger-selector">
-                                    <div class="row g-2">
+                                    <div class="row g-2 justify-content-center">
                                         @for (int i = 1; i <= Math.Min(6, Model.AvailableSeats); i++)
                                         {
                                             <div class="col-4 col-sm-3 col-md-2">
                                                 <input type="radio" name="numberOfPassengers" value="@i" id="passenger@(i)" class="btn-check" @(i == 1 ? "checked" : "")>
-                                                <label class="btn btn-outline-primary w-100 passenger-option" for="passenger@(i)">
-                                                    <span class="d-block fw-bold">@i</span>
-                                                    <small class="d-block">passenger@(i > 1 ? "s" : "")</small>
+                                                <label class="btn btn-outline-primary w-100 passenger-option d-flex flex-column align-items-center justify-content-center" for="passenger@(i)" style="min-height: 80px;">
+                                                    <span class="fw-bold fs-5">@i</span>
+                                                    <small class="text-center">passenger@(i > 1 ? "s" : "")</small>
                                                 </label>
                                             </div>
                                         }
@@ -133,17 +146,76 @@
                                 </div>
                             </div>
 
+                            <!-- Baggage Selection -->
+                            <div class="form-section mb-4">
+                                <label class="form-label fw-bold mb-3">Baggage Options</label>
+                                
+                                <!-- Carry-on Bags -->
+                                <div class="baggage-section mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <h6 class="mb-1">Carry-on Bags</h6>
+                                            <small class="text-muted">Free (up to 7kg each)</small>
+                                        </div>
+                                        <div class="baggage-selector">
+                                            <div class="btn-group" role="group">
+                                                @for (int i = 0; i <= 4; i++)
+                                                {
+                                                    <input type="radio" class="btn-check" name="carryOnBags" value="@i" id="carryOn@(i)" @(i == 0 ? "checked" : "")>
+                                                    <label class="btn btn-outline-secondary" for="carryOn@(i)">@i</label>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Checked Bags -->
+                                <div class="baggage-section">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <h6 class="mb-1">Checked Bags</h6>
+                                            <small class="text-muted">$30 per bag (up to 23kg each)</small>
+                                        </div>
+                                        <div class="baggage-selector">
+                                            <div class="btn-group" role="group">
+                                                @for (int i = 0; i <= 4; i++)
+                                                {
+                                                    <input type="radio" class="btn-check" name="checkedBags" value="@i" id="checked@(i)" @(i == 0 ? "checked" : "")>
+                                                    <label class="btn btn-outline-secondary" for="checked@(i)">@i</label>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Booking Summary -->
                             <div class="booking-summary bg-light rounded p-4 mb-4">
                                 <h6 class="mb-3"><i class="fas fa-receipt me-2"></i>Booking Summary</h6>
-                                <div class="row">
+                                <div class="row mb-2">
+                                    <div class="col-6">
+                                        <small class="text-muted">Passenger Name</small>
+                                        <div id="summaryPassengerName">@User.Identity?.Name</div>
+                                    </div>
                                     <div class="col-6">
                                         <small class="text-muted">Passengers</small>
                                         <div id="summaryPassengers">1 passenger</div>
                                     </div>
-                                    <div class="col-6 text-end">
-                                        <small class="text-muted">Price per passenger</small>
-                                        <div>$@Model.Price.ToString("N2")</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6">
+                                        <small class="text-muted">Carry-on Bags</small>
+                                        <div id="summaryCarryOn">0 (Free)</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Checked Bags</small>
+                                        <div id="summaryChecked">0 ($0.00)</div>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-12 text-end">
+                                        <small class="text-muted">Base Fare</small>
+                                        <div id="summaryBaseFare">$@Model.Price.ToString("N2")</div>
                                     </div>
                                 </div>
                                 <hr>
@@ -222,28 +294,38 @@
                 <div class="confirmation-details bg-light rounded p-3 mb-4">
                     <div class="row mb-2">
                         <div class="col-6">
-                            <small class="text-muted">Flight</small>
-                            <div class="fw-bold">@Model.FlightNumber</div>
+                            <small class="text-muted">Passenger Name</small>
+                            <div class="fw-bold" id="modalPassengerName">@User.Identity?.Name</div>
                         </div>
                         <div class="col-6">
-                            <small class="text-muted">Route</small>
-                            <div class="fw-bold">@Model.DepartureCity → @Model.ArrivalCity</div>
+                            <small class="text-muted">Flight</small>
+                            <div class="fw-bold">@Model.FlightNumber</div>
                         </div>
                     </div>
                     <div class="row mb-2">
                         <div class="col-6">
+                            <small class="text-muted">Route</small>
+                            <div class="fw-bold">@Model.DepartureCity → @Model.ArrivalCity</div>
+                        </div>
+                        <div class="col-6">
                             <small class="text-muted">Date</small>
                             <div class="fw-bold">@Model.DepartureTime.ToString("MMM dd, yyyy")</div>
-                        </div> 
+                        </div>
+                    </div>
+                    <div class="row mb-2">
                         <div class="col-6">
-                            <small class="text-muted">Time</small>
-                            <div class="fw-bold">@Model.DepartureTime.ToString("HH:mm")</div>
+                            <small class="text-muted">Passengers</small>
+                            <div class="fw-bold" id="modalPassengers">1 passenger</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Bags</small>
+                            <div class="fw-bold" id="modalBags">0 carry-on, 0 checked</div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-6">
-                            <small class="text-muted">Passengers</small>
-                            <div class="fw-bold" id="modalPassengers">1 passenger</div>
+                            <small class="text-muted">Base Fare</small>
+                            <div class="fw-bold" id="modalBaseFare">$@Model.Price.ToString("N2")</div>
                         </div>
                         <div class="col-6">
                             <small class="text-muted">Total Amount</small>
@@ -275,32 +357,67 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const pricePerPassenger = @Model.Price;
+            const checkedBagFee = 30; // $30 per checked bag
+            
+            const passengerNameInput = document.querySelector('input[name="passengerName"]');
             const passengerOptions = document.querySelectorAll('input[name="numberOfPassengers"]');
+            const carryOnOptions = document.querySelectorAll('input[name="carryOnBags"]');
+            const checkedOptions = document.querySelectorAll('input[name="checkedBags"]');
+            
+            const summaryPassengerName = document.getElementById('summaryPassengerName');
             const summaryPassengers = document.getElementById('summaryPassengers');
+            const summaryBaseFare = document.getElementById('summaryBaseFare');
+            const summaryCarryOn = document.getElementById('summaryCarryOn');
+            const summaryChecked = document.getElementById('summaryChecked');
             const summaryTotal = document.getElementById('summaryTotal');
+            
             const confirmBookingBtn = document.getElementById('confirmBookingBtn');
+            const modalPassengerName = document.getElementById('modalPassengerName');
             const modalPassengers = document.getElementById('modalPassengers');
+            const modalBags = document.getElementById('modalBags');
+            const modalBaseFare = document.getElementById('modalBaseFare');
             const modalTotalAmount = document.getElementById('modalTotalAmount');
             const finalConfirmBtn = document.getElementById('finalConfirmBtn');
             const bookingForm = document.getElementById('bookingForm');
 
             function updateBookingSummary() {
-                const selectedPassengers = document.querySelector('input[name="numberOfPassengers"]:checked').value;
-                const totalAmount = selectedPassengers * pricePerPassenger;
+                const passengerName = passengerNameInput.value;
+                const selectedPassengers = parseInt(document.querySelector('input[name="numberOfPassengers"]:checked').value);
+                const carryOnBags = parseInt(document.querySelector('input[name="carryOnBags"]:checked').value);
+                const checkedBags = parseInt(document.querySelector('input[name="checkedBags"]:checked').value);
                 
+                const baseAmount = selectedPassengers * pricePerPassenger;
+                const baggageFee = checkedBags * checkedBagFee;
+                const totalAmount = baseAmount + baggageFee;
+                
+                // Update summary
+                summaryPassengerName.textContent = passengerName || 'Not specified';
                 summaryPassengers.textContent = selectedPassengers + ' passenger' + (selectedPassengers > 1 ? 's' : '');
+                summaryBaseFare.textContent = '$' + baseAmount.toFixed(2);
+                summaryCarryOn.textContent = carryOnBags + ' (Free)';
+                summaryChecked.textContent = checkedBags + ' ($' + baggageFee.toFixed(2) + ')';
                 summaryTotal.textContent = '$' + totalAmount.toFixed(2);
                 
                 // Update button text
                 confirmBookingBtn.innerHTML = `<i class="fas fa-lock me-2"></i>Pay $${totalAmount.toFixed(2)} Now`;
                 
                 // Update modal details
+                modalPassengerName.textContent = passengerName || 'Not specified';
                 modalPassengers.textContent = selectedPassengers + ' passenger' + (selectedPassengers > 1 ? 's' : '');
+                modalBags.textContent = carryOnBags + ' carry-on, ' + checkedBags + ' checked';
+                modalBaseFare.textContent = '$' + baseAmount.toFixed(2);
                 modalTotalAmount.textContent = '$' + totalAmount.toFixed(2);
             }
 
-            // Add event listeners to passenger options
+            // Add event listeners to all options
+            passengerNameInput.addEventListener('input', updateBookingSummary);
             passengerOptions.forEach(option => {
+                option.addEventListener('change', updateBookingSummary);
+            });
+            carryOnOptions.forEach(option => {
+                option.addEventListener('change', updateBookingSummary);
+            });
+            checkedOptions.forEach(option => {
                 option.addEventListener('change', updateBookingSummary);
             });
 
@@ -309,6 +426,13 @@
 
             // Final confirmation button click
             finalConfirmBtn.addEventListener('click', function() {
+                // Validate passenger name
+                if (!passengerNameInput.value.trim()) {
+                    alert('Please enter a passenger name');
+                    passengerNameInput.focus();
+                    return;
+                }
+
                 // Show loading state
                 this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
                 this.disabled = true;
@@ -333,8 +457,9 @@
                 }, 500);
             }
 
-            // Enhanced passenger selection with animation
-            passengerOptions.forEach(option => {
+            // Enhanced selection with animation
+            const allOptions = [...passengerOptions, ...carryOnOptions, ...checkedOptions];
+            allOptions.forEach(option => {
                 option.addEventListener('change', function() {
                     updateBookingSummary();
                     animatePriceUpdate(summaryTotal);
@@ -381,17 +506,18 @@
         padding: 0 10px;
     }
 
-    .passenger-option {
+    .passenger-option, .baggage-selector .btn {
         transition: all 0.3s ease;
         padding: 1rem 0.5rem;
     }
 
-    .passenger-option:hover {
+    .passenger-option:hover, .baggage-selector .btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
-    .btn-check:checked + .passenger-option {
+    .btn-check:checked + .passenger-option,
+    .btn-check:checked + .btn {
         background: linear-gradient(135deg, #3498db, #2980b9);
         border-color: #2980b9;
         color: white;
@@ -415,6 +541,13 @@
 
     .confirmation-details {
         border: 1px solid #dee2e6;
+    }
+
+    .baggage-section {
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        background: #f8f9fa;
     }
 
     /* Animation for price update */
@@ -451,8 +584,17 @@
             top: auto;
         }
         
-        .passenger-option {
+        .passenger-option, .baggage-selector .btn {
             padding: 0.75rem 0.25rem;
+        }
+        
+        .baggage-section .d-flex {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .baggage-selector {
+            margin-top: 1rem;
         }
     }
 </style>

@@ -18,10 +18,12 @@ namespace AirlineReservationSystem.Models
         [Required]
         public Guid FlightId { get; set; }
 
+         public string PassengerName { get; set; } = string.Empty; 
+         
         [Required]
         [Range(1, 10)]
         public int NumberOfPassengers { get; set; }
-
+          
         [Required]
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }

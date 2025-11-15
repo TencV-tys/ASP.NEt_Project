@@ -127,6 +127,10 @@ namespace AirlineReservationSystem.Migrations
                     b.Property<int>("NumberOfPassengers")
                         .HasColumnType("int");
 
+                    b.Property<string>("PassengerName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime?>("RescheduledArrivalTime")
                         .HasColumnType("datetime(6)");
 

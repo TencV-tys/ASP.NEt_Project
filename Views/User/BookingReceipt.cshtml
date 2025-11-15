@@ -1,0 +1,267 @@
+@model AirlineReservationSystem.ViewModels.BookingReceiptViewModel
+@{
+    ViewData["Title"] = "Booking Receipt";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Receipt Header -->
+            <div class="text-center mb-4">
+                <div class="mb-3">
+                    <i class="fas fa-check-circle fa-4x text-success"></i>
+                </div>
+                <h1 class="text-success">Booking Confirmed!</h1>
+                <p class="lead text-muted">Your flight has been successfully booked</p>
+                <div class="alert alert-info d-inline-block">
+                    <i class="fas fa-ticket-alt me-2"></i>
+                    <strong>Booking Reference:</strong> @Model.BookingReference
+                </div>
+            </div>
+
+            <!-- Receipt Card -->
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white py-4">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h4 class="mb-0"><i class="fas fa-receipt me-2"></i>Booking Receipt</h4>
+                        </div>
+                        <div class="col-auto">
+                            <span class="badge bg-success fs-6">Confirmed</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- Flight Details -->
+                    <div class="receipt-section mb-4">
+                        <h5 class="section-title mb-3">
+                            <i class="fas fa-plane me-2"></i>Flight Details
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <strong>Flight Number:</strong> @Model.FlightNumber<br>
+                                <strong>Airline:</strong> @Model.Airline
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong>Route:</strong> @Model.DepartureCity → @Model.ArrivalCity<br>
+                                <strong>Date:</strong> @Model.DepartureTime.ToString("MMM dd, yyyy")
+                            </div>
+                        </div>
+                        
+                        <!-- Flight Timeline -->
+                        <div class="flight-timeline bg-light rounded p-3">
+                            <div class="row align-items-center">
+                                <div class="col-md-5 text-center">
+                                    <div class="departure-info">
+                                        <h5 class="mb-1">@Model.DepartureCity</h5>
+                                        <div class="fw-bold text-primary fs-4">
+                                            @Model.DepartureTime.ToString("HH:mm")
+                                        </div>
+                                        <small class="text-muted">@Model.DepartureTime.ToString("MMM dd, yyyy")</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-2 text-center">
+                                    <div class="flight-connection">
+                                        <div class="connection-line bg-primary mx-auto"></div>
+                                        <i class="fas fa-plane text-primary my-2"></i>
+                                        @{
+                                            var duration = Model.ArrivalTime - Model.DepartureTime;
+                                            var durationString = $"{(int)duration.TotalHours}h {duration.Minutes}m";
+                                        }
+                                        <div class="text-muted small">@durationString</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-5 text-center">
+                                    <div class="arrival-info">
+                                        <h5 class="mb-1">@Model.ArrivalCity</h5>
+                                        <div class="fw-bold text-primary fs-4">
+                                            @Model.ArrivalTime.ToString("HH:mm")
+                                        </div>
+                                        <small class="text-muted">@Model.ArrivalTime.ToString("MMM dd, yyyy")</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Passenger Details -->
+                    <div class="receipt-section mb-4">
+                        <h5 class="section-title mb-3">
+                            <i class="fas fa-users me-2"></i>Passenger Details
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <strong>Passenger Name:</strong> @Model.PassengerName
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>Number of Passengers:</strong> @Model.NumberOfPassengers
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>Carry-on Bags:</strong> @Model.CarryOnBags
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>Checked Bags:</strong> @Model.CheckedBags
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Details -->
+                    <div class="receipt-section">
+                        <h5 class="section-title mb-3">
+                            <i class="fas fa-credit-card me-2"></i>Payment Details
+                        </h5>
+                        <div class="payment-breakdown bg-light rounded p-3">
+                            <div class="row mb-2">
+                                <div class="col-6">Base Fare (@Model.NumberOfPassengers x $@Model.BaseFare.ToString("N2"))</div>
+                                <div class="col-6 text-end">$@((Model.BaseFare * Model.NumberOfPassengers).ToString("N2"))</div>
+                            </div>
+                            @if (Model.BaggageFee > 0)
+                            {
+                                <div class="row mb-2">
+                                    <div class="col-6">Baggage Fee (@Model.CheckedBags x $30.00)</div>
+                                    <div class="col-6 text-end">$@Model.BaggageFee.ToString("N2")</div>
+                                </div>
+                            }
+                            <hr>
+                            <div class="row fw-bold fs-5">
+                                <div class="col-6">Total Amount</div>
+                                <div class="col-6 text-end text-success">$@Model.TotalAmount.ToString("N2")</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-light py-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                Booked on: @Model.BookingDate.ToString("MMM dd, yyyy HH:mm")
+                            </small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Booking ID: @Model.BookingReference
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mt-4">
+                <div class="btn-group" role="group">
+                    <a asp-controller="User" asp-action="MyBookings" class="btn btn-primary">
+                        <i class="fas fa-list me-2"></i>View All Bookings
+                    </a>
+                    <a asp-controller="User" asp-action="Flights" class="btn btn-outline-primary">
+                        <i class="fas fa-plane me-2"></i>Book Another Flight
+                    </a>
+                    <button onclick="window.print()" class="btn btn-outline-secondary">
+                        <i class="fas fa-print me-2"></i>Print Receipt
+                    </button>
+                </div>
+            </div>
+
+            <!-- Important Information -->
+            <div class="alert alert-warning mt-4">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Important Information</h6>
+                <ul class="mb-0">
+                    <li>Please arrive at the airport at least 2 hours before departure</li>
+                    <li>Carry a valid government-issued ID for check-in</li>
+                    <li>Online check-in opens 24 hours before departure</li>
+                    <li>Keep this receipt for your records</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .receipt-section {
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 1.5rem;
+    }
+    
+    .receipt-section:last-child {
+        border-bottom: none;
+    }
+    
+    .section-title {
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 0.5rem;
+    }
+    
+    .flight-timeline {
+        position: relative;
+    }
+    
+    .connection-line {
+        height: 2px;
+        width: 80%;
+        position: absolute;
+        top: 50%;
+        left: 10%;
+        transform: translateY(-50%);
+        z-index: 1;
+    }
+    
+    .flight-connection {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .flight-connection i {
+        background: white;
+        padding: 0 10px;
+    }
+    
+    .payment-breakdown {
+        border-left: 4px solid #27ae60;
+    }
+    
+    @@media print {
+        .btn-group, .alert-warning {
+            display: none !important;
+        }
+        
+        .card {
+            border: 1px solid #000 !important;
+            box-shadow: none !important;
+        }
+        
+        .bg-primary {
+            background-color: #000 !important;
+            color: #fff !important;
+            -webkit-print-color-adjust: exact;
+        }
+    }
+    
+    @@media (max-width: 768px) {
+        .flight-timeline .row {
+            text-align: center;
+        }
+        
+        .connection-line {
+            display: none;
+        }
+        
+        .flight-connection {
+            margin: 1rem 0;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .btn-group .btn {
+            border-radius: 0.375rem !important;
+        }
+    }
+</style>

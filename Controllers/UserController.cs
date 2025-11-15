@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AirlineReservationSystem.Data;
+using AirlineReservationSystem.ViewModels; 
 using AirlineReservationSystem.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -75,7 +76,7 @@ namespace AirlineReservationSystem.Controllers
         // POST: User/BookFlight - Only regular users can book flights
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BookFlight(Guid flightId, int numberOfPassengers, int carryOnBags, int checkedBags)
+        public async Task<IActionResult> BookFlight(Guid flightId, int numberOfPassengers, int carryOnBags, int checkedBags, string passengerName)
         {
             try
             {
@@ -111,6 +112,13 @@ namespace AirlineReservationSystem.Controllers
                     return RedirectToAction(nameof(Flights));
                 }
 
+                // Validate passenger name
+                if (string.IsNullOrEmpty(passengerName))
+                {
+                    TempData["Error"] = "Passenger name is required.";
+                    return RedirectToAction(nameof(BookFlight), new { id = flightId });
+                }
+
                 // Validate baggage
                 if (carryOnBags < 0 || carryOnBags > 4)
                 {
@@ -133,12 +141,13 @@ namespace AirlineReservationSystem.Controllers
                 var random = new Random();
                 var bookingReference = $"VAS-{random.Next(100000, 999999)}";
 
-                var booking = new Booking
+                var booking = new Booking 
                 {
                     BookingId = Guid.NewGuid(),
                     BookingReference = bookingReference,
                     UserId = userId,
                     FlightId = flightId,
+                    PassengerName = passengerName,
                     NumberOfPassengers = numberOfPassengers,
                     CarryOnBags = carryOnBags,
                     CheckedBags = checkedBags,
@@ -155,8 +164,8 @@ namespace AirlineReservationSystem.Controllers
                 _context.Bookings.Add(booking);
                 await _context.SaveChangesAsync();
 
-                TempData["Success"] = $"Flight booked successfully! Booking Reference: {bookingReference}";
-                return RedirectToAction(nameof(MyBookings));
+                // Redirect to receipt instead of MyBookings
+                return RedirectToAction(nameof(BookingReceipt), new { bookingId = booking.BookingId });
             }
             catch (Exception ex)
             {
@@ -249,7 +258,7 @@ namespace AirlineReservationSystem.Controllers
                 {
                     return NotFound();
                 }
-
+ 
                 // Check if user owns this booking
                 var userId = _userManager.GetUserId(User);
                 if (booking.UserId != userId)
@@ -370,6 +379,57 @@ namespace AirlineReservationSystem.Controllers
             catch (Exception ex)
             {
                 TempData["Error"] = $"An error occurred while cancelling the booking: {ex.Message}";
+                return RedirectToAction(nameof(MyBookings));
+            }
+        }
+
+        // GET: User/BookingReceipt - Show booking confirmation receipt
+        public async Task<IActionResult> BookingReceipt(Guid bookingId)
+        {
+            try
+            {
+                var booking = await _context.Bookings
+                    .Include(b => b.Flight)
+                    .Include(b => b.User)
+                    .FirstOrDefaultAsync(b => b.BookingId == bookingId);
+
+                if (booking == null)
+                {
+                    return NotFound();
+                }
+
+                // Check if user owns this booking
+                var userId = _userManager.GetUserId(User);
+                if (booking.UserId != userId)
+                {
+                    return Forbid();
+                }
+
+                var viewModel = new BookingReceiptViewModel
+                {
+                    BookingReference = booking.BookingReference,
+                    FlightNumber = booking.Flight.FlightNumber,
+                    Airline = booking.Flight.Airline,
+                    DepartureCity = booking.Flight.DepartureCity,
+                    ArrivalCity = booking.Flight.ArrivalCity,
+                    DepartureTime = booking.Flight.DepartureTime,
+                    ArrivalTime = booking.Flight.ArrivalTime,
+                    PassengerName = booking.PassengerName,
+                    NumberOfPassengers = booking.NumberOfPassengers,
+                    CarryOnBags = booking.CarryOnBags,
+                    CheckedBags = booking.CheckedBags,
+                    BaseFare = booking.Flight.Price,
+                    BaggageFee = booking.CheckedBags * 30m, // $30 per checked bag
+                    TotalAmount = booking.TotalAmount,
+                    BookingDate = booking.BookingDate,
+                    Status = booking.Status
+                };
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"An error occurred while loading the receipt: {ex.Message}";
                 return RedirectToAction(nameof(MyBookings));
             }
         }

@@ -82,6 +82,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVXNlci9Cb29rRmxpZ2h0LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[/home/vincent-tayros/AirlineReservationSystem/Views/User/BookingReceipt.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVXNlci9Cb29raW5nUmVjZWlwdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [/home/vincent-tayros/AirlineReservationSystem/Views/User/EditBooking.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVXNlci9FZGl0Qm9va2luZy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
